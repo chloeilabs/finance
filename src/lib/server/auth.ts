@@ -1,7 +1,10 @@
 import { betterAuth } from "better-auth"
 import { nextCookies } from "better-auth/next-js"
 
-import { DATABASE_URL_ENV_NAME, getDatabase } from "./postgres"
+import {
+  DATABASE_URL_ENV_NAME,
+  getAuthDatabase,
+} from "./postgres"
 
 declare global {
   var yurieAuth: ReturnType<typeof createAuth> | undefined
@@ -146,11 +149,22 @@ function getAllowedHosts(trustedOrigins: string[]): string[] {
   return [...allowedHosts]
 }
 
+function getCookieDomain(): string | null {
+  const cookieDomain = process.env.BETTER_AUTH_COOKIE_DOMAIN?.trim()
+
+  if (!cookieDomain) {
+    return null
+  }
+
+  return cookieDomain.replace(/^\./u, "")
+}
+
 function createAuth() {
   const betterAuthUrl = getRequiredEnv("BETTER_AUTH_URL")
   const betterAuthSecret = getRequiredEnv("BETTER_AUTH_SECRET")
   const trustedOrigins = getTrustedOrigins(betterAuthUrl)
   const allowedHosts = getAllowedHosts(trustedOrigins)
+  const cookieDomain = getCookieDomain()
   const baseURL =
     allowedHosts.length > 1
       ? {
@@ -161,7 +175,7 @@ function createAuth() {
 
   return betterAuth({
     database: {
-      db: getDatabase(),
+      db: getAuthDatabase(),
       type: "postgres",
     },
     secret: betterAuthSecret,
@@ -191,6 +205,14 @@ function createAuth() {
         },
       },
     },
+    advanced: cookieDomain
+      ? {
+          crossSubDomainCookies: {
+            enabled: true,
+            domain: cookieDomain,
+          },
+        }
+      : undefined,
     plugins: [nextCookies()],
   })
 }
