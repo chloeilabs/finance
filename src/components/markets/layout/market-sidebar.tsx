@@ -7,7 +7,6 @@ import {
   GitCompareArrows,
   Newspaper,
   Search,
-  Sparkles,
   Star,
 } from "lucide-react"
 import Link from "next/link"
@@ -58,11 +57,6 @@ const PRIMARY_NAV_ITEMS = [
     href: "/compare",
     label: "Compare",
     icon: GitCompareArrows,
-  },
-  {
-    href: "/copilot",
-    label: "Copilot",
-    icon: Sparkles,
   },
 ] as const
 
