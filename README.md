@@ -30,7 +30,7 @@ The app runs on [http://localhost:3000](http://localhost:3000).
 ## Optional environment
 
 - `FMP_API_KEY`: enables Financial Modeling Prep market data
-- `FMP_PLAN_TIER`: manual Financial Modeling Prep plan label used for server-side capability gating (`BASIC`, `STARTER`, `PREMIUM`, or `ULTIMATE`)
+- `FMP_PLAN_TIER`: manual Financial Modeling Prep plan label used for server-side capability gating (`STARTER`, `PREMIUM`, or `ULTIMATE`)
 - `OPENROUTER_API_KEY`: enables the `/copilot` agent workspace
 - `TAVILY_API_KEY`: enables search tools inside `/copilot`
 

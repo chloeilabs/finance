@@ -1,5 +1,4 @@
 export const FMP_PLAN_TIERS = [
-  "BASIC",
   "STARTER",
   "PREMIUM",
   "ULTIMATE",
@@ -31,7 +30,7 @@ export type MarketScreenerSortKey = (typeof MARKET_SCREENER_SORT_KEYS)[number]
 
 export type SortDirection = "asc" | "desc"
 
-export type FmpCoverageScope = "sample" | "us" | "usUkCanada" | "global"
+export type FmpCoverageScope = "us" | "usUkCanada" | "global"
 
 export const FMP_CAPABILITY_KEYS = [
   "realtimeQuotes",
