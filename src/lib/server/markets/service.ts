@@ -57,7 +57,6 @@ import {
   ensureDefaultWatchlistForUser,
   getCachedMarketPayload,
   getMarketApiUsageForCurrentMinute,
-  getMarketApiUsageForToday,
   getSymbolDirectoryEntry,
   getWatchlistForUser,
   listSavedScreenersForUser,
@@ -80,7 +79,6 @@ const CORE_WATCHLIST_SYMBOLS = [
   "BRK.B",
 ] as const
 
-const BASIC_SOFT_DAILY_LIMIT = 240
 const NEWS_TTL_SECONDS = 60 * 5
 const PROFILE_TTL_SECONDS = 60 * 60 * 24
 const CALENDAR_TTL_SECONDS = 60 * 60
@@ -150,14 +148,8 @@ async function mayUseLiveFmp() {
   }
 
   const softMinuteLimit = getFmpSoftMinuteLimit()
-
-  if (softMinuteLimit !== null) {
-    const usage = await getMarketApiUsageForCurrentMinute("fmp").catch(() => 0)
-    return usage < softMinuteLimit
-  }
-
-  const usage = await getMarketApiUsageForToday("fmp").catch(() => 0)
-  return usage < BASIC_SOFT_DAILY_LIMIT
+  const usage = await getMarketApiUsageForCurrentMinute("fmp").catch(() => 0)
+  return usage < softMinuteLimit
 }
 
 async function mapWithConcurrency<T, R>(

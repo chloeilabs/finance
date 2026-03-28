@@ -38,7 +38,7 @@ import type {
   ValuationSnapshot,
 } from "@/lib/shared"
 
-import { getConfiguredFmpApiKey, getFmpBaseUrl, getFmpPlanTier } from "./config"
+import { getConfiguredFmpApiKey, getFmpBaseUrl } from "./config"
 import { recordMarketApiUsage } from "./store"
 
 const FMP_PROVIDER_NAME = "fmp"
@@ -1716,20 +1716,6 @@ export function createFmpClient() {
         const ownerEarningsPromise = fetchFmpJson("/stable/owner-earnings", {
           symbol,
         }).catch(() => [])
-
-        if (getFmpPlanTier() === "BASIC") {
-          const [enterpriseValue, ownerEarnings] = await Promise.all([
-            fetchFmpJson("/stable/enterprise-values", { symbol }).catch(
-              () => []
-            ),
-            ownerEarningsPromise,
-          ])
-
-          return mapValuation(
-            asArray(enterpriseValue)[0],
-            asArray(ownerEarnings)[0]
-          )
-        }
 
         const [dcfSnapshot, ownerEarnings] = await Promise.all([
           fetchFmpJson("/stable/levered-discounted-cash-flow", {
