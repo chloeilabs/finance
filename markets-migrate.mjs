@@ -99,13 +99,13 @@ ON market_api_usage_minute (provider, "updatedAt" DESC);
 -- Shared auth may live in a separate database, so market data cannot depend on
 -- a local Better Auth "user" table.
 ALTER TABLE IF EXISTS watchlist
-DROP CONSTRAINT IF EXISTS watchlist_userId_fkey;
+DROP CONSTRAINT IF EXISTS "watchlist_userId_fkey";
 
 ALTER TABLE IF EXISTS watchlist_items
-DROP CONSTRAINT IF EXISTS watchlist_items_userId_fkey;
+DROP CONSTRAINT IF EXISTS "watchlist_items_userId_fkey";
 
 ALTER TABLE IF EXISTS saved_screens
-DROP CONSTRAINT IF EXISTS saved_screens_userId_fkey;
+DROP CONSTRAINT IF EXISTS "saved_screens_userId_fkey";
 `
 
 if (!databaseUrl) {
