@@ -1,7 +1,13 @@
 "use client"
 
+import { useState } from "react"
+
 import { AppLauncher } from "@/components/agent/home/app-launcher"
 import { UserMenu } from "@/components/auth/user-menu"
+import {
+  MarketCopilotSidebar,
+  MarketCopilotToggle,
+} from "@/components/markets/layout/market-copilot-sidebar"
 import { SymbolSearch } from "@/components/markets/search/symbol-search"
 import { WarningStrip } from "@/components/markets/ui/market-primitives"
 import {
@@ -26,20 +32,29 @@ export function MarketShell({
   planLabel: string
   warnings: string[]
 }) {
+  const [copilotOpen, setCopilotOpen] = useState(false)
+
   return (
     <SidebarProvider defaultOpen>
       <MarketSidebar planLabel={planLabel} watchlists={watchlists} />
-      <SidebarInset className="min-h-0 overflow-hidden">
-        <div className="flex h-full flex-col">
+      <SidebarInset className="h-svh min-h-0 overflow-hidden">
+        <div className="flex h-full min-h-0 flex-col">
           <div className="border-b border-border/70 bg-background">
-            <div className="flex flex-col gap-3 px-3 py-3 sm:px-4 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
-              <div className="flex items-center">
-                <SidebarTrigger />
-              </div>
+            <div className="z-10 flex h-[52px] shrink-0 items-center gap-3 px-3">
+              <SidebarTrigger />
 
-              <SymbolSearch className="order-last w-full lg:order-none" />
+              <SymbolSearch
+                className="max-w-none min-w-0 flex-1 md:max-w-md"
+                inputClassName="h-9"
+              />
 
-              <div className="flex items-center justify-end gap-1.5">
+              <div className="ml-auto flex shrink-0 items-center gap-1.5">
+                <MarketCopilotToggle
+                  onToggle={() => {
+                    setCopilotOpen((currentOpen) => !currentOpen)
+                  }}
+                  open={copilotOpen}
+                />
                 <AppLauncher className="size-7" />
                 <UserMenu viewer={viewer} className="size-7" />
               </div>
@@ -47,7 +62,18 @@ export function MarketShell({
             <WarningStrip warnings={warnings} />
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+          <div className="flex min-h-0 flex-1 overflow-hidden">
+            <div
+              className="market-workspace min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain"
+              data-copilot-open={copilotOpen ? "true" : "false"}
+            >
+              {children}
+            </div>
+            <MarketCopilotSidebar
+              onOpenChange={setCopilotOpen}
+              open={copilotOpen}
+            />
+          </div>
         </div>
       </SidebarInset>
     </SidebarProvider>

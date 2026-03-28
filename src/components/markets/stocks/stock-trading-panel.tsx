@@ -75,7 +75,7 @@ export function StockTradingPanel({
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+      <div className="market-split-18 grid gap-4">
         <div className="border border-border/70 px-4 py-4">
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -125,7 +125,7 @@ export function StockTradingPanel({
         </div>
       </div>
 
-      <div className="grid gap-px border border-border/70 bg-border/70 md:grid-cols-3 xl:grid-cols-7">
+      <div className="market-grid-7 grid gap-px border border-border/70 bg-border/70">
         {CHANGE_ITEMS.map((item) => (
           <div key={item.key} className="bg-background px-4 py-3">
             <div className="text-xs text-muted-foreground">{item.label}</div>

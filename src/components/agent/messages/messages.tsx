@@ -66,6 +66,8 @@ function MessagesComponent({
   disableEditing,
   onEditMessage,
   isStreamPending,
+  userMessageLayout = "bubble",
+  assistantMessageLayout = "default",
 }: {
   messages: Message[]
   disableEditing: boolean
@@ -75,6 +77,8 @@ function MessagesComponent({
     newModel: ModelType
   }) => Promise<void> | void
   isStreamPending: boolean
+  userMessageLayout?: "bubble" | "fullWidth"
+  assistantMessageLayout?: "default" | "fullWidth"
 }) {
   const messageGroups = useMemo(() => groupMessages(messages), [messages])
 
@@ -100,7 +104,7 @@ function MessagesComponent({
           !hasStreamingAssistantWithNoContent
 
         return (
-          <div className="flex flex-col gap-6" key={groupIndex}>
+          <div className="flex w-full min-w-0 flex-col gap-6" key={groupIndex}>
             {messageGroup.map((message) => {
               if (isUserMessage(message)) {
                 return (
@@ -110,19 +114,29 @@ function MessagesComponent({
                     isFirstMessage={groupIndex === 0}
                     disableEditing={disableEditing}
                     onEditMessage={onEditMessage}
+                    layout={userMessageLayout}
                   />
                 )
               }
 
               if (isAssistantMessage(message)) {
-                return <AssistantMessage key={message.id} message={message} />
+                return (
+                  <AssistantMessage
+                    key={message.id}
+                    message={message}
+                    layout={assistantMessageLayout}
+                  />
+                )
               }
 
               return null
             })}
 
             {shouldShowGenerating ? (
-              <CraftingShimmer key={`crafting-${String(groupIndex)}`} />
+              <CraftingShimmer
+                key={`crafting-${String(groupIndex)}`}
+                layout={assistantMessageLayout}
+              />
             ) : null}
           </div>
         )
