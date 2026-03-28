@@ -19,7 +19,6 @@ interface FamilyApp {
   name: string
   shortName: string
   href: string
-  description: string
   badgeClassName: string
   external?: boolean
 }
@@ -29,44 +28,33 @@ const YURIE_FAMILY_APPS: FamilyApp[] = [
   {
     name: "Markets",
     shortName: "MK",
-    href: "/",
-    description: "Stock research terminal for the Yurie ecosystem.",
+    href: "https://markets.yurie.ai",
     badgeClassName:
-      "border-stone-950/10 bg-linear-to-br from-amber-200 via-orange-100 to-lime-100 text-stone-950",
-  },
-  {
-    name: "Copilot",
-    shortName: "CP",
-    href: "/copilot",
-    description: "Yurie research copilot and agent workspace.",
-    badgeClassName:
-      "border-stone-950/10 bg-linear-to-br from-cyan-200 via-sky-100 to-teal-100 text-stone-950",
+      "border-stone-950/10 bg-linear-to-br from-emerald-200 via-lime-100 to-yellow-100 text-stone-950",
+    external: true,
   },
   {
     name: "Notes",
     shortName: "NO",
     href: "https://notes.yurie.ai",
-    description: "A note-taking app for the Yurie ecosystem.",
     badgeClassName:
-      "border-stone-950/10 bg-linear-to-br from-rose-200 via-orange-100 to-yellow-100 text-stone-950",
+      "border-stone-950/10 bg-linear-to-br from-amber-200 via-orange-100 to-rose-50 text-stone-950",
     external: true,
   },
   {
     name: "Cloud",
     shortName: "CL",
     href: "https://cloud.yurie.ai",
-    description: "Cloud storage app for the Yurie ecosystem.",
     badgeClassName:
-      "border-stone-950/10 bg-linear-to-br from-sky-200 via-cyan-100 to-teal-100 text-stone-950",
+      "border-stone-950/10 bg-linear-to-br from-cyan-200 via-sky-100 to-indigo-100 text-stone-950",
     external: true,
   },
   {
-    name: "Yuriebench",
-    shortName: "YB",
+    name: "Benchmarks",
+    shortName: "BM",
     href: "https://yuriebench.yurie.ai",
-    description: "Yurie benchmark suite.",
     badgeClassName:
-      "border-stone-950/10 bg-linear-to-br from-violet-200 via-fuchsia-100 to-pink-100 text-stone-950",
+      "border-stone-950/10 bg-linear-to-br from-fuchsia-200 via-pink-100 to-orange-100 text-stone-950",
     external: true,
   },
 ]
@@ -74,12 +62,15 @@ const YURIE_FAMILY_APPS: FamilyApp[] = [
 function AppLauncherCard({
   app,
   isCurrent,
+  spanTwoColumns = false,
 }: {
   app: FamilyApp
   isCurrent: boolean
+  spanTwoColumns?: boolean
 }) {
   const className = cn(
-    "group relative flex min-h-30 flex-col justify-between overflow-hidden bg-background px-4 py-3 transition-colors duration-150 hover:bg-muted/55",
+    "group relative flex min-h-24 flex-col justify-between overflow-hidden bg-background px-4 py-3 transition-colors duration-150 hover:bg-muted/55",
+    spanTwoColumns && "col-span-2",
     isCurrent && "bg-muted/40"
   )
 
@@ -109,13 +100,8 @@ function AppLauncherCard({
         )}
       </div>
 
-      <div className="space-y-1.5">
-        <div className="font-departureMono text-sm tracking-tight text-foreground">
-          {app.name}
-        </div>
-        <p className="text-xs leading-5 text-muted-foreground">
-          {app.description}
-        </p>
+      <div className="font-departureMono text-sm tracking-tight text-foreground">
+        {app.name}
       </div>
     </>
   )
@@ -181,24 +167,21 @@ export function AppLauncher({
               Yurie Apps
             </div>
           </div>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            Jump across markets, copilot, notes, cloud storage, and benchmarks.
-          </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-px bg-border/70 p-px">
-          {YURIE_FAMILY_APPS.map((app) => {
-            const isCurrent =
-              !app.external &&
-              (app.href === "/"
-                ? pathname !== "/copilot"
-                : pathname === app.href)
+        <div className="grid auto-rows-fr grid-cols-2 gap-px bg-border/70 p-px">
+          {YURIE_FAMILY_APPS.map((app, index) => {
+            const isCurrent = !app.external && pathname === app.href
+            const spanTwoColumns =
+              YURIE_FAMILY_APPS.length % 2 === 1 &&
+              index === YURIE_FAMILY_APPS.length - 1
 
             return (
               <AppLauncherCard
                 key={`${app.name}:${app.href}`}
                 app={app}
                 isCurrent={isCurrent}
+                spanTwoColumns={spanTwoColumns}
               />
             )
           })}
