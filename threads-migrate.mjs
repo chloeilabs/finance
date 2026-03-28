@@ -5,7 +5,7 @@ import { Client } from "pg"
 const databaseUrl = process.env.DATABASE_URL?.trim()
 const THREAD_STORAGE_SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS thread (
-  "userId" text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+  "userId" text NOT NULL,
   id text NOT NULL,
   title text NOT NULL,
   model text,
@@ -25,6 +25,11 @@ ADD COLUMN IF NOT EXISTS metadata jsonb;
 
 CREATE INDEX IF NOT EXISTS thread_user_updated_at_idx
 ON thread ("userId", "updatedAt" DESC);
+
+-- Shared auth may live in a separate database, so thread storage cannot depend
+-- on a local Better Auth "user" table.
+ALTER TABLE IF EXISTS thread
+DROP CONSTRAINT IF EXISTS thread_userId_fkey;
 `
 
 if (!databaseUrl) {
