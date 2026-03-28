@@ -23,7 +23,7 @@ CREATE INDEX IF NOT EXISTS symbol_directory_name_idx
 ON symbol_directory (name);
 
 CREATE TABLE IF NOT EXISTS watchlist (
-  "userId" text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+  "userId" text NOT NULL,
   id text NOT NULL,
   name text NOT NULL,
   symbols jsonb NOT NULL DEFAULT '[]'::jsonb,
@@ -36,7 +36,7 @@ CREATE INDEX IF NOT EXISTS watchlist_user_updated_at_idx
 ON watchlist ("userId", "updatedAt" DESC);
 
 CREATE TABLE IF NOT EXISTS watchlist_items (
-  "userId" text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+  "userId" text NOT NULL,
   "watchlistId" text NOT NULL,
   symbol text NOT NULL,
   position integer NOT NULL DEFAULT 0,
@@ -53,7 +53,7 @@ CREATE INDEX IF NOT EXISTS watchlist_items_lookup_idx
 ON watchlist_items ("userId", "watchlistId", position ASC);
 
 CREATE TABLE IF NOT EXISTS saved_screens (
-  "userId" text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+  "userId" text NOT NULL,
   id text NOT NULL,
   name text NOT NULL,
   filters jsonb NOT NULL DEFAULT '{}'::jsonb,
@@ -95,6 +95,17 @@ CREATE TABLE IF NOT EXISTS market_api_usage_minute (
 
 CREATE INDEX IF NOT EXISTS market_api_usage_minute_updated_at_idx
 ON market_api_usage_minute (provider, "updatedAt" DESC);
+
+-- Shared auth may live in a separate database, so market data cannot depend on
+-- a local Better Auth "user" table.
+ALTER TABLE IF EXISTS watchlist
+DROP CONSTRAINT IF EXISTS watchlist_userId_fkey;
+
+ALTER TABLE IF EXISTS watchlist_items
+DROP CONSTRAINT IF EXISTS watchlist_items_userId_fkey;
+
+ALTER TABLE IF EXISTS saved_screens
+DROP CONSTRAINT IF EXISTS saved_screens_userId_fkey;
 `
 
 if (!databaseUrl) {
