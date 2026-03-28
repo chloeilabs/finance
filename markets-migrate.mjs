@@ -84,6 +84,17 @@ CREATE TABLE IF NOT EXISTS market_api_usage_daily (
   "updatedAt" timestamp(3) without time zone NOT NULL,
   PRIMARY KEY (provider, day)
 );
+
+CREATE TABLE IF NOT EXISTS market_api_usage_minute (
+  provider text NOT NULL,
+  bucket timestamp(0) without time zone NOT NULL,
+  count integer NOT NULL DEFAULT 0,
+  "updatedAt" timestamp(3) without time zone NOT NULL,
+  PRIMARY KEY (provider, bucket)
+);
+
+CREATE INDEX IF NOT EXISTS market_api_usage_minute_updated_at_idx
+ON market_api_usage_minute (provider, "updatedAt" DESC);
 `
 
 if (!databaseUrl) {

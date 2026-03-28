@@ -10,6 +10,20 @@ import {
 import { formatSignedNumber } from "@/lib/markets-format"
 import { getCurrentViewer } from "@/lib/server/auth-session"
 import { getMarketOverviewData } from "@/lib/server/markets/service"
+import type { FmpCoverageScope } from "@/lib/shared"
+
+function formatCoverageScope(scope: FmpCoverageScope) {
+  switch (scope) {
+    case "sample":
+      return "Sample"
+    case "us":
+      return "US only"
+    case "usUkCanada":
+      return "US / UK / CA"
+    case "global":
+      return "Global"
+  }
+}
 
 export default async function Home() {
   const viewer = await getCurrentViewer()
@@ -26,13 +40,19 @@ export default async function Home() {
       <PageHeader
         eyebrow="Workspace"
         title="Market overview"
-        description={`A stock-first research terminal for ${firstName === "" ? "your" : firstName} workflow. Quotes and broad-market panels are cached for the ${overview.plan.label} tier while deeper pages assemble the full company dossier.`}
+        description={`A stock-first research terminal for ${firstName === "" ? "your" : firstName} workflow. Quotes and broad-market panels stay plan-aware for the ${overview.plan.label} tier while deeper pages assemble the full company dossier.`}
         actions={
-          <div className="grid gap-px border border-border/70 bg-border/70 text-xs md:grid-cols-3">
+          <div className="grid gap-px border border-border/70 bg-border/70 text-xs md:grid-cols-2 xl:grid-cols-5">
             <div className="bg-background px-3 py-2">
               <div className="text-muted-foreground">Tier</div>
               <div className="mt-1 font-departureMono tracking-tight">
                 {overview.plan.label}
+              </div>
+            </div>
+            <div className="bg-background px-3 py-2">
+              <div className="text-muted-foreground">Coverage</div>
+              <div className="mt-1 font-departureMono tracking-tight">
+                {formatCoverageScope(overview.plan.capabilities.coverageScope)}
               </div>
             </div>
             <div className="bg-background px-3 py-2">
@@ -47,13 +67,19 @@ export default async function Home() {
                 {overview.plan.requestBudgetLabel}
               </div>
             </div>
+            <div className="bg-background px-3 py-2">
+              <div className="text-muted-foreground">Bandwidth</div>
+              <div className="mt-1 font-departureMono tracking-tight">
+                {overview.plan.bandwidthLimitLabel}
+              </div>
+            </div>
           </div>
         }
       />
 
       <SectionFrame
         title={`${overview.watchlist.name} watchlist`}
-        description="Batch quotes are prioritized here so the home surface stays useful on the Basic plan."
+        description="Plan-aware quote caching keeps the home surface responsive without assuming batch quote access."
       >
         <QuoteStrip quotes={overview.watchlist.quotes} />
       </SectionFrame>
@@ -115,6 +141,80 @@ export default async function Home() {
             </div>
           ))}
         </div>
+      </SectionFrame>
+
+      <SectionFrame
+        title="Economic releases"
+        description="Near-term macro events that can reset the tape."
+      >
+        <CalendarList events={overview.economicCalendar} />
+      </SectionFrame>
+
+      <SectionFrame
+        title="Exchange state"
+        description="Open and holiday context for the core US exchanges."
+      >
+        <div className="grid gap-px border border-border/70 bg-border/70 lg:grid-cols-3">
+          {overview.marketHours.map((item) => (
+            <div key={item.exchange} className="bg-background px-4 py-3">
+              <div className="font-departureMono text-xs tracking-tight">
+                {item.exchange}
+              </div>
+              <div className="mt-2 text-sm">
+                {item.isMarketOpen ? "Open" : "Closed"}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {item.openingHour ?? "N/A"} to {item.closingHour ?? "N/A"}{" "}
+                {item.timezone ?? ""}
+              </div>
+            </div>
+          ))}
+        </div>
+      </SectionFrame>
+
+      <SectionFrame
+        title="Upcoming holidays"
+        description="Next scheduled closures and adjusted sessions across the core US exchanges."
+      >
+        <div className="grid gap-px border border-border/70 bg-border/70 lg:grid-cols-3">
+          {overview.marketHolidays.map((item) => (
+            <div key={`${item.exchange}:${item.date ?? ""}`} className="bg-background px-4 py-3">
+              <div className="font-departureMono text-xs tracking-tight">
+                {item.exchange}
+              </div>
+              <div className="mt-2 text-sm">{item.name ?? "Holiday"}</div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {item.date ?? "Date N/A"}
+              </div>
+            </div>
+          ))}
+        </div>
+      </SectionFrame>
+
+      <SectionFrame
+        title="Sector valuation"
+        description="Same-day sector P/E snapshot to pair breadth with valuation."
+      >
+        <div className="grid gap-px border border-border/70 bg-border/70 md:grid-cols-2 xl:grid-cols-4">
+          {overview.sectorValuations.map((item) => (
+            <div key={`${item.sector}:${item.exchange ?? ""}`} className="bg-background px-4 py-3">
+              <div className="text-xs text-muted-foreground">{item.sector}</div>
+              <div className="mt-2 text-lg tracking-tight">
+                {item.pe?.toFixed(2) ?? "N/A"}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {item.exchange ?? "Market-wide"}
+              </div>
+            </div>
+          ))}
+        </div>
+      </SectionFrame>
+
+      <SectionFrame
+        title="General news"
+        description="Broader market and macro headlines beyond the stock-specific feed."
+      >
+        <NewsList stories={overview.generalNews} />
       </SectionFrame>
 
       <SectionFrame

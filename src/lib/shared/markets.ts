@@ -7,18 +7,47 @@ export const FMP_PLAN_TIERS = [
 
 export type FmpPlanTier = (typeof FMP_PLAN_TIERS)[number]
 
+export const FMP_INTRADAY_INTERVALS = [
+  "1min",
+  "5min",
+  "15min",
+  "30min",
+  "1hour",
+  "4hour",
+] as const
+
+export type FmpIntradayInterval = (typeof FMP_INTRADAY_INTERVALS)[number]
+
+export const MARKET_SCREENER_SORT_KEYS = [
+  "symbol",
+  "marketCap",
+  "price",
+  "volume",
+  "beta",
+  "dividend",
+] as const
+
+export type MarketScreenerSortKey = (typeof MARKET_SCREENER_SORT_KEYS)[number]
+
+export type SortDirection = "asc" | "desc"
+
+export type FmpCoverageScope = "sample" | "us" | "usUkCanada" | "global"
+
 export const FMP_CAPABILITY_KEYS = [
   "realtimeQuotes",
   "intradayCharts",
+  "batchQuotes",
+  "batchIndexQuotes",
   "analystInsights",
   "insiderTrades",
   "ownership",
-  "etfHoldings",
+  "etfAssetExposure",
   "secFilings",
   "economics",
-  "esg",
+  "esgRatings",
   "dcf",
   "earningsTranscripts",
+  "pressReleases",
   "globalCoverage",
 ] as const
 
@@ -27,16 +56,21 @@ export type FmpCapabilityKey = (typeof FMP_CAPABILITY_KEYS)[number]
 export interface FmpCapabilities {
   realtimeQuotes: boolean
   intradayCharts: boolean
+  batchQuotes: boolean
+  batchIndexQuotes: boolean
   analystInsights: boolean
   insiderTrades: boolean
   ownership: boolean
-  etfHoldings: boolean
+  etfAssetExposure: boolean
   secFilings: boolean
   economics: boolean
-  esg: boolean
+  esgRatings: boolean
   dcf: boolean
   earningsTranscripts: boolean
+  pressReleases: boolean
   globalCoverage: boolean
+  coverageScope: FmpCoverageScope
+  intradayIntervals: FmpIntradayInterval[]
 }
 
 export interface MarketPlanSummary {
@@ -45,6 +79,7 @@ export interface MarketPlanSummary {
   quoteFreshnessLabel: string
   historicalRangeLabel: string
   requestBudgetLabel: string
+  bandwidthLimitLabel: string
   watchlistLimit: number
   capabilities: FmpCapabilities
 }
@@ -73,6 +108,11 @@ export interface MarketSearchResult {
   currency: string | null
   sector: string | null
   industry: string | null
+  price?: number | null
+  marketCap?: number | null
+  volume?: number | null
+  beta?: number | null
+  dividend?: number | null
 }
 
 export interface QuoteSnapshot {
@@ -134,6 +174,40 @@ export interface MacroRate {
   date: string | null
 }
 
+export interface TechnicalIndicatorPoint {
+  date: string
+  value: number | null
+}
+
+export interface TechnicalIndicatorSeries {
+  id: string
+  label: string
+  points: TechnicalIndicatorPoint[]
+}
+
+export interface AftermarketSnapshot {
+  lastTradePrice: number | null
+  lastTradeTimestamp: string | null
+  bidPrice: number | null
+  askPrice: number | null
+  volume: number | null
+  quoteTimestamp: string | null
+}
+
+export interface PriceChangeSnapshot {
+  day1: number | null
+  day5: number | null
+  month1: number | null
+  month3: number | null
+  month6: number | null
+  ytd: number | null
+  year1: number | null
+  year3: number | null
+  year5: number | null
+  year10: number | null
+  max: number | null
+}
+
 export interface PricePoint {
   date: string
   open: number | null
@@ -168,6 +242,18 @@ export interface MetricStat {
   changeHint?: string | null
 }
 
+export interface FinancialScoreSnapshot {
+  altmanZScore: number | null
+  piotroskiScore: number | null
+  workingCapital: number | null
+  totalAssets: number | null
+  retainedEarnings: number | null
+  ebit: number | null
+  marketCap: number | null
+  totalLiabilities: number | null
+  revenue: number | null
+}
+
 export interface StatementRow {
   label: string
   values: (number | string | null)[]
@@ -189,6 +275,42 @@ export interface AnalystSummary {
     provider: string | null
     grade: string | null
   }[]
+}
+
+export interface AnalystEstimateSnapshot {
+  date: string | null
+  revenueLow: number | null
+  revenueHigh: number | null
+  revenueAvg: number | null
+  ebitdaLow: number | null
+  ebitdaHigh: number | null
+  ebitdaAvg: number | null
+  epsLow: number | null
+  epsHigh: number | null
+  epsAvg: number | null
+  numberAnalystsRevenue: number | null
+  numberAnalystsEps: number | null
+}
+
+export interface GradesConsensus {
+  strongBuy: number | null
+  buy: number | null
+  hold: number | null
+  sell: number | null
+  strongSell: number | null
+  consensus: string | null
+}
+
+export interface RatingsHistoricalEntry {
+  date: string | null
+  rating: string | null
+  overallScore: number | null
+  discountedCashFlowScore: number | null
+  returnOnEquityScore: number | null
+  returnOnAssetsScore: number | null
+  debtToEquityScore: number | null
+  peScore: number | null
+  pbScore: number | null
 }
 
 export interface FilingEntry {
@@ -228,6 +350,112 @@ export interface ValuationSnapshot {
   ownerEarnings: number | null
 }
 
+export interface RevenueSegment {
+  label: string
+  value: number | null
+}
+
+export interface RevenueSegmentation {
+  date: string | null
+  fiscalYear: number | null
+  period: string | null
+  segments: RevenueSegment[]
+}
+
+export interface MarketCapPoint {
+  date: string
+  marketCap: number | null
+}
+
+export interface EmployeeCountPoint {
+  acceptanceTime: string | null
+  periodOfReport: string | null
+  employeeCount: number | null
+}
+
+export interface SecProfile {
+  cik: string | null
+  registrantName: string | null
+  sicCode: string | null
+  sicDescription: string | null
+  sicGroup: string | null
+}
+
+export interface PeerComparisonRow {
+  symbol: string
+  companyName: string | null
+  price: number | null
+  changesPercentage: number | null
+  marketCap: number | null
+  peRatio: number | null
+  fcfYield: number | null
+  roic: number | null
+  altmanZScore: number | null
+  piotroskiScore: number | null
+  analystConsensus: string | null
+}
+
+export interface ResearchQuoteRow {
+  symbol: string
+  name: string | null
+  currency: string | null
+  price: number | null
+  changesPercentage: number | null
+  marketCap: number | null
+  rsi14: number | null
+  nextEarningsDate: string | null
+  analystConsensus: string | null
+  piotroskiScore: number | null
+  altmanZScore: number | null
+}
+
+export interface MarketHoursSnapshot {
+  exchange: string
+  name: string | null
+  openingHour: string | null
+  closingHour: string | null
+  timezone: string | null
+  isMarketOpen: boolean
+}
+
+export interface MarketHoliday {
+  exchange: string
+  date: string | null
+  name: string | null
+  isClosed: boolean
+  adjOpenTime: string | null
+  adjCloseTime: string | null
+}
+
+export interface SectorValuationSnapshot {
+  date: string | null
+  sector: string
+  exchange: string | null
+  pe: number | null
+}
+
+export interface SectorHistoryPoint {
+  date: string
+  averageChange: number | null
+}
+
+export interface SectorHistorySeries {
+  sector: string
+  points: SectorHistoryPoint[]
+}
+
+export interface RiskPremiumSnapshot {
+  country: string
+  countryRiskPremium: number | null
+  totalEquityRiskPremium: number | null
+}
+
+export interface ScreenerOptions {
+  exchanges: string[]
+  sectors: string[]
+  industries: string[]
+}
+
 export interface LockedMarketSection {
   title: string
   capability: FmpCapabilityKey
@@ -241,17 +469,31 @@ export interface StockDossier {
   profile: CompanyProfile | null
   quote: QuoteSnapshot | null
   chart: PricePoint[]
+  intradayCharts: Partial<Record<FmpIntradayInterval, PricePoint[]>>
+  aftermarket: AftermarketSnapshot | null
+  priceChange: PriceChangeSnapshot | null
+  technicals: TechnicalIndicatorSeries[]
   headlineStats: MetricStat[]
+  financialScores: FinancialScoreSnapshot | null
   valuation: ValuationSnapshot | null
   statements: StatementTable[]
   growth: MetricStat[]
   calendar: CalendarEvent[]
   news: NewsStory[]
   analyst: AnalystSummary | null
+  gradesConsensus: GradesConsensus | null
+  analystEstimates: AnalystEstimateSnapshot[]
+  ratingsHistory: RatingsHistoricalEntry[]
   filings: FilingEntry[]
   insiderTrades: InsiderTradeEntry[]
   ownership: OwnershipEntry[]
   etfExposure: EtfExposureEntry[]
+  productSegments: RevenueSegmentation | null
+  geographicSegments: RevenueSegmentation | null
+  marketCapHistory: MarketCapPoint[]
+  employeeHistory: EmployeeCountPoint[]
+  secProfile: SecProfile | null
+  peers: PeerComparisonRow[]
   lockedSections: LockedMarketSection[]
 }
 
@@ -265,9 +507,16 @@ export interface MarketOverviewData {
   indexes: QuoteSnapshot[]
   movers: MarketMoverBucket[]
   sectors: SectorSnapshot[]
+  sectorValuations: SectorValuationSnapshot[]
+  sectorHistory: SectorHistorySeries[]
   calendar: CalendarEvent[]
   macro: MacroRate[]
+  economicCalendar: CalendarEvent[]
+  marketHours: MarketHoursSnapshot[]
+  marketHolidays: MarketHoliday[]
+  riskPremium: RiskPremiumSnapshot | null
   news: NewsStory[]
+  generalNews: NewsStory[]
   warnings: string[]
 }
 
@@ -293,7 +542,10 @@ export interface ScreenerFilterState {
   isEtf?: boolean
   isActivelyTrading?: boolean
   sector?: string
+  industry?: string
   exchange?: string
+  sortBy?: MarketScreenerSortKey
+  sortDirection?: SortDirection
 }
 
 export interface SavedScreenerRecord {
@@ -302,4 +554,16 @@ export interface SavedScreenerRecord {
   filters: ScreenerFilterState
   createdAt: string
   updatedAt: string
+}
+
+export interface ComparePageData {
+  symbols: string[]
+  entries: PeerComparisonRow[]
+  generatedAt: string
+}
+
+export interface WatchlistResearchData {
+  watchlist: WatchlistRecord | null
+  rows: ResearchQuoteRow[]
+  plan: MarketPlanSummary
 }

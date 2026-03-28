@@ -20,6 +20,8 @@ import type {
 } from "@/lib/shared"
 import { cn } from "@/lib/utils"
 
+import { PriceHistoryChartShell } from "./price-history-chart-shell"
+
 export function PageHeader({
   eyebrow,
   title,
@@ -281,9 +283,18 @@ export function CalendarList({ events }: { events: CalendarEvent[] }) {
 
   return (
     <div className="space-y-2">
-      {events.map((event) => (
+      {events.map((event, index) => (
         <div
-          key={`${event.eventType}:${event.symbol}:${event.eventDate}:${event.value ?? ""}`}
+          key={[
+            event.eventType,
+            event.symbol,
+            event.name,
+            event.eventDate,
+            event.time ?? "",
+            event.value ?? "",
+            event.estimate ?? "",
+            String(index),
+          ].join(":")}
           className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border border-border/70 px-3 py-2"
         >
           <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
@@ -533,185 +544,13 @@ export function PriceHistoryChart({
   currency?: string | null
   historicalRangeLabel: string
 }) {
-  const series = points.flatMap((point) =>
-    typeof point.close === "number" && Number.isFinite(point.close)
-      ? [{ date: point.date, close: point.close }]
-      : []
-  )
-
-  if (series.length < 2) {
-    return (
-      <EmptyState
-        title="No price history"
-        description="Historical price data will appear here when the EOD series is available."
-      />
-    )
-  }
-
-  const closes = series.map((point) => point.close)
-  const low = Math.min(...closes)
-  const high = Math.max(...closes)
-  const range = high - low || 1
-  const firstPoint = series[0]
-  const lastPoint = series[series.length - 1]
-
-  if (!firstPoint || !lastPoint) {
-    return (
-      <EmptyState
-        title="No price history"
-        description="Historical price data will appear here when the EOD series is available."
-      />
-    )
-  }
-
-  const absoluteChange = lastPoint.close - firstPoint.close
-  const percentChange =
-    firstPoint.close !== 0
-      ? ((lastPoint.close - firstPoint.close) / firstPoint.close) * 100
-      : null
-  const positive = absoluteChange >= 0
-  const gradientId = `price-line-fill-${symbol.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`
-  const linePath = series
-    .map((point, index) => {
-      const x = (index / (series.length - 1)) * 100
-      const y = 52 - ((point.close - low) / range) * 44
-      return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`
-    })
-    .join(" ")
-  const areaPath = `${linePath} L 100 56 L 0 56 Z`
-
   return (
-    <div className="grid gap-px border border-border/70 bg-border/70 xl:grid-cols-[18rem_minmax(0,1fr)]">
-      <div className="grid gap-px bg-border/70">
-        <div className="bg-background px-4 py-4">
-          <div className="font-departureMono text-[11px] tracking-[0.24em] text-muted-foreground uppercase">
-            Price action
-          </div>
-          <div className="mt-2 text-xs leading-5 text-muted-foreground">
-            {historicalRangeLabel} of end-of-day closes for {symbol}, rendered
-            from the cached FMP series.
-          </div>
-        </div>
-        <div className="bg-background px-4 py-3">
-          <div className="text-xs text-muted-foreground">Last close</div>
-          <div className="mt-2 text-lg tracking-tight">
-            {formatCurrency(lastPoint.close, { currency: currency ?? "USD" })}
-          </div>
-        </div>
-        <div className="bg-background px-4 py-3">
-          <div className="text-xs text-muted-foreground">Period change</div>
-          <div
-            className={cn(
-              "mt-2 font-departureMono text-sm",
-              positive
-                ? "text-[color:var(--vesper-teal)]"
-                : "text-[color:var(--vesper-orange)]"
-            )}
-          >
-            {formatSignedNumber(absoluteChange)} / {formatPercent(percentChange)}
-          </div>
-        </div>
-        <div className="grid gap-px bg-border/70 sm:grid-cols-2 xl:grid-cols-1">
-          <div className="bg-background px-4 py-3">
-            <div className="text-xs text-muted-foreground">Range low</div>
-            <div className="mt-2 text-sm">
-              {formatCurrency(low, { currency: currency ?? "USD" })}
-            </div>
-          </div>
-          <div className="bg-background px-4 py-3">
-            <div className="text-xs text-muted-foreground">Range high</div>
-            <div className="mt-2 text-sm">
-              {formatCurrency(high, { currency: currency ?? "USD" })}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-background px-4 py-4 sm:px-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="font-departureMono text-[11px] tracking-[0.24em] text-muted-foreground uppercase">
-            Line chart
-          </div>
-          <div className="text-xs text-muted-foreground">
-            {formatDate(firstPoint.date)} to {formatDate(lastPoint.date)}
-          </div>
-        </div>
-
-        <div className="mt-4 border border-border/70 bg-muted/20 px-3 py-3">
-          <svg
-            aria-hidden
-            className="h-52 w-full"
-            viewBox="0 0 100 56"
-            preserveAspectRatio="none"
-          >
-            <defs>
-              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="0%"
-                  stopColor={
-                    positive ? "var(--vesper-teal)" : "var(--vesper-orange)"
-                  }
-                  stopOpacity="0.2"
-                />
-                <stop
-                  offset="100%"
-                  stopColor={
-                    positive ? "var(--vesper-teal)" : "var(--vesper-orange)"
-                  }
-                  stopOpacity="0"
-                />
-              </linearGradient>
-            </defs>
-
-            {[12, 24, 36, 48].map((y) => (
-              <line
-                key={y}
-                x1="0"
-                x2="100"
-                y1={String(y)}
-                y2={String(y)}
-                stroke="color-mix(in oklab, var(--border) 80%, transparent)"
-                strokeDasharray="1.5 2.5"
-                strokeWidth="0.5"
-                vectorEffect="non-scaling-stroke"
-              />
-            ))}
-
-            <path d={areaPath} fill={`url(#${gradientId})`} />
-            <path
-              d={linePath}
-              fill="none"
-              stroke={positive ? "var(--vesper-teal)" : "var(--vesper-orange)"}
-              strokeLinecap="square"
-              strokeLinejoin="miter"
-              strokeWidth="1.8"
-              vectorEffect="non-scaling-stroke"
-            />
-            <circle
-              cx="100"
-              cy={(56 - ((lastPoint.close - low) / range) * 44).toFixed(2)}
-              r="1.7"
-              fill={positive ? "var(--vesper-teal)" : "var(--vesper-orange)"}
-            />
-          </svg>
-        </div>
-
-        <div className="mt-3 grid gap-px border border-border/70 bg-border/70 sm:grid-cols-3">
-          <div className="bg-background px-3 py-2">
-            <div className="text-[11px] text-muted-foreground">Start</div>
-            <div className="mt-1 text-xs">{formatDate(firstPoint.date)}</div>
-          </div>
-          <div className="bg-background px-3 py-2">
-            <div className="text-[11px] text-muted-foreground">Last</div>
-            <div className="mt-1 text-xs">{formatDate(lastPoint.date)}</div>
-          </div>
-          <div className="bg-background px-3 py-2">
-            <div className="text-[11px] text-muted-foreground">Points</div>
-            <div className="mt-1 text-xs">{series.length} closes</div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <PriceHistoryChartShell
+      symbol={symbol}
+      points={points}
+      currency={currency}
+      historicalRangeLabel={historicalRangeLabel}
+    />
   )
 }
 

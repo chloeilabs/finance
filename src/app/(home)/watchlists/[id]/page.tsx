@@ -1,11 +1,13 @@
+import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import {
   PageHeader,
-  QuoteStrip,
   SectionFrame,
 } from "@/components/markets/ui/market-primitives"
 import { WatchlistEditor } from "@/components/markets/watchlists/watchlist-editor"
+import { WatchlistResearchTable } from "@/components/markets/watchlists/watchlist-research-table"
+import { Button } from "@/components/ui/button"
 import { getCurrentViewer } from "@/lib/server/auth-session"
 import { getWatchlistPageData } from "@/lib/server/markets/service"
 
@@ -21,7 +23,7 @@ export default async function WatchlistPage({
   }
 
   const { id } = await params
-  const { plan, quotes, watchlist } = await getWatchlistPageData({
+  const { plan, rows, watchlist } = await getWatchlistPageData({
     userId: viewer.id,
     watchlistId: id,
   })
@@ -36,6 +38,17 @@ export default async function WatchlistPage({
         eyebrow="Watchlist"
         title={watchlist.name}
         description="Tracked symbols for your daily research flow. Updates run through the server-side cache and respect the active plan budget."
+        actions={
+          <Button asChild size="sm" variant="outline">
+            <Link
+              href={`/compare?symbols=${encodeURIComponent(
+                watchlist.symbols.slice(0, 5).join(",")
+              )}`}
+            >
+              Compare Top 5
+            </Link>
+          </Button>
+        }
       />
 
       <SectionFrame
@@ -49,10 +62,10 @@ export default async function WatchlistPage({
       </SectionFrame>
 
       <SectionFrame
-        title="Quotes"
-        description="Batch quote strip for every symbol currently in the watchlist."
+        title="Research Table"
+        description="Sortable quote, momentum, calendar, and quality context for the entire watchlist."
       >
-        <QuoteStrip quotes={quotes} />
+        <WatchlistResearchTable rows={rows} />
       </SectionFrame>
     </div>
   )
