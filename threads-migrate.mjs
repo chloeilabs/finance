@@ -29,7 +29,7 @@ ON thread ("userId", "updatedAt" DESC);
 -- Shared auth may live in a separate database, so thread storage cannot depend
 -- on a local Better Auth "user" table.
 ALTER TABLE IF EXISTS thread
-DROP CONSTRAINT IF EXISTS thread_userId_fkey;
+DROP CONSTRAINT IF EXISTS "thread_userId_fkey";
 `
 
 if (!databaseUrl) {
