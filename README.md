@@ -30,7 +30,7 @@ The app runs on [http://localhost:3000](http://localhost:3000).
 ## Optional environment
 
 - `FMP_API_KEY`: enables Financial Modeling Prep market data
-- `FMP_PLAN_TIER`: `BASIC`, `STARTER`, `PREMIUM`, or `ULTIMATE`
+- `FMP_PLAN_TIER`: manual Financial Modeling Prep plan label used for server-side capability gating (`BASIC`, `STARTER`, `PREMIUM`, or `ULTIMATE`)
 - `OPENROUTER_API_KEY`: enables the `/copilot` agent workspace
 - `TAVILY_API_KEY`: enables search tools inside `/copilot`
 
@@ -44,6 +44,7 @@ Without `FMP_API_KEY`, the market shell still renders but the data sections rema
 - `pnpm auth:migrate`: apply Better Auth schema changes
 - `pnpm threads:migrate`: apply thread storage schema changes
 - `pnpm markets:migrate`: apply market storage schema changes
+- `pnpm markets:capabilities`: probe representative FMP endpoints against the current key to audit tier access assumptions
 - `pnpm lint`: run ESLint
 - `pnpm lint:fix`: run ESLint autofixes
 - `pnpm format`: run Prettier
@@ -71,9 +72,11 @@ Without `FMP_API_KEY`, the market shell still renders but the data sections rema
 - `saved_screens`
 - `market_cache_entries`
 - `market_api_usage_daily`
+- `market_api_usage_minute`
 
 ## Notes
 
 - FMP access is server-only. The browser never sees the API key.
-- The Basic tier is treated as a constrained environment: cached quotes, submit-based screening, and no intraday/premium sections by default.
+- The FMP integration uses `/stable/*` endpoints with plan-aware fallbacks for tiers that do not expose batch quotes, batch index quotes, ETF asset exposure, or DCF.
+- Set `FMP_PLAN_TIER=STARTER` for Starter access. Starter is treated as US-only with 300 calls per minute and 20 GB over a trailing 30-day window.
 - Thread metadata now supports a bound stock symbol so the copilot path can attach to a company later without creating a separate chat system.

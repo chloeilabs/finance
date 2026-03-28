@@ -3,70 +3,153 @@ import "server-only"
 import {
   FMP_PLAN_TIERS,
   type FmpCapabilities,
+  type FmpCapabilityKey,
+  type FmpCoverageScope,
+  type FmpIntradayInterval,
   type FmpPlanTier,
   type MarketPlanSummary,
 } from "@/lib/shared"
 
 const DEFAULT_FMP_BASE_URL = "https://financialmodelingprep.com"
 const FMP_PLAN_TIER_SET = new Set<FmpPlanTier>(FMP_PLAN_TIERS)
+const STARTER_INTRADAY_INTERVALS: FmpIntradayInterval[] = [
+  "5min",
+  "15min",
+  "30min",
+  "1hour",
+  "4hour",
+]
+const PREMIUM_INTRADAY_INTERVALS: FmpIntradayInterval[] = [
+  "1min",
+  "5min",
+  "15min",
+  "30min",
+  "1hour",
+  "4hour",
+]
 
+// This matrix follows the public pricing/docs pages and the live Starter-key
+// validation run on March 28, 2026. When FMP plan behavior changes, refresh the
+// assumptions with `pnpm markets:capabilities`.
 const PLAN_CAPABILITIES: Record<FmpPlanTier, FmpCapabilities> = {
   BASIC: {
-    realtimeQuotes: false,
+    realtimeQuotes: true,
     intradayCharts: false,
+    batchQuotes: false,
+    batchIndexQuotes: false,
     analystInsights: false,
     insiderTrades: false,
     ownership: false,
-    etfHoldings: false,
+    etfAssetExposure: false,
     secFilings: true,
     economics: true,
-    esg: false,
+    esgRatings: false,
     dcf: false,
     earningsTranscripts: false,
+    pressReleases: false,
     globalCoverage: false,
+    coverageScope: "sample",
+    intradayIntervals: [],
   },
   STARTER: {
     realtimeQuotes: true,
     intradayCharts: true,
+    batchQuotes: false,
+    batchIndexQuotes: false,
     analystInsights: true,
-    insiderTrades: true,
+    insiderTrades: false,
     ownership: false,
-    etfHoldings: true,
+    etfAssetExposure: false,
     secFilings: true,
     economics: true,
-    esg: true,
+    esgRatings: false,
     dcf: true,
     earningsTranscripts: false,
+    pressReleases: false,
     globalCoverage: false,
+    coverageScope: "us",
+    intradayIntervals: STARTER_INTRADAY_INTERVALS,
   },
   PREMIUM: {
     realtimeQuotes: true,
     intradayCharts: true,
+    batchQuotes: false,
+    batchIndexQuotes: false,
     analystInsights: true,
     insiderTrades: true,
-    ownership: true,
-    etfHoldings: true,
+    ownership: false,
+    etfAssetExposure: false,
     secFilings: true,
     economics: true,
-    esg: true,
+    esgRatings: false,
     dcf: true,
-    earningsTranscripts: true,
-    globalCoverage: true,
+    earningsTranscripts: false,
+    pressReleases: true,
+    globalCoverage: false,
+    coverageScope: "usUkCanada",
+    intradayIntervals: PREMIUM_INTRADAY_INTERVALS,
   },
   ULTIMATE: {
     realtimeQuotes: true,
     intradayCharts: true,
+    batchQuotes: true,
+    batchIndexQuotes: true,
     analystInsights: true,
     insiderTrades: true,
     ownership: true,
-    etfHoldings: true,
+    etfAssetExposure: true,
     secFilings: true,
     economics: true,
-    esg: true,
+    esgRatings: true,
     dcf: true,
     earningsTranscripts: true,
+    pressReleases: true,
     globalCoverage: true,
+    coverageScope: "global",
+    intradayIntervals: PREMIUM_INTRADAY_INTERVALS,
   },
+}
+
+function getQuoteFreshnessLabelForTier(tier: FmpPlanTier): string {
+  return tier === "BASIC" ? "Real-time / sample" : "Real-time"
+}
+
+function getHistoricalRangeLabelForTier(tier: FmpPlanTier): string {
+  switch (tier) {
+    case "BASIC":
+    case "STARTER":
+      return "5 years"
+    case "PREMIUM":
+      return "30+ years"
+    case "ULTIMATE":
+      return "Full history"
+  }
+}
+
+function getRequestBudgetLabelForTier(tier: FmpPlanTier): string {
+  switch (tier) {
+    case "BASIC":
+      return "250 calls / day"
+    case "STARTER":
+      return "300 calls / minute"
+    case "PREMIUM":
+      return "750 calls / minute"
+    case "ULTIMATE":
+      return "3,000 calls / minute"
+  }
+}
+
+function getBandwidthLimitLabelForTier(tier: FmpPlanTier): string {
+  switch (tier) {
+    case "BASIC":
+      return "500 MB / 30 days"
+    case "STARTER":
+      return "20 GB / 30 days"
+    case "PREMIUM":
+      return "50 GB / 30 days"
+    case "ULTIMATE":
+      return "150 GB / 30 days"
+  }
 }
 
 export function getConfiguredFmpApiKey(): string | null {
@@ -117,6 +200,14 @@ export function getFmpCapabilities(): FmpCapabilities {
   return PLAN_CAPABILITIES[getFmpPlanTier()]
 }
 
+export function getFmpCoverageScope(): FmpCoverageScope {
+  return getFmpCapabilities().coverageScope
+}
+
+export function getFmpIntradayIntervals(): FmpIntradayInterval[] {
+  return getFmpCapabilities().intradayIntervals
+}
+
 export function getWatchlistLimitForTier(tier: FmpPlanTier): number {
   switch (tier) {
     case "BASIC":
@@ -136,29 +227,32 @@ export function getMarketPlanSummary(): MarketPlanSummary {
   return {
     tier,
     label: tier.charAt(0) + tier.slice(1).toLowerCase(),
-    quoteFreshnessLabel:
-      tier === "BASIC" ? "End of day / delayed" : "Real-time",
-    historicalRangeLabel:
-      tier === "BASIC" || tier === "STARTER" ? "5 years" : "30+ years",
-    requestBudgetLabel:
-      tier === "BASIC"
-        ? "250 calls / day"
-        : tier === "STARTER"
-          ? "300 calls / minute"
-          : tier === "PREMIUM"
-            ? "750 calls / minute"
-            : "3,000+ calls / minute",
+    quoteFreshnessLabel: getQuoteFreshnessLabelForTier(tier),
+    historicalRangeLabel: getHistoricalRangeLabelForTier(tier),
+    requestBudgetLabel: getRequestBudgetLabelForTier(tier),
+    bandwidthLimitLabel: getBandwidthLimitLabelForTier(tier),
     watchlistLimit: getWatchlistLimitForTier(tier),
     capabilities: PLAN_CAPABILITIES[tier],
   }
 }
 
 export function getQuoteCacheTtlSeconds(): number {
-  return getFmpPlanTier() === "BASIC" ? 60 * 10 : 60
+  return 60
 }
 
-export function isCapabilityEnabled(
-  capability: keyof FmpCapabilities
-): boolean {
+export function getFmpSoftMinuteLimit(): number | null {
+  switch (getFmpPlanTier()) {
+    case "BASIC":
+      return null
+    case "STARTER":
+      return 240
+    case "PREMIUM":
+      return 600
+    case "ULTIMATE":
+      return 2400
+  }
+}
+
+export function isCapabilityEnabled(capability: FmpCapabilityKey): boolean {
   return getFmpCapabilities()[capability]
 }
