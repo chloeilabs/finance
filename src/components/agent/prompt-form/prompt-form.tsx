@@ -72,7 +72,7 @@ export function PromptForm({
   const trimmedMessage = useMemo(() => message.trim(), [message])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const { data: availableModels = [] } = useModels()
+  const { data: availableModels = [], status: modelsStatus } = useModels()
   const { selectedModel, setSelectedModel } = usePersistentSelectedModel(
     initialSelectedModel,
     availableModels
@@ -88,6 +88,10 @@ export function PromptForm({
   )
 
   const resolvedSelectedModel = selectedModel
+  const showMissingProviderHint =
+    !resolvedSelectedModel &&
+    availableModels.length === 0 &&
+    modelsStatus === "success"
 
   const handleSelectModel = useCallback(
     (model: ModelType | null) => {
@@ -229,7 +233,7 @@ export function PromptForm({
         </div>
       </div>
 
-      {!resolvedSelectedModel && (
+      {showMissingProviderHint && (
         <p className="mt-2 text-xs text-muted-foreground">
           Configure `OPENROUTER_API_KEY` on the server to enable model access.
         </p>
