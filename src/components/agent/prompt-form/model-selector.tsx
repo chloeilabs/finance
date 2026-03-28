@@ -24,7 +24,7 @@ export function ModelSelector({
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false)
   const shouldPreventCloseAutoFocusRef = useRef(false)
 
-  const { data: availableModels = [] } = useModels()
+  const { data: availableModels = [], status: modelsStatus } = useModels()
 
   const handleModelSelection = (model: ModelType) => {
     shouldPreventCloseAutoFocusRef.current = true
@@ -46,6 +46,12 @@ export function ModelSelector({
     }
   }, [])
 
+  const triggerLabel = selectedModel
+    ? ModelInfos[selectedModel].name
+    : modelsStatus === "pending"
+      ? "Loading models..."
+      : "No Model Selected"
+
   return (
     <Popover open={isModelSelectorOpen} onOpenChange={setIsModelSelectorOpen}>
       <Tooltip>
@@ -56,11 +62,7 @@ export function ModelSelector({
               variant="ghost"
               className="px-2 font-normal text-muted-foreground hover:bg-accent focus-visible:border-transparent focus-visible:ring-0"
             >
-              <span>
-                {selectedModel
-                  ? ModelInfos[selectedModel].name
-                  : "No Model Selected"}
-              </span>
+              <span>{triggerLabel}</span>
             </Button>
           </PopoverTrigger>
         </TooltipTrigger>
@@ -97,6 +99,10 @@ export function ModelSelector({
                 <span>{ModelInfos[model.id].name}</span>
               </Button>
             ))
+          ) : modelsStatus === "pending" ? (
+            <div className="p-2 text-left text-sm text-muted-foreground">
+              Loading models...
+            </div>
           ) : (
             <div className="p-2 text-left text-sm text-muted-foreground">
               No models available. Ask an admin to configure a provider API key

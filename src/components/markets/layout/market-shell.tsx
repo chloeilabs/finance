@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useState } from "react"
 
 import { AppLauncher } from "@/components/agent/home/app-launcher"
 import { UserMenu } from "@/components/auth/user-menu"
@@ -15,27 +15,48 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import {
+  MARKET_COPILOT_COOKIE_NAME,
+  UI_STATE_COOKIE_MAX_AGE,
+} from "@/lib/constants"
 import type { AuthViewer, WatchlistRecord } from "@/lib/shared"
 
 import { MarketSidebar } from "./market-sidebar"
 
 export function MarketShell({
   children,
+  initialCopilotOpen = false,
+  initialSidebarOpen = true,
   viewer,
   watchlists,
   planLabel,
   warnings,
 }: {
   children: React.ReactNode
+  initialCopilotOpen?: boolean
+  initialSidebarOpen?: boolean
   viewer: AuthViewer
   watchlists: WatchlistRecord[]
   planLabel: string
   warnings: string[]
 }) {
-  const [copilotOpen, setCopilotOpen] = useState(false)
+  const [copilotOpen, setCopilotOpenState] = useState(initialCopilotOpen)
+  const setCopilotOpen = useCallback(
+    (value: boolean | ((currentOpen: boolean) => boolean)) => {
+      setCopilotOpenState((currentOpen) => {
+        const nextOpen =
+          typeof value === "function" ? value(currentOpen) : value
+
+        document.cookie = `${MARKET_COPILOT_COOKIE_NAME}=${String(nextOpen)}; path=/; max-age=${String(UI_STATE_COOKIE_MAX_AGE)}`
+
+        return nextOpen
+      })
+    },
+    []
+  )
 
   return (
-    <SidebarProvider defaultOpen>
+    <SidebarProvider defaultOpen={initialSidebarOpen}>
       <MarketSidebar planLabel={planLabel} watchlists={watchlists} />
       <SidebarInset className="h-svh min-h-0 overflow-hidden">
         <div className="flex h-full min-h-0 flex-col">
@@ -70,7 +91,9 @@ export function MarketShell({
               {children}
             </div>
             <MarketCopilotSidebar
-              onOpenChange={setCopilotOpen}
+              onOpenChange={(open) => {
+                setCopilotOpen(open)
+              }}
               open={copilotOpen}
             />
           </div>
