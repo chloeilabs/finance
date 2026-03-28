@@ -35,8 +35,8 @@ export function PageHeader({
 }) {
   return (
     <header className="border-b border-border/70 px-4 py-5 sm:px-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-2">
+      <div className="market-page-header-layout">
+        <div className="min-w-0 space-y-2">
           <div className="font-departureMono text-[11px] tracking-[0.28em] text-muted-foreground uppercase">
             {eyebrow}
           </div>
@@ -47,7 +47,9 @@ export function PageHeader({
             </p>
           </div>
         </div>
-        {actions ? <div className="shrink-0">{actions}</div> : null}
+        {actions ? (
+          <div className="market-page-header-actions">{actions}</div>
+        ) : null}
       </div>
     </header>
   )
@@ -136,7 +138,7 @@ export function QuoteStrip({
   }
 
   return (
-    <div className="grid gap-px border border-border/70 bg-border/70 md:grid-cols-2 xl:grid-cols-4">
+    <div className="market-grid-4 grid gap-px border border-border/70 bg-border/70">
       {quotes.map((quote) => {
         const positive = (quote.change ?? 0) >= 0
         const content = (
@@ -251,7 +253,7 @@ export function SectorGrid({
   }
 
   return (
-    <div className="grid gap-px border border-border/70 bg-border/70 md:grid-cols-2 xl:grid-cols-4">
+    <div className="market-grid-4 grid gap-px border border-border/70 bg-border/70">
       {sectors.map((sector) => (
         <div key={sector.sector} className="bg-background px-4 py-3">
           <div className="text-xs text-muted-foreground">{sector.sector}</div>
@@ -366,7 +368,7 @@ export function MetricGrid({ metrics }: { metrics: MetricStat[] }) {
   }
 
   return (
-    <div className="grid gap-px border border-border/70 bg-border/70 md:grid-cols-2 xl:grid-cols-5">
+    <div className="market-grid-5 grid gap-px border border-border/70 bg-border/70">
       {metrics.map((metric) => (
         <div key={metric.label} className="bg-background px-4 py-3">
           <div className="text-xs text-muted-foreground">{metric.label}</div>
@@ -449,7 +451,7 @@ export function LockedSectionGrid({
   }
 
   return (
-    <div className="grid gap-px border border-border/70 bg-border/70 md:grid-cols-2 xl:grid-cols-3">
+    <div className="market-grid-3 grid gap-px border border-border/70 bg-border/70">
       {sections.map((section) => (
         <div key={section.title} className="bg-background px-4 py-4">
           <div className="flex items-center gap-2 text-muted-foreground">
@@ -486,7 +488,7 @@ export function StockHeadline({
   const positive = (change ?? 0) >= 0
 
   return (
-    <div className="grid gap-px border border-border/70 bg-border/70 lg:grid-cols-[minmax(0,1fr)_18rem]">
+    <div className="market-split-18 grid gap-px border border-border/70 bg-border/70">
       <div className="bg-background px-4 py-4 sm:px-6">
         <div className="font-departureMono text-[11px] tracking-[0.26em] text-muted-foreground uppercase">
           {symbol}
@@ -579,9 +581,11 @@ export function FilingList({
         <a
           key={
             item.finalLink ??
-            [item.formType ?? "form", item.filingDate ?? "date", String(index)].join(
-              ":"
-            )
+            [
+              item.formType ?? "form",
+              item.filingDate ?? "date",
+              String(index),
+            ].join(":")
           }
           className="flex items-center justify-between gap-3 border border-border/70 px-4 py-3 transition-colors hover:bg-muted/35"
           href={item.finalLink ?? "#"}

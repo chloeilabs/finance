@@ -12,10 +12,7 @@ import {
 } from "@/components/markets/ui/market-primitives"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  formatCompactNumber,
-  formatCurrency,
-} from "@/lib/markets-format"
+import { formatCompactNumber, formatCurrency } from "@/lib/markets-format"
 import { getCurrentViewer } from "@/lib/server/auth-session"
 import {
   getMarketScreenerOptions,
@@ -158,7 +155,7 @@ export default async function ScreenersPage({
         title="Presets"
         description="Fast starting points built for common research workflows."
       >
-        <div className="grid gap-px border border-border/70 bg-border/70 lg:grid-cols-3">
+        <div className="market-grid-3 grid gap-px border border-border/70 bg-border/70">
           {PRESET_SCREENERS.map((preset) => (
             <Link
               key={preset.name}
@@ -180,7 +177,7 @@ export default async function ScreenersPage({
         title="Filter builder"
         description="The form executes only on submit and returns cached screener results when available."
       >
-        <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" method="GET">
+        <form className="market-grid-4 grid gap-3" method="GET">
           <Input
             name="marketCapMin"
             placeholder="Min market cap"
@@ -262,7 +259,9 @@ export default async function ScreenersPage({
           </select>
           <select
             className="border border-border/70 bg-background px-3 py-2 text-sm"
-            defaultValue={filters.isEtf === undefined ? "" : String(filters.isEtf)}
+            defaultValue={
+              filters.isEtf === undefined ? "" : String(filters.isEtf)
+            }
             name="isEtf"
           >
             <option value="">Stocks and ETFs</option>
@@ -291,7 +290,9 @@ export default async function ScreenersPage({
           </select>
           <div className="flex items-center gap-3">
             <Button type="submit">Run Screener</Button>
-            {hasAnyFilter(filters) ? <SaveScreenerButton filters={filters} /> : null}
+            {hasAnyFilter(filters) ? (
+              <SaveScreenerButton filters={filters} />
+            ) : null}
           </div>
         </form>
       </SectionFrame>
@@ -301,7 +302,7 @@ export default async function ScreenersPage({
         description="Saved screener definitions can be reopened, deleted, and reused as portfolio building blocks."
       >
         {savedScreeners.length > 0 ? (
-          <div className="grid gap-px border border-border/70 bg-border/70 lg:grid-cols-2">
+          <div className="market-grid-2 grid gap-px border border-border/70 bg-border/70">
             {savedScreeners.map((screen) => (
               <div
                 key={screen.id}
@@ -367,7 +368,9 @@ export default async function ScreenersPage({
                   <div className="min-w-0">
                     <div className="truncate text-sm">{result.name}</div>
                     <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                      <span>{result.exchangeShortName ?? result.type ?? "asset"}</span>
+                      <span>
+                        {result.exchangeShortName ?? result.type ?? "asset"}
+                      </span>
                       <span>{result.sector ?? "Sector N/A"}</span>
                       <span>{result.industry ?? "Industry N/A"}</span>
                       <span>{formatCurrency(result.price)}</span>

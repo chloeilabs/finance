@@ -233,13 +233,15 @@ export function PriceHistoryChart({
       : option
   )
 
-  const availableTimeframes = timeframeOptions.filter((option) => {
-    if (option.id === "MAX") {
-      return true
-    }
+  const availableTimeframes = timeframeOptions
+    .filter((option) => {
+      if (option.id === "MAX") {
+        return true
+      }
 
-    return filterSeriesByTimeframe(series, option.id).length >= 2
-  }).map((option) => option.id)
+      return filterSeriesByTimeframe(series, option.id).length >= 2
+    })
+    .map((option) => option.id)
 
   const [selectedTimeframe, setSelectedTimeframe] = useState<ChartTimeframeId>(
     () => getDefaultTimeframe(availableTimeframes)
@@ -260,12 +262,13 @@ export function PriceHistoryChart({
     )
   }
 
-  const activeTimeframe =
-    timeframeOptions.find((option) => option.id === resolvedTimeframe) ?? {
-      ...MAX_TIMEFRAME,
-      label: getFullRangeLabel(historicalRangeLabel),
-      longLabel: historicalRangeLabel.toLowerCase(),
-    }
+  const activeTimeframe = timeframeOptions.find(
+    (option) => option.id === resolvedTimeframe
+  ) ?? {
+    ...MAX_TIMEFRAME,
+    label: getFullRangeLabel(historicalRangeLabel),
+    longLabel: historicalRangeLabel.toLowerCase(),
+  }
   const filteredSeries = filterSeriesByTimeframe(series, activeTimeframe.id)
   const visibleSeries = filteredSeries.length >= 2 ? filteredSeries : series
   const renderSeries = sampleSeries(visibleSeries, 240)
@@ -294,9 +297,7 @@ export function PriceHistoryChart({
       ? ((lastPoint.close - firstPoint.close) / firstPoint.close) * 100
       : null
   const positive = absoluteChange >= 0
-  const accentColor = positive
-    ? "var(--vesper-teal)"
-    : "var(--vesper-orange)"
+  const accentColor = positive ? "var(--vesper-teal)" : "var(--vesper-orange)"
   const linePath = renderSeries
     .map((point, index) => {
       const x = (index / (renderSeries.length - 1)) * 100
@@ -308,7 +309,7 @@ export function PriceHistoryChart({
   const valueMarkers = [high, low + range / 2, low]
 
   return (
-    <div className="grid gap-px border border-border/70 bg-border/70 xl:grid-cols-[17rem_minmax(0,1fr)]">
+    <div className="market-split-17 grid gap-px border border-border/70 bg-border/70">
       <div className="relative overflow-hidden bg-background">
         <div className="relative grid gap-px bg-border/70">
           <div className="bg-background px-4 py-4">
@@ -316,8 +317,9 @@ export function PriceHistoryChart({
               Price action
             </div>
             <div className="mt-2 text-xs leading-5 text-muted-foreground">
-              {activeTimeframe.longLabel} view inside {historicalRangeLabel.toLowerCase()}{" "}
-              of cached FMP closes for {symbol}.
+              {activeTimeframe.longLabel} view inside{" "}
+              {historicalRangeLabel.toLowerCase()} of cached FMP closes for{" "}
+              {symbol}.
             </div>
           </div>
 
@@ -338,17 +340,22 @@ export function PriceHistoryChart({
                   : "text-[color:var(--vesper-orange)]"
               )}
             >
-              {formatSignedNumber(absoluteChange)} / {formatPercent(percentChange)}
+              {formatSignedNumber(absoluteChange)} /{" "}
+              {formatPercent(percentChange)}
             </div>
           </div>
 
           <div className="grid gap-px bg-border/70 sm:grid-cols-2 xl:grid-cols-1">
             <div className="bg-background px-4 py-3">
               <div className="text-xs text-muted-foreground">Window start</div>
-              <div className="mt-2 text-sm">{formatChartDate(firstPoint.date)}</div>
+              <div className="mt-2 text-sm">
+                {formatChartDate(firstPoint.date)}
+              </div>
             </div>
             <div className="bg-background px-4 py-3">
-              <div className="text-xs text-muted-foreground">Visible closes</div>
+              <div className="text-xs text-muted-foreground">
+                Visible closes
+              </div>
               <div className="mt-2 text-sm">{visibleSeries.length}</div>
             </div>
           </div>
@@ -368,32 +375,32 @@ export function PriceHistoryChart({
           </div>
 
           <div
-            className="inline-flex flex-wrap gap-px border border-border/70 bg-border/70 self-start"
+            className="inline-flex flex-wrap gap-px self-start border border-border/70 bg-border/70"
             role="toolbar"
             aria-label="Price history timeframe"
           >
-            {timeframeOptions.filter((option) =>
-              availableTimeframes.includes(option.id)
-            ).map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                aria-pressed={resolvedTimeframe === option.id}
-                className={cn(
-                  "min-w-11 bg-background px-3 py-2 font-departureMono text-[11px] tracking-[0.18em] transition-colors uppercase",
-                  resolvedTimeframe === option.id
-                    ? positive
-                      ? "bg-[color:var(--vesper-teal)]/12 text-[color:var(--vesper-teal)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--vesper-teal)_55%,transparent)]"
-                      : "bg-[color:var(--vesper-orange)]/12 text-[color:var(--vesper-orange)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--vesper-orange)_55%,transparent)]"
-                    : "text-muted-foreground hover:bg-muted/45 hover:text-foreground"
-                )}
-                onClick={() => {
-                  setSelectedTimeframe(option.id)
-                }}
-              >
-                {option.label}
-              </button>
-            ))}
+            {timeframeOptions
+              .filter((option) => availableTimeframes.includes(option.id))
+              .map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  aria-pressed={resolvedTimeframe === option.id}
+                  className={cn(
+                    "min-w-11 bg-background px-3 py-2 font-departureMono text-[11px] tracking-[0.18em] uppercase transition-colors",
+                    resolvedTimeframe === option.id
+                      ? positive
+                        ? "bg-[color:var(--vesper-teal)]/12 text-[color:var(--vesper-teal)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--vesper-teal)_55%,transparent)]"
+                        : "bg-[color:var(--vesper-orange)]/12 text-[color:var(--vesper-orange)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--vesper-orange)_55%,transparent)]"
+                      : "text-muted-foreground hover:bg-muted/45 hover:text-foreground"
+                  )}
+                  onClick={() => {
+                    setSelectedTimeframe(option.id)
+                  }}
+                >
+                  {option.label}
+                </button>
+              ))}
           </div>
         </div>
 
@@ -447,12 +454,14 @@ export function PriceHistoryChart({
 
           <div className="pointer-events-none absolute inset-y-3 right-3 flex flex-col justify-between text-[11px] text-muted-foreground">
             {valueMarkers.map((value, index) => (
-              <div key={index}>{formatCurrency(value, { currency: currency ?? "USD" })}</div>
+              <div key={index}>
+                {formatCurrency(value, { currency: currency ?? "USD" })}
+              </div>
             ))}
           </div>
         </div>
 
-        <div className="mt-4 grid gap-px border border-border/70 bg-border/70 lg:grid-cols-4">
+        <div className="market-grid-4 mt-4 grid gap-px border border-border/70 bg-border/70">
           {dateMarkers.map((marker, index) => (
             <div
               key={[marker.date, String(index)].join(":")}
@@ -469,7 +478,9 @@ export function PriceHistoryChart({
             </div>
           ))}
           <div className="bg-background px-3 py-2">
-            <div className="text-[11px] text-muted-foreground">Available range</div>
+            <div className="text-[11px] text-muted-foreground">
+              Available range
+            </div>
             <div className="mt-1 text-xs">{historicalRangeLabel}</div>
           </div>
         </div>

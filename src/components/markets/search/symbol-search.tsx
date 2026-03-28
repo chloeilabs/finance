@@ -8,7 +8,13 @@ import { Input } from "@/components/ui/input"
 import type { MarketSearchResult } from "@/lib/shared"
 import { cn } from "@/lib/utils"
 
-export function SymbolSearch({ className }: { className?: string }) {
+export function SymbolSearch({
+  className,
+  inputClassName,
+}: {
+  className?: string
+  inputClassName?: string
+}) {
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<MarketSearchResult[]>([])
   const [isOpen, setIsOpen] = useState(false)
@@ -76,7 +82,10 @@ export function SymbolSearch({ className }: { className?: string }) {
         <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           aria-label="Search stocks"
-          className="h-9 rounded-none border-border/70 bg-background pl-8"
+          className={cn(
+            "h-9 rounded-none border-border/70 bg-background pl-8",
+            inputClassName
+          )}
           placeholder="Search symbols, companies, ETFs"
           value={query}
           onChange={(event) => {

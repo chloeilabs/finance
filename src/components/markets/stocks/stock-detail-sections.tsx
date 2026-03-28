@@ -157,7 +157,7 @@ export async function StockStreetViewSection({ symbol }: { symbol: string }) {
         title="Street View"
         description="Targets, estimate ranges, rating distribution, and recent model score changes."
       >
-        <div className="grid gap-4 xl:grid-cols-[18rem_minmax(0,1fr)]">
+        <div className="market-split-18 grid gap-4">
           <div className="grid gap-px border border-border/70 bg-border/70">
             <div className="bg-background px-4 py-3">
               <div className="text-xs text-muted-foreground">Consensus</div>
@@ -185,7 +185,9 @@ export async function StockStreetViewSection({ symbol }: { symbol: string }) {
             <div className="bg-background px-4 py-3">
               <div className="text-xs text-muted-foreground">Grade Mix</div>
               <div className="mt-2 space-y-1 text-sm">
-                <div>Strong Buy: {street.gradesConsensus?.strongBuy ?? "N/A"}</div>
+                <div>
+                  Strong Buy: {street.gradesConsensus?.strongBuy ?? "N/A"}
+                </div>
                 <div>Buy: {street.gradesConsensus?.buy ?? "N/A"}</div>
                 <div>Hold: {street.gradesConsensus?.hold ?? "N/A"}</div>
                 <div>Sell: {street.gradesConsensus?.sell ?? "N/A"}</div>
@@ -219,7 +221,9 @@ export async function StockStreetViewSection({ symbol }: { symbol: string }) {
                         key={`${estimate.date ?? "estimate"}:${String(index)}`}
                         className="border-b border-border/40 last:border-b-0"
                       >
-                        <td className="px-3 py-2">{formatDate(estimate.date)}</td>
+                        <td className="px-3 py-2">
+                          {formatDate(estimate.date)}
+                        </td>
                         <td className="px-3 py-2 text-right">
                           {formatCompactNumber(estimate.revenueAvg)}
                         </td>
@@ -287,7 +291,10 @@ export async function StockQualitySection({ symbol }: { symbol: string }) {
     ? [
         { label: "Altman Z", value: street.financialScores.altmanZScore },
         { label: "Piotroski", value: street.financialScores.piotroskiScore },
-        { label: "Working Capital", value: street.financialScores.workingCapital },
+        {
+          label: "Working Capital",
+          value: street.financialScores.workingCapital,
+        },
         { label: "Revenue", value: street.financialScores.revenue },
         {
           label: "Total Liabilities",
@@ -339,7 +346,7 @@ export async function StockBusinessMixSection({ symbol }: { symbol: string }) {
         title="Business Mix"
         description="Revenue segmentation, SEC classification, market-cap path, and employee history."
       >
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className="market-grid-2 grid gap-4">
           <SegmentationBlock
             segmentation={business.productSegments}
             title="Product Mix"
@@ -350,7 +357,7 @@ export async function StockBusinessMixSection({ symbol }: { symbol: string }) {
           />
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_20rem]">
+        <div className="market-split-20 grid gap-4">
           <div className="border border-border/70 px-4 py-4">
             <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
               Market Cap History
@@ -366,7 +373,9 @@ export async function StockBusinessMixSection({ symbol }: { symbol: string }) {
             </div>
             <Sparkline
               className="mt-5 h-20"
-              values={business.employeeHistory.map((item) => item.employeeCount)}
+              values={business.employeeHistory.map(
+                (item) => item.employeeCount
+              )}
             />
           </div>
           <div className="grid gap-px border border-border/70 bg-border/70">
@@ -378,7 +387,9 @@ export async function StockBusinessMixSection({ symbol }: { symbol: string }) {
             </div>
             <div className="bg-background px-4 py-3">
               <div className="text-xs text-muted-foreground">CIK</div>
-              <div className="mt-2 text-sm">{business.secProfile?.cik ?? "N/A"}</div>
+              <div className="mt-2 text-sm">
+                {business.secProfile?.cik ?? "N/A"}
+              </div>
             </div>
             <div className="bg-background px-4 py-3">
               <div className="text-xs text-muted-foreground">SIC</div>
@@ -522,7 +533,7 @@ export function StockPlanLimitsSection({
         title="Plan limits"
         description="Sections that are ready in the shell but intentionally gated by the current FMP plan."
       >
-        <div className="grid gap-px border border-border/70 bg-border/70 md:grid-cols-2 xl:grid-cols-3">
+        <div className="market-grid-3 grid gap-px border border-border/70 bg-border/70">
           {sections.map((section) => (
             <div key={section.title} className="bg-background px-4 py-4">
               <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">

@@ -11,6 +11,7 @@ import {
   type SearchToolName,
   type ToolInvocationStatus,
 } from "@/lib/shared"
+import { cn } from "@/lib/utils"
 
 import { Button } from "../../ui/button"
 import { Source, SourceContent, SourceTrigger } from "../../ui/source"
@@ -38,9 +39,7 @@ function toReasoningEntries(reasoning: string): string[] {
   return normalized
     .split(/\n{2,}/)
     .map((entry) => entry.trim())
-    .filter(
-      (entry) => entry.length > 0 && !isRedactedReasoningEntry(entry)
-    )
+    .filter((entry) => entry.length > 0 && !isRedactedReasoningEntry(entry))
 }
 
 function isRedactedReasoningEntry(text: string): boolean {
@@ -119,7 +118,10 @@ function normalizeActivityTimeline(message: Message): ActivityTimelineEntry[] {
     const normalizedTimeline = [...timeline]
       .sort((a, b) => a.order - b.order)
       .flatMap((entry) => {
-        if (entry.kind === "reasoning" && isRedactedReasoningEntry(entry.text)) {
+        if (
+          entry.kind === "reasoning" &&
+          isRedactedReasoningEntry(entry.text)
+        ) {
           return []
         }
 
@@ -211,9 +213,18 @@ function normalizeActivityTimeline(message: Message): ActivityTimelineEntry[] {
   return insertSourcesIntoTimeline(fallback, dedupedSources, message.createdAt)
 }
 
-export function CraftingShimmer() {
+export function CraftingShimmer({
+  layout = "default",
+}: {
+  layout?: "default" | "fullWidth"
+}) {
   return (
-    <div className="shimmer flex h-7 w-fit items-center px-3 text-[13px]">
+    <div
+      className={cn(
+        "shimmer flex h-7 items-center px-3 text-[13px]",
+        layout === "fullWidth" ? "w-full" : "w-fit"
+      )}
+    >
       Crafting
     </div>
   )
@@ -222,11 +233,7 @@ export function CraftingShimmer() {
 function ToolStatusIcon({ status }: { status: ToolInvocationStatus }) {
   if (status === "running") {
     return (
-      <LogoHover
-        forceAnimate
-        size="xs"
-        className="shrink-0 text-foreground"
-      />
+      <LogoHover forceAnimate size="xs" className="shrink-0 text-foreground" />
     )
   }
 
@@ -237,7 +244,13 @@ function ToolStatusIcon({ status }: { status: ToolInvocationStatus }) {
   return <CircleX className="size-3.5 shrink-0 text-red-600" />
 }
 
-export function AssistantMessage({ message }: { message: Message }) {
+export function AssistantMessage({
+  message,
+  layout = "default",
+}: {
+  message: Message
+  layout?: "default" | "fullWidth"
+}) {
   const content = useMemo(() => getAssistantContent(message), [message])
   const [activityVisibility, setActivityVisibility] = useState<
     "auto" | "expanded" | "collapsed"
@@ -269,10 +282,10 @@ export function AssistantMessage({ message }: { message: Message }) {
   }
 
   return (
-    <div className="group/assistant-message relative flex flex-col gap-1">
+    <div className="group/assistant-message relative flex w-full min-w-0 flex-col gap-1 self-stretch">
       {showActivitySection && (
-        <div className="px-3 pt-2">
-          <div className="mb-1">
+        <div className={cn("pt-2", layout === "default" && "px-3")}>
+          <div className={cn("mb-1", layout === "fullWidth" && "px-3")}>
             <button
               type="button"
               className="inline-flex cursor-pointer items-center gap-1 bg-transparent p-0 font-departureMono text-[11px] font-medium tracking-wide text-muted-foreground/80 transition-colors hover:text-foreground"
@@ -380,7 +393,7 @@ export function AssistantMessage({ message }: { message: Message }) {
       )}
 
       {hasContent && (
-        <div className="px-3 py-2 text-sm">
+        <div className={cn("py-2 text-sm", layout === "default" && "px-3")}>
           <MemoizedMarkdown
             content={content}
             id={`${message.id}-text`}

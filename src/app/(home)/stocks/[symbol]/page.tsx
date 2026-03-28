@@ -110,7 +110,7 @@ export default async function StockPage({
         title="Company summary"
         description="Identity, listing context, and balance-sheet scale before diving into the rest of the dossier."
       >
-        <div className="grid gap-px border border-border/70 bg-border/70 md:grid-cols-2 xl:grid-cols-6">
+        <div className="market-grid-6 grid gap-px border border-border/70 bg-border/70">
           <div className="bg-background px-4 py-3">
             <div className="text-xs text-muted-foreground">Exchange</div>
             <div className="mt-2 text-sm">
@@ -158,7 +158,7 @@ export default async function StockPage({
         description="Owner earnings and enterprise value summary based on the currently available plan data."
       >
         {dossier.valuation ? (
-          <div className="grid gap-px border border-border/70 bg-border/70 md:grid-cols-2 xl:grid-cols-4">
+          <div className="market-grid-4 grid gap-px border border-border/70 bg-border/70">
             <div className="bg-background px-4 py-3">
               <div className="text-xs text-muted-foreground">DCF</div>
               <div className="mt-2 text-lg tracking-tight">
@@ -208,7 +208,10 @@ export default async function StockPage({
           />
         }
       >
-        <StockTradingSection currency={quote?.currency} symbol={dossier.symbol} />
+        <StockTradingSection
+          currency={quote?.currency}
+          symbol={dossier.symbol}
+        />
       </Suspense>
 
       <Suspense

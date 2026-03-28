@@ -200,6 +200,115 @@
       min-width: 5.5rem;
     }
   }
+
+  .market-workspace {
+    container-name: market-workspace;
+    container-type: inline-size;
+  }
+
+  .market-page-header-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .market-page-header-actions {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .market-grid-2,
+  .market-grid-3,
+  .market-grid-4,
+  .market-grid-5,
+  .market-grid-6,
+  .market-grid-7,
+  .market-split-17,
+  .market-split-18,
+  .market-split-20 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @container market-workspace (min-width: 40rem) {
+    .market-grid-2,
+    .market-grid-3,
+    .market-grid-4,
+    .market-grid-5,
+    .market-grid-6,
+    .market-grid-7 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @container market-workspace (min-width: 56rem) {
+    .market-grid-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .market-grid-5,
+    .market-grid-6 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .market-grid-7 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  @container market-workspace (min-width: 72rem) {
+    .market-page-header-layout {
+      align-items: end;
+      flex-direction: row;
+      justify-content: space-between;
+    }
+
+    .market-page-header-actions {
+      flex: 0 1 42rem;
+      width: min(100%, 42rem);
+    }
+
+    .market-grid-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .market-grid-7 {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .market-split-17 {
+      grid-template-columns: 17rem minmax(0, 1fr);
+    }
+
+    .market-split-18 {
+      grid-template-columns: minmax(0, 1fr) 18rem;
+    }
+
+    .market-split-20 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @container market-workspace (min-width: 80rem) {
+    .market-grid-5 {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
+
+  @container market-workspace (min-width: 88rem) {
+    .market-grid-6 {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+
+    .market-split-20 {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 20rem;
+    }
+  }
+
+  @container market-workspace (min-width: 96rem) {
+    .market-grid-7 {
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+    }
+  }
 }
 
 html,

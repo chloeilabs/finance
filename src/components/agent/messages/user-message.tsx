@@ -38,6 +38,7 @@ export function UserMessage({
   isFirstMessage,
   disableEditing,
   onEditMessage,
+  layout = "bubble",
 }: {
   message: Message
   isFirstMessage: boolean
@@ -48,6 +49,7 @@ export function UserMessage({
     newContent: string
     newModel: ModelType
   }) => Promise<void> | void
+  layout?: "bubble" | "fullWidth"
 }) {
   const { data: availableModels = [] } = useModels()
   const initialModel = useMemo(() => {
@@ -165,7 +167,10 @@ export function UserMessage({
   return (
     <div
       className={cn(
-        "group/user-message ml-auto flex max-w-[95%] flex-col self-end text-start",
+        "group/user-message flex min-w-0 flex-col text-start",
+        layout === "fullWidth"
+          ? "w-full max-w-full self-stretch"
+          : "ml-auto max-w-[95%] self-end",
         agentShellFrameClass,
         agentShellInteractiveClass,
         agentShellHighlightClass,
