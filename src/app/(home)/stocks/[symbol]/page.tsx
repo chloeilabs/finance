@@ -64,13 +64,6 @@ export default async function StockPage({
                   Compare
                 </Link>
               </Button>
-              <Button asChild size="sm" variant="outline">
-                <Link
-                  href={`/copilot?symbol=${encodeURIComponent(dossier.symbol)}`}
-                >
-                  Open Copilot
-                </Link>
-              </Button>
               {profile?.website ? (
                 <Button asChild size="sm" variant="outline">
                   <a
