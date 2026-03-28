@@ -47,6 +47,15 @@ interface SavedScreenRow {
   updatedAt: Date | string
 }
 
+function isUndefinedTableError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "42P01"
+  )
+}
+
 function toIsoString(value: Date | string): string {
   const parsed = value instanceof Date ? value : new Date(value)
   return parsed.toISOString()
@@ -500,7 +509,42 @@ export async function recordMarketApiUsage(provider: string): Promise<void> {
     DO UPDATE SET
       count = market_api_usage_daily.count + 1,
       "updatedAt" = NOW()
-  `.execute(database)
+  `
+    .execute(database)
+    .catch((error: unknown) => {
+      if (isUndefinedTableError(error)) {
+        return
+      }
+
+      throw error
+    })
+
+  await sql`
+    INSERT INTO market_api_usage_minute (
+      provider,
+      bucket,
+      count,
+      "updatedAt"
+    )
+    VALUES (
+      ${provider},
+      DATE_TRUNC('minute', NOW()),
+      1,
+      NOW()
+    )
+    ON CONFLICT (provider, bucket)
+    DO UPDATE SET
+      count = market_api_usage_minute.count + 1,
+      "updatedAt" = NOW()
+  `
+    .execute(database)
+    .catch((error: unknown) => {
+      if (isUndefinedTableError(error)) {
+        return
+      }
+
+      throw error
+    })
 }
 
 export async function getMarketApiUsageForToday(
@@ -512,6 +556,21 @@ export async function getMarketApiUsageForToday(
     FROM market_api_usage_daily
     WHERE provider = ${provider}
       AND day = CURRENT_DATE
+    LIMIT 1
+  `.execute(database)
+
+  return result.rows[0]?.count ?? 0
+}
+
+export async function getMarketApiUsageForCurrentMinute(
+  provider: string
+): Promise<number> {
+  const database = getDatabase()
+  const result = await sql<{ count: number }>`
+    SELECT count
+    FROM market_api_usage_minute
+    WHERE provider = ${provider}
+      AND bucket = DATE_TRUNC('minute', NOW())
     LIMIT 1
   `.execute(database)
 
@@ -591,4 +650,17 @@ export async function upsertSavedScreenerForUser(params: {
   }
 
   return mapSavedScreenRow(row)
+}
+
+export async function deleteSavedScreenerForUser(
+  userId: string,
+  screenerId: string
+): Promise<void> {
+  const database = getDatabase()
+
+  await sql`
+    DELETE FROM saved_screens
+    WHERE "userId" = ${userId}
+      AND id = ${screenerId}
+  `.execute(database)
 }

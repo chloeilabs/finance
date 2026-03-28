@@ -1,17 +1,25 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { Suspense } from "react"
 
 import {
-  CalendarList,
+  SectionLoadingState,
+  StockBusinessMixSection,
+  StockCatalystsSection,
+  StockFinancialSection,
+  StockPeersSection,
+  StockPlanLimitsSection,
+  StockQualitySection,
+  StockSectionNav,
+  StockStreetViewSection,
+  StockTradingSection,
+} from "@/components/markets/stocks/stock-detail-sections"
+import {
   EmptyState,
-  FilingList,
-  LockedSectionGrid,
   MetricGrid,
-  NewsList,
   PageHeader,
   PriceHistoryChart,
   SectionFrame,
-  StatementTables,
   StockHeadline,
 } from "@/components/markets/ui/market-primitives"
 import { Button } from "@/components/ui/button"
@@ -19,9 +27,8 @@ import {
   formatCompactNumber,
   formatCurrency,
   formatDate,
-  formatMetricValue,
 } from "@/lib/markets-format"
-import { getStockDossier } from "@/lib/server/markets/service"
+import { getStockDossierOverview } from "@/lib/server/markets/service"
 
 export default async function StockPage({
   params,
@@ -29,7 +36,7 @@ export default async function StockPage({
   params: Promise<{ symbol: string }>
 }) {
   const { symbol } = await params
-  const dossier = await getStockDossier(symbol)
+  const dossier = await getStockDossierOverview(symbol)
 
   if (!dossier.profile && !dossier.quote) {
     notFound()
@@ -37,42 +44,48 @@ export default async function StockPage({
 
   const profile = dossier.profile
   const quote = dossier.quote
-  const analystLocks = dossier.lockedSections.filter(
-    (section) => section.title === "Analyst"
-  )
 
   return (
     <div className="pb-10">
-      <PageHeader
-        eyebrow="Stock"
-        title={profile?.companyName ?? dossier.symbol}
-        description={
-          profile?.description ??
-          "Deep company workspace with cached market, fundamentals, calendar, filings, and premium-gated context."
-        }
-        actions={
-          <div className="flex gap-2">
-            <Button asChild size="sm" variant="outline">
-              <Link
-                href={`/copilot?symbol=${encodeURIComponent(dossier.symbol)}`}
-              >
-                Open Copilot
-              </Link>
-            </Button>
-            {profile?.website ? (
+      <div id="summary">
+        <PageHeader
+          eyebrow="Stock"
+          title={profile?.companyName ?? dossier.symbol}
+          description={
+            profile?.description ??
+            "Deep company workspace with cached market, fundamentals, street context, business mix, peer comparison, and plan-aware research modules."
+          }
+          actions={
+            <div className="flex gap-2">
               <Button asChild size="sm" variant="outline">
-                <a
-                  href={profile.website}
-                  rel="noreferrer noopener"
-                  target="_blank"
+                <Link
+                  href={`/compare?symbols=${encodeURIComponent(dossier.symbol)}`}
                 >
-                  Company Site
-                </a>
+                  Compare
+                </Link>
               </Button>
-            ) : null}
-          </div>
-        }
-      />
+              <Button asChild size="sm" variant="outline">
+                <Link
+                  href={`/copilot?symbol=${encodeURIComponent(dossier.symbol)}`}
+                >
+                  Open Copilot
+                </Link>
+              </Button>
+              {profile?.website ? (
+                <Button asChild size="sm" variant="outline">
+                  <a
+                    href={profile.website}
+                    rel="noreferrer noopener"
+                    target="_blank"
+                  >
+                    Company Site
+                  </a>
+                </Button>
+              ) : null}
+            </div>
+          }
+        />
+      </div>
 
       <div className="px-4 py-4 sm:px-6">
         <StockHeadline
@@ -85,16 +98,18 @@ export default async function StockPage({
         />
       </div>
 
+      <StockSectionNav />
+
       <SectionFrame
         title="Price history"
         description="End-of-day line chart for the currently available historical window on your active FMP plan."
         aside={dossier.plan.historicalRangeLabel}
       >
         <PriceHistoryChart
-          symbol={dossier.symbol}
-          points={dossier.chart}
           currency={quote?.currency}
           historicalRangeLabel={dossier.plan.historicalRangeLabel}
+          points={dossier.chart}
+          symbol={dossier.symbol}
         />
       </SectionFrame>
 
@@ -178,7 +193,9 @@ export default async function StockPage({
                 Owner Earnings
               </div>
               <div className="mt-2 text-lg tracking-tight">
-                {formatMetricValue(dossier.valuation.ownerEarnings)}
+                {formatCurrency(dossier.valuation.ownerEarnings, {
+                  compact: true,
+                })}
               </div>
             </div>
           </div>
@@ -190,119 +207,84 @@ export default async function StockPage({
         )}
       </SectionFrame>
 
-      <SectionFrame
-        title="Statements"
-        description="Recent annual statement snapshots for revenue, profitability, balance-sheet strength, and cash generation."
-      >
-        <StatementTables tables={dossier.statements} />
-      </SectionFrame>
-
-      <SectionFrame
-        title="Growth"
-        description="Recent year-over-year change points derived from the income statement growth series."
-      >
-        <MetricGrid metrics={dossier.growth} />
-      </SectionFrame>
-
-      <SectionFrame
-        title="Catalysts"
-        description="Company-specific earnings and dividend events, sorted most recent first."
-      >
-        <CalendarList events={dossier.calendar} />
-      </SectionFrame>
-
-      <SectionFrame
-        title="Analyst"
-        description="Consensus targets and recent grade changes when the active plan exposes them."
-      >
-        {dossier.analyst ? (
-          <div className="grid gap-4 xl:grid-cols-[18rem_minmax(0,1fr)]">
-            <div className="grid gap-px border border-border/70 bg-border/70">
-              <div className="bg-background px-4 py-3">
-                <div className="text-xs text-muted-foreground">Consensus</div>
-                <div className="mt-2 text-lg tracking-tight">
-                  {dossier.analyst.ratingSummary ?? "N/A"}
-                </div>
-              </div>
-              <div className="bg-background px-4 py-3">
-                <div className="text-xs text-muted-foreground">
-                  Target Range
-                </div>
-                <div className="mt-2 text-sm">
-                  {formatCurrency(dossier.analyst.targetLow)} to{" "}
-                  {formatCurrency(dossier.analyst.targetHigh)}
-                </div>
-              </div>
-              <div className="bg-background px-4 py-3">
-                <div className="text-xs text-muted-foreground">
-                  Consensus Target
-                </div>
-                <div className="mt-2 text-lg tracking-tight">
-                  {formatCurrency(dossier.analyst.targetConsensus)}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              {dossier.analyst.grades.length > 0 ? (
-                dossier.analyst.grades.map((grade, index) => (
-                  <div
-                    key={[
-                      grade.provider ?? "grade",
-                      grade.date ?? "date",
-                      String(index),
-                    ].join(":")}
-                    className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border border-border/70 px-4 py-3"
-                  >
-                    <div>
-                      <div className="font-departureMono text-xs tracking-tight">
-                        {grade.provider ?? "Coverage update"}
-                      </div>
-                      <div className="mt-1 text-sm">{grade.grade ?? "N/A"}</div>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {formatDate(grade.date)}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <EmptyState
-                  title="No analyst grades"
-                  description="Analyst grades are not available for this symbol or current plan."
-                />
-              )}
-            </div>
-          </div>
-        ) : analystLocks.length > 0 ? (
-          <LockedSectionGrid sections={analystLocks} />
-        ) : (
-          <EmptyState
-            title="No analyst data"
-            description="The analyst surface is enabled for this plan, but the upstream feed did not return coverage for this symbol."
+      <Suspense
+        fallback={
+          <SectionLoadingState
+            description="Intraday tape, aftermarket prints, and short-horizon price action."
+            title="Trading"
           />
-        )}
-      </SectionFrame>
-
-      <SectionFrame
-        title="Filings"
-        description="Recent SEC documents sourced through the filings search feed."
+        }
       >
-        <FilingList items={dossier.filings} />
-      </SectionFrame>
+        <StockTradingSection currency={quote?.currency} symbol={dossier.symbol} />
+      </Suspense>
 
-      <SectionFrame
-        title="News"
-        description="Recent company-specific stories from the FMP stock news feed."
+      <Suspense
+        fallback={
+          <SectionLoadingState
+            description="Targets, estimate ranges, and recent ratings history."
+            title="Street View"
+          />
+        }
       >
-        <NewsList stories={dossier.news} />
-      </SectionFrame>
+        <StockStreetViewSection symbol={dossier.symbol} />
+      </Suspense>
 
-      <SectionFrame
-        title="Premium context"
-        description="Sections that are ready in the shell but intentionally gated by the current FMP plan."
+      <Suspense
+        fallback={
+          <SectionLoadingState
+            description="Financial scores and quality signals."
+            title="Quality"
+          />
+        }
       >
-        <LockedSectionGrid sections={dossier.lockedSections} />
-      </SectionFrame>
+        <StockQualitySection symbol={dossier.symbol} />
+      </Suspense>
+
+      <Suspense
+        fallback={
+          <SectionLoadingState
+            description="Statements and growth series."
+            title="Financials"
+          />
+        }
+      >
+        <StockFinancialSection symbol={dossier.symbol} />
+      </Suspense>
+
+      <Suspense
+        fallback={
+          <SectionLoadingState
+            description="Revenue segmentation, SEC profile, and operating scale history."
+            title="Business Mix"
+          />
+        }
+      >
+        <StockBusinessMixSection symbol={dossier.symbol} />
+      </Suspense>
+
+      <Suspense
+        fallback={
+          <SectionLoadingState
+            description="Relative valuation, quality, and peer context."
+            title="Peers"
+          />
+        }
+      >
+        <StockPeersSection symbol={dossier.symbol} />
+      </Suspense>
+
+      <Suspense
+        fallback={
+          <SectionLoadingState
+            description="Catalysts, filings, and company-specific news."
+            title="Catalysts"
+          />
+        }
+      >
+        <StockCatalystsSection symbol={dossier.symbol} />
+      </Suspense>
+
+      <StockPlanLimitsSection sections={dossier.lockedSections} />
     </div>
   )
 }

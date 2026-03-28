@@ -1,14 +1,25 @@
 import Link from "next/link"
 
 import {
+  AddResultsToWatchlistButton,
+  DeleteScreenerButton,
+  SaveScreenerButton,
+} from "@/components/markets/screeners/screener-actions"
+import {
   EmptyState,
   PageHeader,
   SectionFrame,
 } from "@/components/markets/ui/market-primitives"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  formatCompactNumber,
+  formatCurrency,
+} from "@/lib/markets-format"
 import { getCurrentViewer } from "@/lib/server/auth-session"
 import {
+  getMarketScreenerOptions,
+  getMarketSidebarData,
   getSavedMarketScreeners,
   runMarketScreener,
 } from "@/lib/server/markets/service"
@@ -21,18 +32,18 @@ const PRESET_SCREENERS: {
 }[] = [
   {
     name: "Megacap compounders",
-    href: "/screeners?marketCapMin=200000000000&priceMin=20&volumeMin=1000000",
+    href: "/screeners?marketCapMin=200000000000&priceMin=20&volumeMin=1000000&sortBy=marketCap&sortDirection=desc",
     description:
       "High-liquidity leaders with enough scale to anchor a research list.",
   },
   {
     name: "Income names",
-    href: "/screeners?dividendMin=2&marketCapMin=5000000000",
+    href: "/screeners?dividendMin=2&marketCapMin=5000000000&sortBy=dividend&sortDirection=desc",
     description: "Dividend-paying companies above the small-cap threshold.",
   },
   {
     name: "High beta tape",
-    href: "/screeners?betaMin=1.5&volumeMin=2000000",
+    href: "/screeners?betaMin=1.5&volumeMin=2000000&sortBy=beta&sortDirection=desc",
     description: "Names where the tape tends to move faster than the market.",
   },
 ] as const
@@ -44,6 +55,18 @@ function toNumber(value: string | undefined) {
 
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : undefined
+}
+
+function toBoolean(value: string | undefined) {
+  if (value === "true") {
+    return true
+  }
+
+  if (value === "false") {
+    return false
+  }
+
+  return undefined
 }
 
 function parseFilters(
@@ -65,13 +88,35 @@ function parseFilters(
     dividendMax: toNumber(first("dividendMax")),
     priceMin: toNumber(first("priceMin")),
     priceMax: toNumber(first("priceMax")),
+    isActivelyTrading: toBoolean(first("isActivelyTrading")),
+    isEtf: toBoolean(first("isEtf")),
     sector: first("sector")?.trim() ?? undefined,
+    industry: first("industry")?.trim() ?? undefined,
     exchange: first("exchange")?.trim() ?? undefined,
+    sortBy: (first("sortBy") as ScreenerFilterState["sortBy"]) ?? undefined,
+    sortDirection:
+      (first("sortDirection") as ScreenerFilterState["sortDirection"]) ??
+      undefined,
   }
 }
 
 function hasAnyFilter(filters: ScreenerFilterState) {
   return Object.values(filters).some((value) => value !== undefined)
+}
+
+function buildFilterHref(filters: ScreenerFilterState) {
+  const searchParams = new URLSearchParams()
+
+  for (const [key, value] of Object.entries(filters)) {
+    if (value === undefined) {
+      continue
+    }
+
+    searchParams.set(key, String(value))
+  }
+
+  const query = searchParams.toString()
+  return query === "" ? "/screeners" : `/screeners?${query}`
 }
 
 export default async function ScreenersPage({
@@ -87,17 +132,26 @@ export default async function ScreenersPage({
 
   const resolvedSearchParams = await searchParams
   const filters = parseFilters(resolvedSearchParams)
-  const [savedScreeners, results] = await Promise.all([
+  const [{ watchlists }, savedScreeners, results, options] = await Promise.all([
+    getMarketSidebarData(viewer.id),
     getSavedMarketScreeners(viewer.id),
     hasAnyFilter(filters) ? runMarketScreener(filters) : Promise.resolve([]),
+    getMarketScreenerOptions(),
   ])
+
+  const compareHref = `/compare?symbols=${encodeURIComponent(
+    results
+      .slice(0, 5)
+      .map((result) => result.symbol)
+      .join(",")
+  )}`
 
   return (
     <div className="pb-10">
       <PageHeader
         eyebrow="Screeners"
         title="Company screener"
-        description="Submit-only filters tuned for the Basic plan. Start with a preset or dial in market cap, beta, volume, price, and dividend thresholds."
+        description="Submit-based filters with hydrated FMP reference data, saved screens, and direct handoff into compare and watchlist workflows."
       />
 
       <SectionFrame
@@ -133,6 +187,11 @@ export default async function ScreenersPage({
             defaultValue={filters.marketCapMin?.toString()}
           />
           <Input
+            name="marketCapMax"
+            placeholder="Max market cap"
+            defaultValue={filters.marketCapMax?.toString()}
+          />
+          <Input
             name="betaMin"
             placeholder="Min beta"
             defaultValue={filters.betaMin?.toString()}
@@ -152,46 +211,124 @@ export default async function ScreenersPage({
             placeholder="Min price"
             defaultValue={filters.priceMin?.toString()}
           />
-          <Input
+          <select
+            className="border border-border/70 bg-background px-3 py-2 text-sm"
+            defaultValue={filters.sector ?? ""}
             name="sector"
-            placeholder="Sector"
-            defaultValue={filters.sector}
-          />
-          <Input
+          >
+            <option value="">Any sector</option>
+            {options.sectors.map((sector) => (
+              <option key={sector} value={sector}>
+                {sector}
+              </option>
+            ))}
+          </select>
+          <select
+            className="border border-border/70 bg-background px-3 py-2 text-sm"
+            defaultValue={filters.industry ?? ""}
+            name="industry"
+          >
+            <option value="">Any industry</option>
+            {options.industries.map((industry) => (
+              <option key={industry} value={industry}>
+                {industry}
+              </option>
+            ))}
+          </select>
+          <select
+            className="border border-border/70 bg-background px-3 py-2 text-sm"
+            defaultValue={filters.exchange ?? ""}
             name="exchange"
-            placeholder="Exchange"
-            defaultValue={filters.exchange}
-          />
-          <div className="flex items-center">
+          >
+            <option value="">Any exchange</option>
+            {options.exchanges.map((exchange) => (
+              <option key={exchange} value={exchange}>
+                {exchange}
+              </option>
+            ))}
+          </select>
+          <select
+            className="border border-border/70 bg-background px-3 py-2 text-sm"
+            defaultValue={
+              filters.isActivelyTrading === undefined
+                ? ""
+                : String(filters.isActivelyTrading)
+            }
+            name="isActivelyTrading"
+          >
+            <option value="">Any listing status</option>
+            <option value="true">Actively trading</option>
+            <option value="false">Inactive</option>
+          </select>
+          <select
+            className="border border-border/70 bg-background px-3 py-2 text-sm"
+            defaultValue={filters.isEtf === undefined ? "" : String(filters.isEtf)}
+            name="isEtf"
+          >
+            <option value="">Stocks and ETFs</option>
+            <option value="false">Stocks only</option>
+            <option value="true">ETFs only</option>
+          </select>
+          <select
+            className="border border-border/70 bg-background px-3 py-2 text-sm"
+            defaultValue={filters.sortBy ?? "marketCap"}
+            name="sortBy"
+          >
+            <option value="marketCap">Sort by market cap</option>
+            <option value="price">Sort by price</option>
+            <option value="volume">Sort by volume</option>
+            <option value="beta">Sort by beta</option>
+            <option value="dividend">Sort by dividend</option>
+            <option value="symbol">Sort by symbol</option>
+          </select>
+          <select
+            className="border border-border/70 bg-background px-3 py-2 text-sm"
+            defaultValue={filters.sortDirection ?? "desc"}
+            name="sortDirection"
+          >
+            <option value="desc">Descending</option>
+            <option value="asc">Ascending</option>
+          </select>
+          <div className="flex items-center gap-3">
             <Button type="submit">Run Screener</Button>
+            {hasAnyFilter(filters) ? <SaveScreenerButton filters={filters} /> : null}
           </div>
         </form>
       </SectionFrame>
 
       <SectionFrame
         title="Saved screens"
-        description="Persistence is ready for user-defined screens even if this launch keeps the UI minimal."
+        description="Saved screener definitions can be reopened, deleted, and reused as portfolio building blocks."
       >
         {savedScreeners.length > 0 ? (
-          <div className="grid gap-px border border-border/70 bg-border/70 lg:grid-cols-3">
+          <div className="grid gap-px border border-border/70 bg-border/70 lg:grid-cols-2">
             {savedScreeners.map((screen) => (
-              <div key={screen.id} className="bg-background px-4 py-3">
-                <div className="font-departureMono text-sm tracking-tight">
-                  {screen.name}
+              <div
+                key={screen.id}
+                className="flex items-start justify-between gap-3 bg-background px-4 py-3"
+              >
+                <div>
+                  <Link
+                    className="font-departureMono text-sm tracking-tight hover:underline"
+                    href={buildFilterHref(screen.filters)}
+                  >
+                    {screen.name}
+                  </Link>
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    {Object.entries(screen.filters)
+                      .filter(([, value]) => value !== undefined)
+                      .map(([key]) => key)
+                      .join(", ") || "Custom filter set"}
+                  </div>
                 </div>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  {Object.entries(screen.filters)
-                    .filter(([, value]) => value !== undefined)
-                    .map(([key]) => key)
-                    .join(", ") || "Custom filter set"}
-                </div>
+                <DeleteScreenerButton screenerId={screen.id} />
               </div>
             ))}
           </div>
         ) : (
           <EmptyState
             title="No saved screeners yet"
-            description="The storage layer is ready. The first saved screen will appear here once the create flow is wired."
+            description="Save the active filter set to keep it in your daily workflow."
           />
         )}
       </SectionFrame>
@@ -201,24 +338,48 @@ export default async function ScreenersPage({
         description="Returned companies from the active filter set."
       >
         {results.length > 0 ? (
-          <div className="space-y-2">
-            {results.map((result) => (
-              <Link
-                key={`${result.symbol}:${result.exchangeShortName ?? ""}`}
-                className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-3 border border-border/70 px-4 py-3 transition-colors hover:bg-muted/35"
-                href={`/stocks/${encodeURIComponent(result.symbol)}`}
-              >
-                <div className="font-departureMono text-sm tracking-tight">
-                  {result.symbol}
-                </div>
-                <div className="min-w-0 truncate text-muted-foreground">
-                  {result.name}
-                </div>
-                <div className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
-                  {result.exchangeShortName ?? result.type ?? "asset"}
-                </div>
-              </Link>
-            ))}
+          <div className="space-y-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="text-sm text-muted-foreground">
+                {results.length} results
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button asChild size="sm" variant="outline">
+                  <Link href={compareHref}>Compare Top 5</Link>
+                </Button>
+                <AddResultsToWatchlistButton
+                  symbols={results.map((result) => result.symbol)}
+                  watchlists={watchlists}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {results.map((result) => (
+                <Link
+                  key={`${result.symbol}:${result.exchangeShortName ?? ""}`}
+                  className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-3 border border-border/70 px-4 py-3 transition-colors hover:bg-muted/35"
+                  href={`/stocks/${encodeURIComponent(result.symbol)}`}
+                >
+                  <div className="font-departureMono text-sm tracking-tight">
+                    {result.symbol}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm">{result.name}</div>
+                    <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                      <span>{result.exchangeShortName ?? result.type ?? "asset"}</span>
+                      <span>{result.sector ?? "Sector N/A"}</span>
+                      <span>{result.industry ?? "Industry N/A"}</span>
+                      <span>{formatCurrency(result.price)}</span>
+                      <span>{formatCompactNumber(result.marketCap)}</span>
+                    </div>
+                  </div>
+                  <div className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
+                    {result.exchangeShortName ?? result.type ?? "asset"}
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         ) : (
           <EmptyState

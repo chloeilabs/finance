@@ -33,14 +33,14 @@ export function MarketShell({
         <div className="flex h-full flex-col">
           <div className="border-b border-border/70 bg-background">
             <div className="flex flex-col gap-3 px-3 py-3 sm:px-4 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center">
                 <SidebarTrigger />
-                <AppLauncher className="size-7" />
               </div>
 
               <SymbolSearch className="order-last w-full lg:order-none" />
 
-              <div className="flex items-center justify-end">
+              <div className="flex items-center justify-end gap-1.5">
+                <AppLauncher className="size-7" />
                 <UserMenu viewer={viewer} className="size-7" />
               </div>
             </div>

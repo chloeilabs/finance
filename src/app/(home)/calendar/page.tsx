@@ -13,7 +13,7 @@ export default async function CalendarPage() {
       <PageHeader
         eyebrow="Calendar"
         title="Upcoming catalysts"
-        description="Earnings and dividend events pulled into one operational calendar for the next two weeks."
+        description="Earnings, dividends, splits, and economic releases pulled into one operational calendar for the next two weeks."
       />
 
       <SectionFrame

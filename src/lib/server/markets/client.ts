@@ -1,23 +1,40 @@
 import "server-only"
 
 import type {
+  AftermarketSnapshot,
+  AnalystEstimateSnapshot,
   AnalystSummary,
   CalendarEvent,
   CompanyProfile,
+  EmployeeCountPoint,
   EtfExposureEntry,
   FilingEntry,
+  FinancialScoreSnapshot,
+  FmpIntradayInterval,
+  GradesConsensus,
   InsiderTradeEntry,
   MacroRate,
+  MarketCapPoint,
+  MarketHoliday,
+  MarketHoursSnapshot,
   MarketMoverBucket,
   MarketSearchResult,
   MetricStat,
   NewsStory,
   OwnershipEntry,
+  PriceChangeSnapshot,
   PricePoint,
   QuoteSnapshot,
+  RatingsHistoricalEntry,
+  RevenueSegmentation,
+  RiskPremiumSnapshot,
+  SecProfile,
+  SectorHistoryPoint,
   SectorSnapshot,
+  SectorValuationSnapshot,
   StatementTable,
   SymbolDirectoryEntry,
+  TechnicalIndicatorSeries,
   ValuationSnapshot,
 } from "@/lib/shared"
 
@@ -140,6 +157,8 @@ async function fetchFmpJson(
     cache: "no-store",
   })
 
+  await recordMarketApiUsage(FMP_PROVIDER_NAME)
+
   if (!response.ok) {
     throw new FmpRequestError(
       `FMP request failed for ${path} with status ${String(response.status)}.`,
@@ -147,7 +166,6 @@ async function fetchFmpJson(
     )
   }
 
-  await recordMarketApiUsage(FMP_PROVIDER_NAME)
   return response.json()
 }
 
@@ -174,6 +192,11 @@ function mapSearchResult(item: unknown): MarketSearchResult | null {
     currency: pickString(record, ["currency"]),
     sector: pickString(record, ["sector"]),
     industry: pickString(record, ["industry"]),
+    price: pickNumber(record, ["price"]),
+    marketCap: pickNumber(record, ["marketCap", "mktCap"]),
+    volume: pickNumber(record, ["volume"]),
+    beta: pickNumber(record, ["beta"]),
+    dividend: pickNumber(record, ["lastAnnualDividend", "dividend"]),
   }
 }
 
@@ -217,6 +240,7 @@ function mapQuote(item: unknown): QuoteSnapshot | null {
     price: pickNumber(record, ["price"]),
     change: pickNumber(record, ["change"]),
     changesPercentage: pickNumber(record, [
+      "changePercentage",
       "changesPercentage",
       "changesPercentage1D",
     ]),
@@ -355,18 +379,27 @@ function mapCalendarEvent(
   }
 
   return {
-    symbol: symbol ?? "N/A",
-    name: pickString(record, ["name", "companyName"]) ?? symbol ?? "Unknown",
+    symbol: symbol ?? pickString(record, ["country", "currency"]) ?? "N/A",
+    name:
+      pickString(record, ["name", "companyName", "event"]) ??
+      symbol ??
+      "Unknown",
     eventType,
     eventDate,
     time: pickString(record, ["time"]),
     value:
-      pickString(record, ["dividend", "adjDividend", "splitRatio"]) ??
-      pickNumber(record, ["dividend", "adjDividend"])?.toString() ??
+      pickString(record, [
+        "dividend",
+        "adjDividend",
+        "splitRatio",
+        "actual",
+        "previous",
+      ]) ??
+      pickNumber(record, ["dividend", "adjDividend", "actual", "previous"])?.toString() ??
       null,
     estimate:
-      pickString(record, ["epsEstimated", "eps"]) ??
-      pickNumber(record, ["epsEstimated", "eps"])?.toString() ??
+      pickString(record, ["epsEstimated", "eps", "estimate"]) ??
+      pickNumber(record, ["epsEstimated", "eps", "estimate"])?.toString() ??
       null,
   }
 }
@@ -538,6 +571,335 @@ function mapValuation(
   }
 }
 
+function mapAftermarketSnapshot(
+  tradeItem: unknown,
+  quoteItem: unknown
+): AftermarketSnapshot | null {
+  const trade = asRecord(tradeItem)
+  const quote = asRecord(quoteItem)
+
+  if (!trade && !quote) {
+    return null
+  }
+
+  return {
+    lastTradePrice: trade ? pickNumber(trade, ["price"]) : null,
+    lastTradeTimestamp: trade
+      ? pickString(trade, ["timestamp", "date"])
+      : null,
+    bidPrice: quote ? pickNumber(quote, ["bidPrice"]) : null,
+    askPrice: quote ? pickNumber(quote, ["askPrice"]) : null,
+    volume: quote ? pickNumber(quote, ["volume"]) : null,
+    quoteTimestamp: quote ? pickString(quote, ["timestamp", "date"]) : null,
+  }
+}
+
+function mapPriceChange(item: unknown): PriceChangeSnapshot | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  return {
+    day1: pickNumber(record, ["1D"]),
+    day5: pickNumber(record, ["5D"]),
+    month1: pickNumber(record, ["1M"]),
+    month3: pickNumber(record, ["3M"]),
+    month6: pickNumber(record, ["6M"]),
+    ytd: pickNumber(record, ["ytd", "YTD"]),
+    year1: pickNumber(record, ["1Y"]),
+    year3: pickNumber(record, ["3Y"]),
+    year5: pickNumber(record, ["5Y"]),
+    year10: pickNumber(record, ["10Y"]),
+    max: pickNumber(record, ["max"]),
+  }
+}
+
+function mapTechnicalSeries(
+  items: unknown[],
+  params: {
+    id: string
+    label: string
+    field: string
+  }
+): TechnicalIndicatorSeries {
+  return {
+    id: params.id,
+    label: params.label,
+    points: items
+      .map((item) => asRecord(item))
+      .filter((item): item is Record<string, unknown> => item !== null)
+      .map((record) => ({
+        date: pickString(record, ["date"]) ?? "",
+        value: pickNumber(record, [params.field]),
+      }))
+      .filter((point) => point.date !== "")
+      .reverse(),
+  }
+}
+
+function mapFinancialScores(item: unknown): FinancialScoreSnapshot | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  return {
+    altmanZScore: pickNumber(record, ["altmanZScore"]),
+    piotroskiScore: pickNumber(record, ["piotroskiScore"]),
+    workingCapital: pickNumber(record, ["workingCapital"]),
+    totalAssets: pickNumber(record, ["totalAssets"]),
+    retainedEarnings: pickNumber(record, ["retainedEarnings"]),
+    ebit: pickNumber(record, ["ebit"]),
+    marketCap: pickNumber(record, ["marketCap"]),
+    totalLiabilities: pickNumber(record, ["totalLiabilities"]),
+    revenue: pickNumber(record, ["revenue"]),
+  }
+}
+
+function mapAnalystEstimate(item: unknown): AnalystEstimateSnapshot | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  return {
+    date: pickString(record, ["date"]),
+    revenueLow: pickNumber(record, ["revenueLow"]),
+    revenueHigh: pickNumber(record, ["revenueHigh"]),
+    revenueAvg: pickNumber(record, ["revenueAvg"]),
+    ebitdaLow: pickNumber(record, ["ebitdaLow"]),
+    ebitdaHigh: pickNumber(record, ["ebitdaHigh"]),
+    ebitdaAvg: pickNumber(record, ["ebitdaAvg"]),
+    epsLow: pickNumber(record, ["epsLow"]),
+    epsHigh: pickNumber(record, ["epsHigh"]),
+    epsAvg: pickNumber(record, ["epsAvg"]),
+    numberAnalystsRevenue: pickNumber(record, ["numberAnalystsRevenue"]),
+    numberAnalystsEps: pickNumber(record, ["numberAnalystsEps"]),
+  }
+}
+
+function mapGradesConsensus(item: unknown): GradesConsensus | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  return {
+    strongBuy: pickNumber(record, ["strongBuy"]),
+    buy: pickNumber(record, ["buy"]),
+    hold: pickNumber(record, ["hold"]),
+    sell: pickNumber(record, ["sell"]),
+    strongSell: pickNumber(record, ["strongSell"]),
+    consensus: pickString(record, ["consensus"]),
+  }
+}
+
+function mapRatingsHistoricalEntry(item: unknown): RatingsHistoricalEntry | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  return {
+    date: pickString(record, ["date"]),
+    rating: pickString(record, ["rating"]),
+    overallScore: pickNumber(record, ["overallScore"]),
+    discountedCashFlowScore: pickNumber(record, ["discountedCashFlowScore"]),
+    returnOnEquityScore: pickNumber(record, ["returnOnEquityScore"]),
+    returnOnAssetsScore: pickNumber(record, ["returnOnAssetsScore"]),
+    debtToEquityScore: pickNumber(record, ["debtToEquityScore"]),
+    peScore: pickNumber(record, ["peScore"]),
+    pbScore: pickNumber(record, ["pbScore"]),
+  }
+}
+
+function mapRevenueSegmentation(item: unknown): RevenueSegmentation | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  const segmentsRecord = asRecord(record.data)
+
+  if (!segmentsRecord) {
+    return null
+  }
+
+  return {
+    date: pickString(record, ["date"]),
+    fiscalYear: pickNumber(record, ["fiscalYear"]),
+    period: pickString(record, ["period"]),
+    segments: Object.entries(segmentsRecord)
+      .map(([label, value]) => ({
+        label,
+        value: asNumber(value),
+      }))
+      .sort((left, right) => (right.value ?? 0) - (left.value ?? 0)),
+  }
+}
+
+function mapMarketCapPoint(item: unknown): MarketCapPoint | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  const date = pickString(record, ["date"])
+
+  if (!date) {
+    return null
+  }
+
+  return {
+    date,
+    marketCap: pickNumber(record, ["marketCap"]),
+  }
+}
+
+function mapEmployeeCountPoint(item: unknown): EmployeeCountPoint | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  return {
+    acceptanceTime: pickString(record, ["acceptanceTime"]),
+    periodOfReport: pickString(record, ["periodOfReport", "date"]),
+    employeeCount: pickNumber(record, ["employeeCount", "employees"]),
+  }
+}
+
+function mapSecProfile(item: unknown): SecProfile | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  return {
+    cik: pickString(record, ["cik"]),
+    registrantName: pickString(record, ["registrantName"]),
+    sicCode: pickString(record, ["sicCode"]),
+    sicDescription: pickString(record, ["sicDescription"]),
+    sicGroup: pickString(record, ["sicGroup"]),
+  }
+}
+
+function mapMarketHours(item: unknown): MarketHoursSnapshot | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  const exchange = pickString(record, ["exchange"])
+
+  if (!exchange) {
+    return null
+  }
+
+  return {
+    exchange,
+    name: pickString(record, ["name"]),
+    openingHour: pickString(record, ["openingHour"]),
+    closingHour: pickString(record, ["closingHour"]),
+    timezone: pickString(record, ["timezone"]),
+    isMarketOpen: asBoolean(record.isMarketOpen),
+  }
+}
+
+function mapMarketHoliday(item: unknown): MarketHoliday | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  const exchange = pickString(record, ["exchange"])
+
+  if (!exchange) {
+    return null
+  }
+
+  return {
+    exchange,
+    date: pickString(record, ["date"]),
+    name: pickString(record, ["name"]),
+    isClosed: asBoolean(record.isClosed),
+    adjOpenTime: pickString(record, ["adjOpenTime"]),
+    adjCloseTime: pickString(record, ["adjCloseTime"]),
+  }
+}
+
+function mapSectorValuation(item: unknown): SectorValuationSnapshot | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  const sector = pickString(record, ["sector"])
+
+  if (!sector) {
+    return null
+  }
+
+  return {
+    date: pickString(record, ["date"]),
+    sector,
+    exchange: pickString(record, ["exchange"]),
+    pe: pickNumber(record, ["pe"]),
+  }
+}
+
+function mapSectorHistoryPoint(item: unknown): SectorHistoryPoint | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  const date = pickString(record, ["date"])
+
+  if (!date) {
+    return null
+  }
+
+  return {
+    date,
+    averageChange: pickNumber(record, ["averageChange"]),
+  }
+}
+
+function mapRiskPremium(item: unknown): RiskPremiumSnapshot | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  const country = pickString(record, ["country"])
+
+  if (!country) {
+    return null
+  }
+
+  return {
+    country,
+    countryRiskPremium: pickNumber(record, ["countryRiskPremium"]),
+    totalEquityRiskPremium: pickNumber(record, ["totalEquityRiskPremium"]),
+  }
+}
+
 function dedupeSymbols(symbols: string[]): string[] {
   return [
     ...new Set(
@@ -589,14 +951,30 @@ export function createFmpClient() {
         const payload = await fetchFmpJson("/stable/available-exchanges")
 
         return asArray(payload)
-          .map((item) => (typeof item === "string" ? item.trim() : null))
+          .map((item) => {
+            const record = asRecord(item)
+            return record ? pickString(record, ["exchange", "name"]) : asString(item)
+          })
           .filter((item): item is string => Boolean(item))
       },
       async listSectors(): Promise<string[]> {
         const payload = await fetchFmpJson("/stable/available-sectors")
 
         return asArray(payload)
-          .map((item) => (typeof item === "string" ? item.trim() : null))
+          .map((item) => {
+            const record = asRecord(item)
+            return record ? pickString(record, ["sector"]) : asString(item)
+          })
+          .filter((item): item is string => Boolean(item))
+      },
+      async listIndustries(): Promise<string[]> {
+        const payload = await fetchFmpJson("/stable/available-industries")
+
+        return asArray(payload)
+          .map((item) => {
+            const record = asRecord(item)
+            return record ? pickString(record, ["industry"]) : asString(item)
+          })
           .filter((item): item is string => Boolean(item))
       },
       async screenCompanies(
@@ -613,6 +991,23 @@ export function createFmpClient() {
       async getQuote(symbol: string): Promise<QuoteSnapshot | null> {
         const payload = await fetchFmpJson("/stable/quote", { symbol })
         return mapQuote(asArray(payload)[0])
+      },
+      async getAftermarketSnapshot(
+        symbol: string
+      ): Promise<AftermarketSnapshot | null> {
+        const [trade, quote] = await Promise.all([
+          fetchFmpJson("/stable/aftermarket-trade", { symbol }).catch(() => []),
+          fetchFmpJson("/stable/aftermarket-quote", { symbol }).catch(() => []),
+        ])
+
+        return mapAftermarketSnapshot(asArray(trade)[0], asArray(quote)[0])
+      },
+      async getPriceChange(symbol: string): Promise<PriceChangeSnapshot | null> {
+        const payload = await fetchFmpJson("/stable/stock-price-change", {
+          symbol,
+        })
+
+        return mapPriceChange(asArray(payload)[0])
       },
       async getBatchQuotes(symbols: string[]): Promise<QuoteSnapshot[]> {
         const normalizedSymbols = dedupeSymbols(symbols)
@@ -694,6 +1089,7 @@ export function createFmpClient() {
             return {
               sector,
               changePercentage: pickNumber(record, [
+                "averageChange",
                 "changesPercentage",
                 "changePercentage",
               ]),
@@ -714,12 +1110,11 @@ export function createFmpClient() {
         return asArray(payload)
           .map(mapPricePoint)
           .filter((item): item is PricePoint => item !== null)
-          .slice(0, 180)
           .reverse()
       },
       async getIntradayChart(
         symbol: string,
-        interval: "1min" | "5min" | "15min" | "1hour"
+        interval: FmpIntradayInterval
       ) {
         const payload = await fetchFmpJson(
           `/stable/historical-chart/${interval}`,
@@ -733,6 +1128,57 @@ export function createFmpClient() {
           .filter((item): item is PricePoint => item !== null)
           .slice(0, 120)
           .reverse()
+      },
+    },
+    technicals: {
+      async getCoreIndicators(
+        symbol: string
+      ): Promise<TechnicalIndicatorSeries[]> {
+        const [sma20, sma50, ema20, rsi14] = await Promise.all([
+          fetchFmpJson("/stable/technical-indicators/sma", {
+            symbol,
+            periodLength: 20,
+            timeframe: "1day",
+          }).catch(() => []),
+          fetchFmpJson("/stable/technical-indicators/sma", {
+            symbol,
+            periodLength: 50,
+            timeframe: "1day",
+          }).catch(() => []),
+          fetchFmpJson("/stable/technical-indicators/ema", {
+            symbol,
+            periodLength: 20,
+            timeframe: "1day",
+          }).catch(() => []),
+          fetchFmpJson("/stable/technical-indicators/rsi", {
+            symbol,
+            periodLength: 14,
+            timeframe: "1day",
+          }).catch(() => []),
+        ])
+
+        return [
+          mapTechnicalSeries(asArray(sma20), {
+            id: "sma20",
+            label: "SMA 20",
+            field: "sma",
+          }),
+          mapTechnicalSeries(asArray(sma50), {
+            id: "sma50",
+            label: "SMA 50",
+            field: "sma",
+          }),
+          mapTechnicalSeries(asArray(ema20), {
+            id: "ema20",
+            label: "EMA 20",
+            field: "ema",
+          }),
+          mapTechnicalSeries(asArray(rsi14), {
+            id: "rsi14",
+            label: "RSI 14",
+            field: "rsi",
+          }),
+        ]
       },
     },
     company: {
@@ -749,6 +1195,67 @@ export function createFmpClient() {
           })
           .map((item) => asString(item))
           .filter((item): item is string => Boolean(item))
+      },
+      async getMarketCapHistory(symbol: string): Promise<MarketCapPoint[]> {
+        const payload = await fetchFmpJson(
+          "/stable/historical-market-capitalization",
+          {
+            symbol,
+            limit: 120,
+          }
+        )
+
+        return asArray(payload)
+          .map(mapMarketCapPoint)
+          .filter((item): item is MarketCapPoint => item !== null)
+          .reverse()
+      },
+      async getEmployeeHistory(symbol: string): Promise<EmployeeCountPoint[]> {
+        const payload = await fetchFmpJson("/stable/historical-employee-count", {
+          symbol,
+        })
+
+        return asArray(payload)
+          .map(mapEmployeeCountPoint)
+          .filter((item): item is EmployeeCountPoint => item !== null)
+          .reverse()
+      },
+      async getLatestEmployeeCount(
+        symbol: string
+      ): Promise<EmployeeCountPoint | null> {
+        const payload = await fetchFmpJson("/stable/employee-count", {
+          symbol,
+        })
+
+        return mapEmployeeCountPoint(asArray(payload)[0])
+      },
+      async getProductSegmentation(
+        symbol: string
+      ): Promise<RevenueSegmentation | null> {
+        const payload = await fetchFmpJson(
+          "/stable/revenue-product-segmentation",
+          {
+            symbol,
+          }
+        )
+
+        return mapRevenueSegmentation(asArray(payload)[0])
+      },
+      async getGeographicSegmentation(
+        symbol: string
+      ): Promise<RevenueSegmentation | null> {
+        const payload = await fetchFmpJson(
+          "/stable/revenue-geographic-segmentation",
+          {
+            symbol,
+          }
+        )
+
+        return mapRevenueSegmentation(asArray(payload)[0])
+      },
+      async getSecProfile(symbol: string): Promise<SecProfile | null> {
+        const payload = await fetchFmpJson("/stable/sec-profile", { symbol })
+        return mapSecProfile(asArray(payload)[0])
       },
     },
     fundamentals: {
@@ -859,6 +1366,15 @@ export function createFmpClient() {
           { key: "ratingPeScore", label: "P / E Score" },
         ])
       },
+      async getFinancialScores(
+        symbol: string
+      ): Promise<FinancialScoreSnapshot | null> {
+        const payload = await fetchFmpJson("/stable/financial-scores", {
+          symbol,
+        })
+
+        return mapFinancialScores(asArray(payload)[0])
+      },
       async getEnterpriseValue(symbol: string): Promise<unknown> {
         const payload = await fetchFmpJson("/stable/enterprise-values", {
           symbol,
@@ -930,6 +1446,16 @@ export function createFmpClient() {
           .map(mapNewsStory)
           .filter((item): item is NewsStory => item !== null)
       },
+      async getLatestGeneralNews(limit = 12): Promise<NewsStory[]> {
+        const payload = await fetchFmpJson("/stable/news/general-latest", {
+          page: 0,
+          limit,
+        })
+
+        return asArray(payload)
+          .map(mapNewsStory)
+          .filter((item): item is NewsStory => item !== null)
+      },
       async getStockNews(symbol: string, limit = 12): Promise<NewsStory[]> {
         const payload = await fetchFmpJson("/stable/news/stock", {
           symbols: symbol,
@@ -961,6 +1487,43 @@ export function createFmpClient() {
         ])
 
         return mapAnalystSummary(asArray(consensus)[0], asArray(grades))
+      },
+      async getGradesConsensus(symbol: string): Promise<GradesConsensus | null> {
+        const payload = await fetchFmpJson("/stable/grades-consensus", {
+          symbol,
+        })
+
+        return mapGradesConsensus(asArray(payload)[0])
+      },
+      async getAnalystEstimates(
+        symbol: string
+      ): Promise<AnalystEstimateSnapshot[]> {
+        const payload = await fetchFmpJson("/stable/analyst-estimates", {
+          symbol,
+          period: "annual",
+          page: 0,
+          limit: 4,
+        })
+
+        return asArray(payload)
+          .map(mapAnalystEstimate)
+          .filter(
+            (item): item is AnalystEstimateSnapshot => item !== null
+          )
+      },
+      async getRatingsHistorical(
+        symbol: string
+      ): Promise<RatingsHistoricalEntry[]> {
+        const payload = await fetchFmpJson("/stable/ratings-historical", {
+          symbol,
+        })
+
+        return asArray(payload)
+          .map(mapRatingsHistoricalEntry)
+          .filter(
+            (item): item is RatingsHistoricalEntry => item !== null
+          )
+          .slice(0, 8)
       },
     },
     filings: {
@@ -1038,19 +1601,37 @@ export function createFmpClient() {
     macro: {
       async getTreasuryRates(): Promise<MacroRate[]> {
         const payload = await fetchFmpJson("/stable/treasury-rates")
+        const latest = asRecord(asArray(payload)[0])
 
-        return asArray(payload)
-          .map(mapMacroRate)
-          .filter((item): item is MacroRate => item !== null)
-          .slice(0, 8)
+        if (!latest) {
+          return []
+        }
+
+        const labels = [
+          ["month3", "3M Treasury"],
+          ["year2", "2Y Treasury"],
+          ["year10", "10Y Treasury"],
+        ] as const
+
+        return labels.map(([key, label]) => ({
+          label,
+          value: pickNumber(latest, [key]),
+          previous: null,
+          date: pickString(latest, ["date"]),
+        }))
       },
-      async getEconomicCalendar(): Promise<CalendarEvent[]> {
-        const payload = await fetchFmpJson("/stable/economic-calendar")
+      async getEconomicCalendar(
+        from?: string,
+        to?: string
+      ): Promise<CalendarEvent[]> {
+        const payload = await fetchFmpJson("/stable/economic-calendar", {
+          from,
+          to,
+        })
 
         return asArray(payload)
           .map((item) => mapCalendarEvent(item, "economic"))
           .filter((item): item is CalendarEvent => item !== null)
-          .slice(0, 8)
       },
       async getEconomicIndicators(names: string[]): Promise<MacroRate[]> {
         const entries = await Promise.all(
@@ -1066,19 +1647,109 @@ export function createFmpClient() {
           .map(mapMacroRate)
           .filter((item): item is MacroRate => item !== null)
       },
+      async getMarketRiskPremium(): Promise<RiskPremiumSnapshot | null> {
+        const payload = await fetchFmpJson("/stable/market-risk-premium")
+
+        return asArray(payload)
+          .map(mapRiskPremium)
+          .find((item) => item?.country === "United States") ?? null
+      },
+    },
+    marketStructure: {
+      async getExchangeMarketHours(
+        exchange: string
+      ): Promise<MarketHoursSnapshot | null> {
+        const payload = await fetchFmpJson("/stable/exchange-market-hours", {
+          exchange,
+        })
+
+        return mapMarketHours(asArray(payload)[0])
+      },
+      async getAllExchangeMarketHours(): Promise<MarketHoursSnapshot[]> {
+        const payload = await fetchFmpJson("/stable/all-exchange-market-hours")
+
+        return asArray(payload)
+          .map(mapMarketHours)
+          .filter((item): item is MarketHoursSnapshot => item !== null)
+      },
+      async getHolidaysByExchange(exchange: string): Promise<MarketHoliday[]> {
+        const payload = await fetchFmpJson("/stable/holidays-by-exchange", {
+          exchange,
+        })
+
+        return asArray(payload)
+          .map(mapMarketHoliday)
+          .filter((item): item is MarketHoliday => item !== null)
+      },
+    },
+    breadth: {
+      async getSectorPeSnapshot(
+        date?: string
+      ): Promise<SectorValuationSnapshot[]> {
+        const payload = await fetchFmpJson("/stable/sector-pe-snapshot", {
+          date,
+        })
+
+        return asArray(payload)
+          .map(mapSectorValuation)
+          .filter((item): item is SectorValuationSnapshot => item !== null)
+      },
+      async getHistoricalSectorPerformance(
+        sector: string
+      ): Promise<SectorHistoryPoint[]> {
+        const payload = await fetchFmpJson(
+          "/stable/historical-sector-performance",
+          {
+            sector,
+          }
+        )
+
+        return asArray(payload)
+          .map(mapSectorHistoryPoint)
+          .filter((item): item is SectorHistoryPoint => item !== null)
+          .slice(0, 20)
+          .reverse()
+      },
     },
     valuation: {
       async getSnapshot(symbol: string): Promise<ValuationSnapshot | null> {
-        const path =
-          getFmpPlanTier() === "BASIC"
-            ? "/stable/enterprise-values"
-            : "/stable/levered-discounted-cash-flow"
-        const [valuation, ownerEarnings] = await Promise.all([
-          fetchFmpJson(path, { symbol }).catch(() => []),
-          fetchFmpJson("/stable/owner-earnings", { symbol }).catch(() => []),
+        const ownerEarningsPromise = fetchFmpJson("/stable/owner-earnings", {
+          symbol,
+        }).catch(() => [])
+
+        if (getFmpPlanTier() === "BASIC") {
+          const [enterpriseValue, ownerEarnings] = await Promise.all([
+            fetchFmpJson("/stable/enterprise-values", { symbol }).catch(
+              () => []
+            ),
+            ownerEarningsPromise,
+          ])
+
+          return mapValuation(
+            asArray(enterpriseValue)[0],
+            asArray(ownerEarnings)[0]
+          )
+        }
+
+        const [dcfSnapshot, ownerEarnings] = await Promise.all([
+          fetchFmpJson("/stable/levered-discounted-cash-flow", {
+            symbol,
+          }).catch(() => []),
+          ownerEarningsPromise,
         ])
 
-        return mapValuation(asArray(valuation)[0], asArray(ownerEarnings)[0])
+        let valuation = asArray(dcfSnapshot)[0] ?? null
+
+        if (!valuation) {
+          const enterpriseValue = await fetchFmpJson(
+            "/stable/enterprise-values",
+            { symbol }
+          ).catch(() => [])
+
+          valuation = asArray(enterpriseValue)[0] ?? null
+        }
+
+        return mapValuation(valuation, asArray(ownerEarnings)[0])
       },
     },
   }

@@ -4,6 +4,7 @@ import {
   BarChart3,
   CalendarDays,
   ChevronRight,
+  GitCompareArrows,
   Newspaper,
   Search,
   Sparkles,
@@ -52,6 +53,11 @@ const PRIMARY_NAV_ITEMS = [
     href: "/screeners",
     label: "Screeners",
     icon: Search,
+  },
+  {
+    href: "/compare",
+    label: "Compare",
+    icon: GitCompareArrows,
   },
   {
     href: "/copilot",
@@ -184,8 +190,8 @@ export function MarketSidebar({
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <div className="border-t border-sidebar-border/70 px-2 pt-3 text-xs leading-5 text-sidebar-foreground/60">
-              US equities first, cached for the Basic plan, with premium modules
-              ready to unlock later.
+              US equities first, with plan-aware caching and research modules
+              that adapt to the active FMP tier.
             </div>
             <div className="mt-2 flex items-center gap-2 px-2 pb-2 text-[11px] tracking-[0.16em] text-sidebar-foreground/60 uppercase">
               <ChevronRight className="size-3" />
