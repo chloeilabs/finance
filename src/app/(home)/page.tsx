@@ -14,8 +14,6 @@ import type { FmpCoverageScope } from "@/lib/shared"
 
 function formatCoverageScope(scope: FmpCoverageScope) {
   switch (scope) {
-    case "sample":
-      return "Sample"
     case "us":
       return "US only"
     case "usUkCanada":

@@ -32,25 +32,6 @@ const PREMIUM_INTRADAY_INTERVALS: FmpIntradayInterval[] = [
 // validation run on March 28, 2026. When FMP plan behavior changes, refresh the
 // assumptions with `pnpm markets:capabilities`.
 const PLAN_CAPABILITIES: Record<FmpPlanTier, FmpCapabilities> = {
-  BASIC: {
-    realtimeQuotes: true,
-    intradayCharts: false,
-    batchQuotes: false,
-    batchIndexQuotes: false,
-    analystInsights: false,
-    insiderTrades: false,
-    ownership: false,
-    etfAssetExposure: false,
-    secFilings: true,
-    economics: true,
-    esgRatings: false,
-    dcf: false,
-    earningsTranscripts: false,
-    pressReleases: false,
-    globalCoverage: false,
-    coverageScope: "sample",
-    intradayIntervals: [],
-  },
   STARTER: {
     realtimeQuotes: true,
     intradayCharts: true,
@@ -110,13 +91,12 @@ const PLAN_CAPABILITIES: Record<FmpPlanTier, FmpCapabilities> = {
   },
 }
 
-function getQuoteFreshnessLabelForTier(tier: FmpPlanTier): string {
-  return tier === "BASIC" ? "Real-time / sample" : "Real-time"
+function getQuoteFreshnessLabelForTier(): string {
+  return "Real-time"
 }
 
 function getHistoricalRangeLabelForTier(tier: FmpPlanTier): string {
   switch (tier) {
-    case "BASIC":
     case "STARTER":
       return "5 years"
     case "PREMIUM":
@@ -128,8 +108,6 @@ function getHistoricalRangeLabelForTier(tier: FmpPlanTier): string {
 
 function getRequestBudgetLabelForTier(tier: FmpPlanTier): string {
   switch (tier) {
-    case "BASIC":
-      return "250 calls / day"
     case "STARTER":
       return "300 calls / minute"
     case "PREMIUM":
@@ -141,8 +119,6 @@ function getRequestBudgetLabelForTier(tier: FmpPlanTier): string {
 
 function getBandwidthLimitLabelForTier(tier: FmpPlanTier): string {
   switch (tier) {
-    case "BASIC":
-      return "500 MB / 30 days"
     case "STARTER":
       return "20 GB / 30 days"
     case "PREMIUM":
@@ -193,7 +169,7 @@ export function getFmpPlanTier(): FmpPlanTier {
     return candidate as FmpPlanTier
   }
 
-  return "BASIC"
+  return "STARTER"
 }
 
 export function getFmpCapabilities(): FmpCapabilities {
@@ -210,8 +186,6 @@ export function getFmpIntradayIntervals(): FmpIntradayInterval[] {
 
 export function getWatchlistLimitForTier(tier: FmpPlanTier): number {
   switch (tier) {
-    case "BASIC":
-      return 25
     case "STARTER":
       return 75
     case "PREMIUM":
@@ -227,7 +201,7 @@ export function getMarketPlanSummary(): MarketPlanSummary {
   return {
     tier,
     label: tier.charAt(0) + tier.slice(1).toLowerCase(),
-    quoteFreshnessLabel: getQuoteFreshnessLabelForTier(tier),
+    quoteFreshnessLabel: getQuoteFreshnessLabelForTier(),
     historicalRangeLabel: getHistoricalRangeLabelForTier(tier),
     requestBudgetLabel: getRequestBudgetLabelForTier(tier),
     bandwidthLimitLabel: getBandwidthLimitLabelForTier(tier),
@@ -240,10 +214,8 @@ export function getQuoteCacheTtlSeconds(): number {
   return 60
 }
 
-export function getFmpSoftMinuteLimit(): number | null {
+export function getFmpSoftMinuteLimit(): number {
   switch (getFmpPlanTier()) {
-    case "BASIC":
-      return null
     case "STARTER":
       return 240
     case "PREMIUM":
