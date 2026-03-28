@@ -28,19 +28,16 @@ function MarketCopilotPanel({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-background">
-      <div className="flex items-start justify-between gap-3 border-b border-border/70 px-4 py-3">
-        <div className="min-w-0">
-          <div className="font-departureMono text-sm tracking-tight">
+      <div className="flex items-center justify-between gap-3 border-b border-border/70 px-4 py-3">
+        <div className="min-w-0 select-none">
+          <div className="font-departureMono text-sm tracking-tight text-foreground">
             Copilot
           </div>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            Ask market questions without leaving this screen.
-          </p>
         </div>
 
         <Button
           aria-label="Close Copilot"
-          className="shrink-0"
+          className="-mr-1 shrink-0"
           onClick={onClose}
           size="iconSm"
           variant="ghost"
@@ -55,7 +52,7 @@ function MarketCopilotPanel({ onClose }: { onClose: () => void }) {
           initial="smooth"
           resize="smooth"
         >
-          <StickToBottom.Content className="relative flex min-h-full w-full flex-col px-4">
+          <StickToBottom.Content className="relative flex min-h-full w-full flex-col items-center px-4">
             <div className="relative z-0 flex w-full flex-1 flex-col pt-4">
               {hasMessages ? (
                 <Messages
