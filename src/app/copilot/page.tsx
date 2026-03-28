@@ -9,12 +9,11 @@ import { redirect } from "next/navigation"
 import { HomePageContent } from "@/components/agent/home/home-content"
 import { ThreadsProvider } from "@/components/agent/home/threads-context"
 import { getModels } from "@/lib/actions/api-keys"
+import { SIDEBAR_COOKIE_NAME } from "@/lib/constants"
 import { isAuthConfigured } from "@/lib/server/auth"
 import { getCurrentViewer } from "@/lib/server/auth-session"
 import { listThreadsForUser } from "@/lib/server/threads"
 import { resolveDefaultModel } from "@/lib/shared"
-
-const SIDEBAR_COOKIE_NAME = "sidebar_state"
 
 export default async function CopilotPage() {
   if (!isAuthConfigured()) {
