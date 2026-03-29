@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import {
   formatCompactNumber,
   formatCurrency,
+  formatLabeledMetricValue,
   formatMetricValue,
   formatPercent,
 } from "@/lib/markets-format"
@@ -40,16 +41,9 @@ export default async function ComparePage({
 
   return (
     <div className="pb-10">
-      <PageHeader
-        eyebrow="Compare"
-        title="Peer comparison"
-        description="Compare up to five symbols across price, valuation, quality, and street context using the same cached Starter-tier loaders as the stock dossier."
-      />
+      <PageHeader eyebrow="Compare" title="Peer comparison" />
 
-      <SectionFrame
-        title="Compare symbols"
-        description="Enter up to five comma-separated symbols."
-      >
+      <SectionFrame title="Compare symbols">
         <form className="flex flex-col gap-3 sm:flex-row" method="GET">
           <Input
             className="rounded-none border-border/70"
@@ -61,10 +55,7 @@ export default async function ComparePage({
         </form>
       </SectionFrame>
 
-      <SectionFrame
-        title="Comparison grid"
-        description="Relative valuation and quality context for the selected set."
-      >
+      <SectionFrame title="Comparison grid">
         {data.entries.length > 0 ? (
           <div className="overflow-x-auto border border-border/70">
             <table className="min-w-full border-collapse text-sm">
@@ -134,10 +125,10 @@ export default async function ComparePage({
                       {formatMetricValue(entry.peRatio)}
                     </td>
                     <td className="px-3 py-3 text-right">
-                      {formatMetricValue(entry.fcfYield)}
+                      {formatLabeledMetricValue("FCF Yield", entry.fcfYield)}
                     </td>
                     <td className="px-3 py-3 text-right">
-                      {formatMetricValue(entry.roic)}
+                      {formatLabeledMetricValue("ROIC", entry.roic)}
                     </td>
                     <td className="px-3 py-3 text-right">
                       {formatMetricValue(entry.altmanZScore)}

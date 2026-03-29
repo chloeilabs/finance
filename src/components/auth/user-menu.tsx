@@ -1,6 +1,6 @@
 "use client"
 
-import { CircleUser, SquareArrowRightExit } from "lucide-react"
+import { CircleUser, Settings, SquareArrowRightExit } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTransition } from "react"
 import { toast } from "sonner"
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -32,6 +33,10 @@ export function UserMenu({
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+
+  const handleOpenSettings = () => {
+    router.push("/settings")
+  }
 
   const handleSignOut = () => {
     startTransition(() => {
@@ -85,14 +90,23 @@ export function UserMenu({
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          variant="destructive"
-          disabled={isPending}
-          onSelect={handleSignOut}
-        >
-          <SquareArrowRightExit className="size-4" />
-          {isPending ? "Signing out…" : "Sign out"}
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuItem onSelect={handleOpenSettings}>
+            <Settings />
+            Settings
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            variant="destructive"
+            disabled={isPending}
+            onSelect={handleSignOut}
+          >
+            <SquareArrowRightExit />
+            {isPending ? "Signing out…" : "Sign out"}
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   )

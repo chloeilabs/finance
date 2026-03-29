@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils"
 
 const DropdownMenu = DropdownMenuPrimitive.Root
 
+const DropdownMenuGroup = DropdownMenuPrimitive.Group
+
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
 
 function DropdownMenuContent({
@@ -97,6 +99,7 @@ function DropdownMenuSeparator({
 export {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,

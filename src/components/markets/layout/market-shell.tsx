@@ -29,7 +29,6 @@ export function MarketShell({
   initialSidebarOpen = true,
   viewer,
   watchlists,
-  planLabel,
   warnings,
 }: {
   children: React.ReactNode
@@ -37,7 +36,6 @@ export function MarketShell({
   initialSidebarOpen?: boolean
   viewer: AuthViewer
   watchlists: WatchlistRecord[]
-  planLabel: string
   warnings: string[]
 }) {
   const [copilotOpen, setCopilotOpenState] = useState(initialCopilotOpen)
@@ -57,7 +55,7 @@ export function MarketShell({
 
   return (
     <SidebarProvider defaultOpen={initialSidebarOpen}>
-      <MarketSidebar planLabel={planLabel} watchlists={watchlists} />
+      <MarketSidebar watchlists={watchlists} />
       <SidebarInset className="h-svh min-h-0 overflow-hidden">
         <div className="flex h-full min-h-0 flex-col">
           <div className="border-b border-border/70 bg-background">

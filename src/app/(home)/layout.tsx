@@ -25,7 +25,7 @@ export default async function MarketLayout({
     redirect("/sign-in")
   }
 
-  const { plan, watchlists, warnings } = await getMarketSidebarData(viewer.id)
+  const { watchlists, warnings } = await getMarketSidebarData(viewer.id)
   const cookieStore = await cookies()
   const sidebarCookie = cookieStore.get(SIDEBAR_COOKIE_NAME)?.value
   const copilotCookie = cookieStore.get(MARKET_COPILOT_COOKIE_NAME)?.value
@@ -36,7 +36,6 @@ export default async function MarketLayout({
     <MarketShell
       initialCopilotOpen={initialCopilotOpen}
       initialSidebarOpen={initialSidebarOpen}
-      planLabel={plan.label}
       viewer={viewer}
       warnings={warnings}
       watchlists={watchlists}

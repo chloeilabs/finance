@@ -83,6 +83,20 @@ export function formatSignedNumber(
   }).format(value)
 }
 
+export function formatNumber(
+  value: number | null | undefined,
+  options: { digits?: number } = {}
+) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "N/A"
+  }
+
+  return new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: options.digits ?? 2,
+    minimumFractionDigits: options.digits ?? 0,
+  }).format(value)
+}
+
 export function formatDate(value: string | null | undefined) {
   if (!value) {
     return "N/A"
@@ -137,5 +151,26 @@ export function formatMetricValue(value: number | string | null | undefined) {
     return value.toFixed(2)
   }
 
-  return formatSignedNumber(value)
+  return formatNumber(value)
+}
+
+function isFractionalPercentMetricLabel(label: string) {
+  return (
+    label === "FCF Yield" ||
+    label === "ROE" ||
+    label === "ROIC" ||
+    label.endsWith(" Margin") ||
+    label.endsWith(" Growth")
+  )
+}
+
+export function formatLabeledMetricValue(
+  label: string,
+  value: number | string | null | undefined
+) {
+  if (typeof value === "number" && isFractionalPercentMetricLabel(label)) {
+    return formatPercent(value, { scale: "fraction" })
+  }
+
+  return formatMetricValue(value)
 }
