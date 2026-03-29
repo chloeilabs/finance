@@ -23,7 +23,6 @@ export default function MarketRouteError({
   return (
     <div className="pb-10">
       <PageHeader
-        eyebrow="Workspace"
         title="Market page unavailable"
         description="An unexpected error interrupted this view. Cached sections may still recover on retry."
       />

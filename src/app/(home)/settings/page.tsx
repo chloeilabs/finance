@@ -21,7 +21,7 @@ export default function SettingsPage() {
 
   return (
     <div className="pb-10">
-      <PageHeader eyebrow="Workspace" title="Settings" />
+      <PageHeader title="Settings" />
 
       <SectionFrame title="Market data plan">
         <div className="market-grid-5 market-panel-grid grid text-xs">

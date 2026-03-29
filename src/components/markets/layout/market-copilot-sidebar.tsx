@@ -1,6 +1,6 @@
 "use client"
 
-import { Sparkles, X } from "lucide-react"
+import { HatGlasses, X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
@@ -114,7 +114,7 @@ export function MarketCopilotToggle({
       size="sm"
       variant="ghost"
     >
-      <Sparkles className="size-3.5" />
+      <HatGlasses className="size-3.5" />
       <span>Copilot</span>
     </Button>
   )

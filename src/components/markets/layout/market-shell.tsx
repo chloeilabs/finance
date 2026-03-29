@@ -67,8 +67,8 @@ export function MarketShell({
       <MarketSidebar watchlists={watchlists} />
       <SidebarInset className="h-svh min-h-0 overflow-hidden">
         <div className="flex h-full min-h-0 flex-col">
-          <div className="border-b border-border/50 bg-background/95 backdrop-blur">
-            <div className="z-10 flex h-[52px] shrink-0 items-center gap-2.5 px-3">
+          <div className="relative z-20 border-b border-border/50 bg-background/95 backdrop-blur">
+            <div className="flex h-[52px] shrink-0 items-center gap-2.5 px-3">
               <SidebarTrigger />
 
               <SymbolSearch
