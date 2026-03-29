@@ -10,12 +10,19 @@ When Tavily tool results are used in the answer, cite them inline with markdown 
 `.trim()
 
 function getFmpMcpInstruction(planTier: string): string {
+  const starterNote =
+    planTier === "STARTER"
+      ? "- Starter is validated here for quotes, company/reference data, statements, SEC filings, economic calendars, technical indicators, analyst estimates/consensus, and validated crypto, forex, and commodity symbols. Batch quotes, ETF exposure, 13F ownership, press releases, transcripts, and ESG may still be restricted."
+      : ""
+
   return `
 <fmp_mcp_tool_rules>
 FMP MCP tools are available for this response.
-- Prefer FMP tools first for quotes, company data, statements, filings, earnings or economic calendars, technical indicators, and FMP-hosted news.
+- Prefer FMP tools first for quotes, company data, statements, filings, earnings or economic calendars, technical indicators, insider feeds, multi-asset symbols, and FMP-hosted news.
 - Keep Tavily or other web tools for external commentary, third-party reporting, or pages that are not hosted in FMP.
 - The configured FMP plan tier for this server is ${planTier}.
+- Prefer live tool outcomes over static plan assumptions when they conflict.
+${starterNote}
 - Some FMP endpoints may be restricted by plan tier or availability. If an FMP tool fails, try a nearby FMP tool when it is still likely to answer the question.
 - If the data still cannot be retrieved, say the FMP tool was unavailable or restricted and do not invent financial values.
 </fmp_mcp_tool_rules>

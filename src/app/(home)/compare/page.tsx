@@ -83,6 +83,12 @@ export default async function ComparePage({
                     ROIC
                   </th>
                   <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                    DCF
+                  </th>
+                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                    Free Float
+                  </th>
+                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
                     Altman Z
                   </th>
                   <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
@@ -129,6 +135,12 @@ export default async function ComparePage({
                     </td>
                     <td className="px-3 py-3 text-right">
                       {formatLabeledMetricValue("ROIC", entry.roic)}
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      {formatCurrency(entry.dcf)}
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      {formatPercent(entry.freeFloatPercentage)}
                     </td>
                     <td className="px-3 py-3 text-right">
                       {formatMetricValue(entry.altmanZScore)}

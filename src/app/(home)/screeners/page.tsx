@@ -13,14 +13,18 @@ import {
 } from "@/components/markets/ui/market-primitives"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { formatCompactNumber, formatCurrency } from "@/lib/markets-format"
+import {
+  formatCompactNumber,
+  formatCurrency,
+  formatPercent,
+} from "@/lib/markets-format"
 import { getCurrentViewer } from "@/lib/server/auth-session"
 import { isMarketStoreNotInitializedError } from "@/lib/server/markets/errors"
 import {
+  getEnrichedMarketScreenerResults,
   getMarketScreenerOptions,
   getMarketSidebarData,
   getSavedMarketScreeners,
-  runMarketScreener,
 } from "@/lib/server/markets/service"
 import type { ScreenerFilterState } from "@/lib/shared/markets/workspace"
 
@@ -134,7 +138,9 @@ export default async function ScreenersPage({
   const [{ watchlists }, results, options, savedScreenersState] =
     await Promise.all([
       getMarketSidebarData(viewer.id),
-      hasAnyFilter(filters) ? runMarketScreener(filters) : Promise.resolve([]),
+      hasAnyFilter(filters)
+        ? getEnrichedMarketScreenerResults(filters)
+        : Promise.resolve([]),
       getMarketScreenerOptions(),
       getSavedMarketScreeners(viewer.id)
         .then((savedScreeners) => ({
@@ -286,6 +292,9 @@ export default async function ScreenersPage({
             <option value="volume">Sort by volume</option>
             <option value="beta">Sort by beta</option>
             <option value="dividend">Sort by dividend</option>
+            <option value="dcf">Sort by DCF</option>
+            <option value="piotroskiScore">Sort by Piotroski</option>
+            <option value="freeFloatPercentage">Sort by free float</option>
             <option value="symbol">Sort by symbol</option>
           </select>
           <select
@@ -386,6 +395,12 @@ export default async function ScreenersPage({
                       <span>{result.industry ?? "Industry N/A"}</span>
                       <span>{formatCurrency(result.price)}</span>
                       <span>{formatCompactNumber(result.marketCap)}</span>
+                      <span>{formatCurrency(result.dcf)}</span>
+                      <span>{formatPercent(result.freeFloatPercentage)}</span>
+                      <span>Piotroski {result.piotroskiScore ?? "N/A"}</span>
+                      <span>
+                        Altman {result.altmanZScore?.toFixed(2) ?? "N/A"}
+                      </span>
                     </div>
                   </div>
                   <div className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">

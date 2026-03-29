@@ -1,4 +1,6 @@
 import {
+  formatCompactNumber,
+  formatCurrency,
   formatDate,
   formatDateTime,
   formatMetricValue,
@@ -8,6 +10,10 @@ import type {
   NewsStory,
   StatementTable,
 } from "@/lib/shared/markets/core"
+import type {
+  FilingEntry,
+  LatestInsiderTradeEntry,
+} from "@/lib/shared/markets/intelligence"
 
 import { EmptyState } from "./market-layout-primitives"
 
@@ -118,14 +124,14 @@ export function StatementTables({ tables }: { tables: StatementTable[] }) {
                 {table.columns.map((column) => (
                   <th
                     key={`${table.title}:${column}`}
-                  className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground"
-                >
-                  {column}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
+                    className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground"
+                  >
+                    {column}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
               {table.rows.map((row) => (
                 <tr
                   key={`${table.title}:${row.label}`}
@@ -152,16 +158,7 @@ export function StatementTables({ tables }: { tables: StatementTable[] }) {
   )
 }
 
-export function FilingList({
-  items,
-}: {
-  items: {
-    formType: string | null
-    filingDate: string | null
-    description: string | null
-    finalLink: string | null
-  }[]
-}) {
+export function FilingList({ items }: { items: FilingEntry[] }) {
   if (items.length === 0) {
     return (
       <EmptyState
@@ -190,7 +187,9 @@ export function FilingList({
         >
           <div>
             <div className="font-departureMono text-xs tracking-tight">
-              {item.formType ?? "Filing"}
+              {[item.symbol, item.formType ?? "Filing"]
+                .filter(Boolean)
+                .join(" ")}
             </div>
             <div className="mt-1 text-xs text-muted-foreground">
               {item.description ?? "SEC filing"}
@@ -200,6 +199,54 @@ export function FilingList({
             {formatDate(item.filingDate)}
           </div>
         </a>
+      ))}
+    </div>
+  )
+}
+
+export function InsiderFeedList({
+  items,
+}: {
+  items: LatestInsiderTradeEntry[]
+}) {
+  if (items.length === 0) {
+    return (
+      <EmptyState
+        title="No insider tape"
+        description="The latest insider activity feed will appear here when the Starter endpoint returns data."
+      />
+    )
+  }
+
+  return (
+    <div className="market-panel-list">
+      {items.map((item, index) => (
+        <div
+          key={[
+            item.symbol,
+            item.filingDate ?? "date",
+            item.transactionDate ?? "transaction",
+            String(index),
+          ].join(":")}
+          className="market-panel-row grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2"
+        >
+          <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
+            {item.symbol}
+          </div>
+          <div className="min-w-0">
+            <div className="truncate text-sm">
+              {item.reportingName ?? "Insider activity"}
+            </div>
+            <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
+              <span>{item.transactionType ?? "Form 4 flow"}</span>
+              <span>{formatCompactNumber(item.securitiesTransacted)}</span>
+              <span>{formatCurrency(item.price)}</span>
+            </div>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {formatDate(item.filingDate ?? item.transactionDate)}
+          </div>
+        </div>
       ))}
     </div>
   )

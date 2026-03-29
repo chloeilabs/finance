@@ -8,6 +8,7 @@ export {
 export {
   CalendarList,
   FilingList,
+  InsiderFeedList,
   NewsList,
   StatementTables,
 } from "./market-data-lists"

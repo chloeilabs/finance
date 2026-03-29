@@ -27,6 +27,12 @@ export interface MarketSearchResult {
   volume?: number | null
   beta?: number | null
   dividend?: number | null
+  dcf?: number | null
+  altmanZScore?: number | null
+  piotroskiScore?: number | null
+  fcfYield?: number | null
+  freeFloatPercentage?: number | null
+  floatShares?: number | null
 }
 
 export interface QuoteSnapshot {

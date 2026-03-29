@@ -5,6 +5,7 @@ import {
   CalendarDays,
   ChevronDown,
   GitCompareArrows,
+  Globe,
   HatGlasses,
   MessageSquare,
   MoreHorizontal,
@@ -17,7 +18,13 @@ import {
   X,
 } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
-import { type KeyboardEvent, useDeferredValue, useEffect, useRef, useState } from "react"
+import {
+  type KeyboardEvent,
+  useDeferredValue,
+  useEffect,
+  useRef,
+  useState,
+} from "react"
 import { createPortal } from "react-dom"
 
 import {
@@ -62,6 +69,11 @@ const PRIMARY_NAV_ITEMS = [
     href: "/markets",
     label: "Markets",
     icon: Star,
+  },
+  {
+    href: "/assets",
+    label: "Assets",
+    icon: Globe,
   },
   {
     href: "/calendar",
@@ -602,7 +614,9 @@ export function MarketSidebar({
                       {watchlists.map((watchlist) => (
                         <SidebarMenuItem key={watchlist.id}>
                           <SidebarMenuButton
-                            isActive={pathname === `/watchlists/${watchlist.id}`}
+                            isActive={
+                              pathname === `/watchlists/${watchlist.id}`
+                            }
                             onClick={() => {
                               router.push(`/watchlists/${watchlist.id}`)
                             }}

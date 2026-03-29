@@ -1,3 +1,6 @@
+import Link from "next/link"
+
+import { AssetTeaserGrid } from "@/components/markets/assets/asset-market-grid"
 import {
   CalendarList,
   MoverGrid,
@@ -8,11 +11,18 @@ import {
   SectorGrid,
 } from "@/components/markets/ui/market-primitives"
 import { Sparkline } from "@/components/markets/ui/sparkline"
+import { Button } from "@/components/ui/button"
 import { formatSignedNumber } from "@/lib/markets-format"
-import { getMarketsSnapshot } from "@/lib/server/markets/service"
+import {
+  getMarketsSnapshot,
+  getMultiAssetSnapshot,
+} from "@/lib/server/markets/service"
 
 export default async function MarketsPage() {
-  const snapshot = await getMarketsSnapshot()
+  const [snapshot, assets] = await Promise.all([
+    getMarketsSnapshot(),
+    getMultiAssetSnapshot(),
+  ])
 
   return (
     <div className="pb-10">
@@ -20,6 +30,18 @@ export default async function MarketsPage() {
 
       <SectionFrame title="Benchmarks">
         <QuoteStrip linkItems={false} quotes={snapshot.indexes} />
+      </SectionFrame>
+
+      <SectionFrame
+        title="Cross-asset tape"
+        description="Starter coverage extends past US equities, so keep a live read on crypto, forex, and commodity symbols from the same workspace."
+        aside={
+          <Button asChild size="sm" variant="outline">
+            <Link href="/assets">Open Assets</Link>
+          </Button>
+        }
+      >
+        <AssetTeaserGrid groups={assets.groups} />
       </SectionFrame>
 
       <SectionFrame title="Sector breadth">

@@ -1,9 +1,11 @@
 import type { CompanyProfile } from "@/lib/shared/markets/core"
 import type {
   EmployeeCountPoint,
+  ExecutiveEntry,
   MarketCapPoint,
   RevenueSegmentation,
   SecProfile,
+  ShareFloatSnapshot,
 } from "@/lib/shared/markets/intelligence"
 
 import { fetchFmpJson } from "../fmp-request"
@@ -118,6 +120,36 @@ function mapSecProfile(item: unknown): SecProfile | null {
   }
 }
 
+function mapExecutive(item: unknown): ExecutiveEntry | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  return {
+    name: pickString(record, ["name"]),
+    title: pickString(record, ["title"]),
+    pay: pickNumber(record, ["pay"]),
+    currencyPay: pickString(record, ["currencyPay"]),
+  }
+}
+
+function mapShareFloat(item: unknown): ShareFloatSnapshot | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  return {
+    date: pickString(record, ["date"]),
+    freeFloatPercentage: pickNumber(record, ["freeFloat"]),
+    floatShares: pickNumber(record, ["floatShares"]),
+    outstandingShares: pickNumber(record, ["outstandingShares"]),
+  }
+}
+
 export function createCompanyClient() {
   return {
     async getProfile(symbol: string): Promise<CompanyProfile | null> {
@@ -170,9 +202,12 @@ export function createCompanyClient() {
     async getProductSegmentation(
       symbol: string
     ): Promise<RevenueSegmentation | null> {
-      const payload = await fetchFmpJson("/stable/revenue-product-segmentation", {
-        symbol,
-      })
+      const payload = await fetchFmpJson(
+        "/stable/revenue-product-segmentation",
+        {
+          symbol,
+        }
+      )
 
       return mapRevenueSegmentation(asArray(payload)[0])
     },
@@ -191,6 +226,18 @@ export function createCompanyClient() {
     async getSecProfile(symbol: string): Promise<SecProfile | null> {
       const payload = await fetchFmpJson("/stable/sec-profile", { symbol })
       return mapSecProfile(asArray(payload)[0])
+    },
+    async getKeyExecutives(symbol: string): Promise<ExecutiveEntry[]> {
+      const payload = await fetchFmpJson("/stable/key-executives", { symbol })
+
+      return asArray(payload)
+        .map(mapExecutive)
+        .filter((item): item is ExecutiveEntry => item !== null)
+        .slice(0, 6)
+    },
+    async getShareFloat(symbol: string): Promise<ShareFloatSnapshot | null> {
+      const payload = await fetchFmpJson("/stable/shares-float", { symbol })
+      return mapShareFloat(asArray(payload)[0])
     },
   }
 }

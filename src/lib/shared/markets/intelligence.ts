@@ -69,6 +69,7 @@ export interface RatingsHistoricalEntry {
 }
 
 export interface FilingEntry {
+  symbol: string | null
   formType: string | null
   filingDate: string | null
   acceptedDate: string | null
@@ -82,6 +83,16 @@ export interface InsiderTradeEntry {
   securitiesOwned: number | null
   price: number | null
   filingDate: string | null
+}
+
+export interface LatestInsiderTradeEntry {
+  symbol: string
+  reportingName: string | null
+  transactionType: string | null
+  securitiesTransacted: number | null
+  price: number | null
+  filingDate: string | null
+  transactionDate: string | null
 }
 
 export interface OwnershipEntry {
@@ -103,6 +114,20 @@ export interface ValuationSnapshot {
   marketCap: number | null
   enterpriseValue: number | null
   ownerEarnings: number | null
+}
+
+export interface ExecutiveEntry {
+  name: string | null
+  title: string | null
+  pay: number | null
+  currencyPay: string | null
+}
+
+export interface ShareFloatSnapshot {
+  date: string | null
+  freeFloatPercentage: number | null
+  floatShares: number | null
+  outstandingShares: number | null
 }
 
 export interface RevenueSegment {
@@ -147,6 +172,9 @@ export interface PeerComparisonRow {
   roic: number | null
   altmanZScore: number | null
   piotroskiScore: number | null
+  dcf: number | null
+  freeFloatPercentage: number | null
+  floatShares: number | null
   analystConsensus: string | null
 }
 
@@ -162,6 +190,32 @@ export interface ResearchQuoteRow {
   analystConsensus: string | null
   piotroskiScore: number | null
   altmanZScore: number | null
+  fcfYield: number | null
+  roic: number | null
+  dcf: number | null
+  freeFloatPercentage: number | null
+  floatShares: number | null
+}
+
+export type AssetMarketGroupId = "crypto" | "forex" | "commodities"
+
+export interface AssetSnapshot {
+  symbol: string
+  quote: QuoteSnapshot | null
+  intradayChart: PricePoint[]
+  eodChart: PricePoint[]
+}
+
+export interface AssetMarketGroup {
+  id: AssetMarketGroupId
+  title: string
+  description: string
+  items: AssetSnapshot[]
+}
+
+export interface MultiAssetMarketData {
+  plan: MarketPlanSummary
+  groups: AssetMarketGroup[]
 }
 
 export interface MarketHoursSnapshot {
@@ -237,6 +291,8 @@ export interface StockDossier {
   insiderTrades: InsiderTradeEntry[]
   ownership: OwnershipEntry[]
   etfExposure: EtfExposureEntry[]
+  executives: ExecutiveEntry[]
+  shareFloat: ShareFloatSnapshot | null
   productSegments: RevenueSegmentation | null
   geographicSegments: RevenueSegmentation | null
   marketCapHistory: MarketCapPoint[]

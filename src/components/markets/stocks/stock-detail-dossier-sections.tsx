@@ -11,9 +11,11 @@ import {
 } from "@/components/markets/ui/market-primitives"
 import { Sparkline } from "@/components/markets/ui/sparkline"
 import {
+  formatCompactNumber,
   formatCurrency,
   formatLabeledMetricValue,
   formatMetricValue,
+  formatPercent,
 } from "@/lib/markets-format"
 import type { LockedMarketSection } from "@/lib/shared/markets/intelligence"
 
@@ -98,6 +100,59 @@ export async function StockBusinessMixSection({ symbol }: { symbol: string }) {
                 {business.secProfile?.sicDescription ?? ""}
               </div>
             </div>
+            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
+              <div className="text-xs text-muted-foreground">Free Float</div>
+              <div className="mt-2 text-sm">
+                {formatPercent(business.shareFloat?.freeFloatPercentage)}
+              </div>
+            </div>
+            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
+              <div className="text-xs text-muted-foreground">Float Shares</div>
+              <div className="mt-2 text-sm">
+                {formatCompactNumber(business.shareFloat?.floatShares)}
+              </div>
+            </div>
+            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
+              <div className="text-xs text-muted-foreground">
+                Outstanding Shares
+              </div>
+              <div className="mt-2 text-sm">
+                {formatCompactNumber(business.shareFloat?.outstandingShares)}
+              </div>
+            </div>
+          </div>
+
+          <div className="market-panel-list">
+            {business.executives.length > 0 ? (
+              business.executives.map((executive, index) => (
+                <div
+                  key={[
+                    executive.name ?? "name",
+                    executive.title ?? "title",
+                    String(index),
+                  ].join(":")}
+                  className="market-panel-tile px-3 py-2.5 sm:px-4"
+                >
+                  <div className="text-xs text-muted-foreground">
+                    {executive.title ?? "Executive"}
+                  </div>
+                  <div className="mt-2 text-sm">
+                    {executive.name ?? "Unknown"}
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {formatCurrency(executive.pay, {
+                      currency: executive.currencyPay ?? "USD",
+                      compact: true,
+                    })}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <EmptyState
+                title="No executive roster"
+                description="Key executives will appear here when the company reference endpoint returns leadership data."
+              />
+            )}
           </div>
         </div>
       </SectionFrame>
@@ -130,6 +185,12 @@ export async function StockPeersSection({ symbol }: { symbol: string }) {
                   </th>
                   <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
                     ROIC
+                  </th>
+                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                    DCF
+                  </th>
+                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                    Free Float
                   </th>
                   <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
                     Piotroski
@@ -166,6 +227,12 @@ export async function StockPeersSection({ symbol }: { symbol: string }) {
                     </td>
                     <td className="px-3 py-3 text-right">
                       {formatLabeledMetricValue("ROIC", peer.roic)}
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      {formatCurrency(peer.dcf)}
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      {formatPercent(peer.freeFloatPercentage)}
                     </td>
                     <td className="px-3 py-3 text-right">
                       {formatMetricValue(peer.piotroskiScore)}
