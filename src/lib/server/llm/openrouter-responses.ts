@@ -2,7 +2,8 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider"
 import { type ModelMessage, stepCountIs, streamText, type ToolSet } from "ai"
 
 import { asRecord, asString } from "@/lib/cast"
-import { type AgentStreamEvent, type ModelType } from "@/lib/shared"
+import type { AgentStreamEvent } from "@/lib/shared/agent/messages"
+import type { ModelType } from "@/lib/shared/llm/models"
 
 import {
   createAiSdkTavilyTools,

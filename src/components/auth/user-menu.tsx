@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { authClient } from "@/lib/auth-client"
-import type { AuthViewer } from "@/lib/shared"
+import type { AuthViewer } from "@/lib/shared/auth"
 
 import { getAuthErrorMessage } from "./auth-form-utils"
 

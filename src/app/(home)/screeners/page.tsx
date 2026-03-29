@@ -9,18 +9,20 @@ import {
   EmptyState,
   PageHeader,
   SectionFrame,
+  WarningStrip,
 } from "@/components/markets/ui/market-primitives"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { formatCompactNumber, formatCurrency } from "@/lib/markets-format"
 import { getCurrentViewer } from "@/lib/server/auth-session"
+import { isMarketStoreNotInitializedError } from "@/lib/server/markets/errors"
 import {
   getMarketScreenerOptions,
   getMarketSidebarData,
   getSavedMarketScreeners,
   runMarketScreener,
 } from "@/lib/server/markets/service"
-import type { ScreenerFilterState } from "@/lib/shared"
+import type { ScreenerFilterState } from "@/lib/shared/markets/workspace"
 
 const PRESET_SCREENERS: {
   name: string
@@ -129,12 +131,28 @@ export default async function ScreenersPage({
 
   const resolvedSearchParams = await searchParams
   const filters = parseFilters(resolvedSearchParams)
-  const [{ watchlists }, savedScreeners, results, options] = await Promise.all([
-    getMarketSidebarData(viewer.id),
-    getSavedMarketScreeners(viewer.id),
-    hasAnyFilter(filters) ? runMarketScreener(filters) : Promise.resolve([]),
-    getMarketScreenerOptions(),
-  ])
+  const [{ watchlists }, results, options, savedScreenersState] =
+    await Promise.all([
+      getMarketSidebarData(viewer.id),
+      hasAnyFilter(filters) ? runMarketScreener(filters) : Promise.resolve([]),
+      getMarketScreenerOptions(),
+      getSavedMarketScreeners(viewer.id)
+        .then((savedScreeners) => ({
+          savedScreeners,
+          warning: null as string | null,
+        }))
+        .catch((error: unknown) => {
+          if (!isMarketStoreNotInitializedError(error)) {
+            throw error
+          }
+
+          return {
+            savedScreeners: [],
+            warning: error.message,
+          }
+        }),
+    ])
+  const { savedScreeners, warning: savedScreenersWarning } = savedScreenersState
 
   const compareHref = `/compare?symbols=${encodeURIComponent(
     results
@@ -287,8 +305,17 @@ export default async function ScreenersPage({
         </form>
       </SectionFrame>
 
+      {savedScreenersWarning ? (
+        <WarningStrip warnings={[savedScreenersWarning]} />
+      ) : null}
+
       <SectionFrame title="Saved screens">
-        {savedScreeners.length > 0 ? (
+        {savedScreenersWarning ? (
+          <EmptyState
+            title="Saved screeners are unavailable"
+            description="Initialize the market tables and reload this page to restore saved screeners."
+          />
+        ) : savedScreeners.length > 0 ? (
           <div className="market-grid-2 grid gap-px border border-border/70 bg-border/70">
             {savedScreeners.map((screen) => (
               <div

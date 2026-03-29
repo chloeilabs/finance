@@ -1,16 +1,22 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import type { ScreenerFilterState, WatchlistRecord } from "@/lib/shared"
+import { readApiErrorMessage } from "@/lib/market-api"
+import type {
+  ScreenerFilterState,
+  WatchlistRecord,
+} from "@/lib/shared/markets/workspace"
 
 export function SaveScreenerButton({
   filters,
 }: {
   filters: ScreenerFilterState
 }) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   return (
@@ -26,21 +32,27 @@ export function SaveScreenerButton({
         }
 
         startTransition(async () => {
-          const response = await fetch("/api/screeners", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ name, filters }),
-          })
+          try {
+            const response = await fetch("/api/screeners", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ name, filters }),
+            })
 
-          if (!response.ok) {
+            if (!response.ok) {
+              toast.error(
+                await readApiErrorMessage(response, "Failed to save screener.")
+              )
+              return
+            }
+
+            toast.success("Screener saved.")
+            router.refresh()
+          } catch {
             toast.error("Failed to save screener.")
-            return
           }
-
-          toast.success("Screener saved.")
-          window.location.reload()
         })
       }}
     >
@@ -49,11 +61,8 @@ export function SaveScreenerButton({
   )
 }
 
-export function DeleteScreenerButton({
-  screenerId,
-}: {
-  screenerId: string
-}) {
+export function DeleteScreenerButton({ screenerId }: { screenerId: string }) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   return (
@@ -63,17 +72,26 @@ export function DeleteScreenerButton({
       variant="ghost"
       onClick={() => {
         startTransition(async () => {
-          const response = await fetch(`/api/screeners/${screenerId}`, {
-            method: "DELETE",
-          })
+          try {
+            const response = await fetch(`/api/screeners/${screenerId}`, {
+              method: "DELETE",
+            })
 
-          if (!response.ok) {
+            if (!response.ok) {
+              toast.error(
+                await readApiErrorMessage(
+                  response,
+                  "Failed to delete screener."
+                )
+              )
+              return
+            }
+
+            toast.success("Screener deleted.")
+            router.refresh()
+          } catch {
             toast.error("Failed to delete screener.")
-            return
           }
-
-          toast.success("Screener deleted.")
-          window.location.reload()
         })
       }}
     >
@@ -89,8 +107,11 @@ export function AddResultsToWatchlistButton({
   symbols: string[]
   watchlists: WatchlistRecord[]
 }) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [watchlistId, setWatchlistId] = useState<string>(watchlists[0]?.id ?? "")
+  const [watchlistId, setWatchlistId] = useState<string>(
+    watchlists[0]?.id ?? ""
+  )
 
   if (watchlists.length === 0) {
     return null
@@ -117,35 +138,50 @@ export function AddResultsToWatchlistButton({
         variant="outline"
         onClick={() => {
           startTransition(async () => {
-            const existing = await fetch(`/api/watchlists/${watchlistId}`, {
-              method: "GET",
-            })
+            try {
+              const existing = await fetch(`/api/watchlists/${watchlistId}`, {
+                method: "GET",
+              })
 
-            if (!existing.ok) {
-              toast.error("Failed to load watchlist.")
-              return
-            }
+              if (!existing.ok) {
+                toast.error(
+                  await readApiErrorMessage(
+                    existing,
+                    "Failed to load watchlist."
+                  )
+                )
+                return
+              }
 
-            const payload = (await existing.json()) as {
-              watchlist?: WatchlistRecord | null
-            }
-            const currentSymbols = payload.watchlist?.symbols ?? []
-            const nextSymbols = [...new Set([...currentSymbols, ...symbols])]
+              const payload = (await existing.json()) as {
+                watchlist?: WatchlistRecord | null
+              }
+              const currentSymbols = payload.watchlist?.symbols ?? []
+              const nextSymbols = [...new Set([...currentSymbols, ...symbols])]
 
-            const response = await fetch(`/api/watchlists/${watchlistId}`, {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ symbols: nextSymbols }),
-            })
+              const response = await fetch(`/api/watchlists/${watchlistId}`, {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ symbols: nextSymbols }),
+              })
 
-            if (!response.ok) {
+              if (!response.ok) {
+                toast.error(
+                  await readApiErrorMessage(
+                    response,
+                    "Failed to update watchlist."
+                  )
+                )
+                return
+              }
+
+              toast.success("Added screener results to watchlist.")
+              router.refresh()
+            } catch {
               toast.error("Failed to update watchlist.")
-              return
             }
-
-            toast.success("Added screener results to watchlist.")
           })
         }}
       >

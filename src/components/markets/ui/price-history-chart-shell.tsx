@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic"
 
-import type { PricePoint } from "@/lib/shared"
+import type { PricePoint } from "@/lib/shared/markets/core"
 
 const DynamicPriceHistoryChart = dynamic(
   () => import("./price-history-chart").then((mod) => mod.PriceHistoryChart),

@@ -19,7 +19,8 @@ import {
   MARKET_COPILOT_COOKIE_NAME,
   UI_STATE_COOKIE_MAX_AGE,
 } from "@/lib/constants"
-import type { AuthViewer, WatchlistRecord } from "@/lib/shared"
+import type { AuthViewer } from "@/lib/shared/auth"
+import type { WatchlistRecord } from "@/lib/shared/markets/workspace"
 
 import { MarketSidebar } from "./market-sidebar"
 

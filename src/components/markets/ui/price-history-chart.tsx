@@ -7,7 +7,7 @@ import {
   formatPercent,
   formatSignedNumber,
 } from "@/lib/markets-format"
-import type { PricePoint } from "@/lib/shared"
+import type { PricePoint } from "@/lib/shared/markets/core"
 import { cn } from "@/lib/utils"
 
 type ChartTimeframeId = "1M" | "3M" | "6M" | "YTD" | "1Y" | "3Y" | "MAX"

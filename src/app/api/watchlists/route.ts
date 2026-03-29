@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server"
-import { z } from "zod"
+import { z, ZodError } from "zod"
 
+import { createMarketApiErrorResponse } from "@/lib/server/markets/api-errors"
 import {
-  createAuthUnavailableResponse,
-  isAuthConfigured,
-} from "@/lib/server/auth"
-import { getRequestSession } from "@/lib/server/auth-session"
+  createMarketApiRequestContext,
+  requireMarketSession,
+} from "@/lib/server/markets/api-route"
+import { isMarketStoreNotInitializedError } from "@/lib/server/markets/errors"
 import {
   createNewWatchlistForUser,
   getMarketSidebarData,
@@ -20,73 +21,52 @@ const createWatchlistPayloadSchema = z
   })
   .strict()
 
-function createHeaders(requestId: string) {
-  return {
-    "Cache-Control": "no-store",
-    "X-Content-Type-Options": "nosniff",
-    "X-Request-Id": requestId,
-  }
-}
-
 export async function GET(request: Request) {
-  const requestId = crypto.randomUUID()
+  const context = createMarketApiRequestContext(request)
+  const { response, session } = await requireMarketSession(request, context)
 
-  if (!isAuthConfigured()) {
-    return createAuthUnavailableResponse(createHeaders(requestId))
-  }
-
-  const session = await getRequestSession(new Headers(request.headers))
-
-  if (!session) {
-    return NextResponse.json(
-      { error: "Unauthorized." },
-      {
-        status: 401,
-        headers: createHeaders(requestId),
-      }
-    )
+  if (response) {
+    return response
   }
 
   try {
-    const { watchlists } = await getMarketSidebarData(session.user.id)
+    const { watchlists, warnings } = await getMarketSidebarData(session.user.id)
+
+    if (warnings.some((warning) => warning.includes("pnpm markets:migrate"))) {
+      return createMarketApiErrorResponse({
+        code: "market_storage_unavailable",
+        error: "Market storage is not initialized. Run `pnpm markets:migrate`.",
+        headers: context.headers,
+        status: 503,
+      })
+    }
+
     return NextResponse.json(
       { watchlists },
       {
-        headers: createHeaders(requestId),
+        headers: context.headers,
       }
     )
   } catch (error) {
     console.error(
-      `[watchlists:${requestId}] Failed to fetch watchlists:`,
+      `[watchlists:${context.requestId}] Failed to fetch watchlists:`,
       error
     )
-    return NextResponse.json(
-      { error: "Failed to fetch watchlists." },
-      {
-        status: 500,
-        headers: createHeaders(requestId),
-      }
-    )
+    return createMarketApiErrorResponse({
+      code: "watchlists_fetch_failed",
+      error: "Failed to fetch watchlists.",
+      headers: context.headers,
+      status: 500,
+    })
   }
 }
 
 export async function POST(request: Request) {
-  const requestId = crypto.randomUUID()
+  const context = createMarketApiRequestContext(request)
+  const { response, session } = await requireMarketSession(request, context)
 
-  if (!isAuthConfigured()) {
-    return createAuthUnavailableResponse(createHeaders(requestId))
-  }
-
-  const session = await getRequestSession(new Headers(request.headers))
-
-  if (!session) {
-    return NextResponse.json(
-      { error: "Unauthorized." },
-      {
-        status: 401,
-        headers: createHeaders(requestId),
-      }
-    )
+  if (response) {
+    return response
   }
 
   try {
@@ -101,20 +81,37 @@ export async function POST(request: Request) {
       { watchlist },
       {
         status: 201,
-        headers: createHeaders(requestId),
+        headers: context.headers,
       }
     )
   } catch (error) {
+    if (error instanceof ZodError) {
+      return createMarketApiErrorResponse({
+        code: "invalid_watchlist_payload",
+        error: "Invalid watchlist payload.",
+        headers: context.headers,
+        status: 400,
+      })
+    }
+
+    if (isMarketStoreNotInitializedError(error)) {
+      return createMarketApiErrorResponse({
+        code: error.code,
+        error: error.message,
+        headers: context.headers,
+        status: 503,
+      })
+    }
+
     console.error(
-      `[watchlists:${requestId}] Failed to create watchlist:`,
+      `[watchlists:${context.requestId}] Failed to create watchlist:`,
       error
     )
-    return NextResponse.json(
-      { error: "Failed to create watchlist." },
-      {
-        status: 400,
-        headers: createHeaders(requestId),
-      }
-    )
+    return createMarketApiErrorResponse({
+      code: "watchlist_create_failed",
+      error: "Failed to create watchlist.",
+      headers: context.headers,
+      status: 500,
+    })
   }
 }

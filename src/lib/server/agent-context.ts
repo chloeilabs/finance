@@ -1,8 +1,10 @@
 import {
   type AuthViewer,
+} from "@/lib/shared/auth"
+import {
   DEFAULT_OPERATING_INSTRUCTION,
   DEFAULT_SOUL_FALLBACK_INSTRUCTION,
-} from "@/lib/shared"
+} from "@/lib/shared/llm/system-instructions"
 
 import {
   createPromptSteeringBlocks,

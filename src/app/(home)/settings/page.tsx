@@ -3,7 +3,7 @@ import {
   SectionFrame,
 } from "@/components/markets/ui/market-primitives"
 import { getMarketPlanSummary } from "@/lib/server/markets/config"
-import type { FmpCoverageScope } from "@/lib/shared"
+import type { FmpCoverageScope } from "@/lib/shared/markets/plan"
 
 function formatCoverageScope(scope: FmpCoverageScope) {
   switch (scope) {

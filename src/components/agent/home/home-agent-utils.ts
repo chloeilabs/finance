@@ -1,5 +1,6 @@
 import { ASSISTANT_EMPTY_RESPONSE_FALLBACK } from "@/lib/constants"
-import type { Message as AgentMessage, ModelType } from "@/lib/shared"
+import type { Message as AgentMessage } from "@/lib/shared/agent/messages"
+import type { ModelType } from "@/lib/shared/llm/models"
 
 export const EMPTY_ASSISTANT_RESPONSE_FALLBACK =
   ASSISTANT_EMPTY_RESPONSE_FALLBACK

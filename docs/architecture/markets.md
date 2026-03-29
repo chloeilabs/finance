@@ -1,0 +1,33 @@
+# Markets Architecture
+
+## Responsibilities
+
+- provider access: FMP request and mapping logic
+- cache policy: TTLs, stale-on-error fallback, cache keys
+- market time: `createMarketDateClock()` for all day-based queries
+- storage: watchlists, saved screeners, symbol directory, cache entries, usage tracking
+- page orchestration: compose provider and storage data for routes/pages
+
+## Working Rules
+
+- keep live FMP request semantics centralized
+- keep store and provider failures distinguishable
+- split focused modules by concern, then preserve stable exports from the existing facade while consumers migrate
+- search and directory hydration must stay non-blocking for user requests
+
+## Current Focused Modules
+
+- `cache.ts`: market cache orchestration and stale fallback
+- `service.ts`: stable facade plus higher-level page orchestration
+- `service-overview.ts`: home, markets, news, and calendar aggregation
+- `service-dossier.ts`: stable dossier facade for stock, compare, and watchlist flows
+- `service-dossier-overview.ts`: stock summary and locked-section resolution
+- `service-dossier-sections.ts`: trading, financial, context, street-view, and business section builders
+- `service-dossier-research.ts`: compare and watchlist research assembly
+- `service-dossier-fetchers.ts`: reusable cached stock fetch helpers
+- `store.ts`: stable Postgres persistence facade
+- `store-*.ts`: focused persistence modules for watchlists, directory, cache/usage, and screeners
+- `client.ts`: stable FMP client facade
+- `client/*`: domain-specific FMP fetchers and response mappers
+- `market-clock.ts`: market-day date helpers
+- `errors.ts` / `api-errors.ts`: domain error contracts
