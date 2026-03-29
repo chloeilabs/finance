@@ -77,10 +77,10 @@ function MarketCopilotPanel({
 
       <div className="min-h-0 flex-1 overflow-hidden">
         <HomePageContent
-          assistantActivityLayout="default"
+          assistantActivityLayout="fullWidth"
           assistantMessageLayout="fullWidth"
           contentWidthMode="rail"
-          craftingShimmerLayout="default"
+          craftingShimmerLayout="fullWidth"
           homePromptSuggestions={COPILOT_SUGGESTIONS}
           initialSelectedModel={initialSelectedModel}
           integratedLayout
