@@ -6,7 +6,7 @@ export function PageHeader({
   description,
   actions,
 }: {
-  eyebrow: string
+  eyebrow?: string
   title: string
   description?: string
   actions?: React.ReactNode
@@ -15,9 +15,11 @@ export function PageHeader({
     <header className="px-4 pt-4 pb-1 sm:px-6 sm:pt-5">
       <div className="market-page-header-layout">
         <div className="min-w-0 space-y-1.5">
-          <div className="font-departureMono text-[10px] tracking-[0.24em] text-muted-foreground uppercase">
-            {eyebrow}
-          </div>
+          {eyebrow ? (
+            <div className="font-departureMono text-[10px] tracking-[0.24em] text-muted-foreground uppercase">
+              {eyebrow}
+            </div>
+          ) : null}
           <div className="space-y-1">
             <h1 className="text-2xl tracking-tight sm:text-3xl">{title}</h1>
             {description ? (
