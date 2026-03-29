@@ -31,7 +31,7 @@ export function MarketShell({
   enableCopilotRail = true,
   initialCopilotOpen = false,
   initialSelectedModel,
-  initialSidebarOpen = true,
+  initialSidebarOpen = false,
   viewer,
   watchlists,
   warnings,
@@ -98,7 +98,9 @@ export function MarketShell({
                 "market-workspace min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain",
                 workspaceClassName
               )}
-              data-copilot-open={enableCopilotRail && copilotOpen ? "true" : "false"}
+              data-copilot-open={
+                enableCopilotRail && copilotOpen ? "true" : "false"
+              }
             >
               {children}
             </div>

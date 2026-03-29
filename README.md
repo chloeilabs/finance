@@ -59,6 +59,9 @@ Without `FMP_API_KEY`, the market shell still renders but the data sections rema
 - `pnpm format`: run Prettier
 - `pnpm format:check`: verify formatting
 - `pnpm test`: run the Vitest suite
+- `pnpm test:e2e`: run the Playwright browser smoke suite for auth + market flows
+- `pnpm test:e2e:copilot`: run the live `/copilot` smoke suite (uses the configured AI key)
+- `pnpm test:e2e:install`: install the Chromium browser used by Playwright
 - `pnpm test:watch`: run Vitest in watch mode
 - `pnpm typecheck`: run TypeScript checks
 
@@ -101,6 +104,7 @@ Before closing a substantial change, run:
 
 ```bash
 pnpm test
+pnpm test:e2e
 pnpm lint
 pnpm typecheck
 pnpm build

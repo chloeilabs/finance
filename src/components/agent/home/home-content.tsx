@@ -43,7 +43,7 @@ export function HomePageContent({
   homePromptSuggestions,
   initialSelectedModel,
   initialThreadId = null,
-  initialSidebarOpen = true,
+  initialSidebarOpen = false,
   userMessageLayout = "bubble",
   viewer,
   integratedLayout = false,

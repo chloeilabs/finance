@@ -8,6 +8,7 @@ import { redirect } from "next/navigation"
 
 import { ThreadsProvider } from "@/components/agent/home/threads-context"
 import { MarketShell } from "@/components/markets/layout/market-shell"
+import { resolvePersistedOpenState } from "@/components/markets/layout/sidebar-open-state"
 import { getModels } from "@/lib/actions/api-keys"
 import {
   MARKET_COPILOT_COOKIE_NAME,
@@ -41,8 +42,8 @@ export default async function MarketLayout({
   const cookieStore = await cookies()
   const sidebarCookie = cookieStore.get(SIDEBAR_COOKIE_NAME)?.value
   const copilotCookie = cookieStore.get(MARKET_COPILOT_COOKIE_NAME)?.value
-  const initialSidebarOpen = sidebarCookie ? sidebarCookie === "true" : true
-  const initialCopilotOpen = copilotCookie ? copilotCookie === "true" : false
+  const initialSidebarOpen = resolvePersistedOpenState(sidebarCookie)
+  const initialCopilotOpen = resolvePersistedOpenState(copilotCookie)
   const initialSelectedModel =
     availableModels.length > 0 ? resolveDefaultModel(availableModels) : null
 

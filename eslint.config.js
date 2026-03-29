@@ -13,13 +13,15 @@ import tseslint from "typescript-eslint"
 
 const tsconfigRootDir = path.dirname(fileURLToPath(import.meta.url))
 const sourceFiles = ["src/**/*.{ts,tsx}"]
+const e2eFiles = ["e2e/**/*.ts", "playwright.config.ts", "vitest.config.ts"]
 const scriptFiles = ["auth.ts"]
-const typeCheckedFiles = [...sourceFiles, ...scriptFiles]
+const typeCheckedFiles = [...sourceFiles, ...e2eFiles, ...scriptFiles]
 const nodeConfigFiles = [
   "eslint.config.js",
   "next.config.mjs",
   "postcss.config.mjs",
   "threads-migrate.mjs",
+  "test/run-playwright-live-ai.mjs",
 ]
 const typeCheckedConfigs = [
   ...tseslint.configs.recommendedTypeChecked,
@@ -118,6 +120,44 @@ export default [
     files: scriptFiles,
     languageOptions: {
       globals: {
+        ...globals.node,
+      },
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir,
+      },
+    },
+    plugins: {
+      "simple-import-sort": simpleImportSort,
+    },
+    rules: {
+      "no-console": "off",
+      "no-debugger": "error",
+      "no-duplicate-imports": "error",
+      "simple-import-sort/exports": "error",
+      "simple-import-sort/imports": "error",
+      "@typescript-eslint/consistent-type-imports": [
+        "error",
+        {
+          prefer: "type-imports",
+          fixStyle: "inline-type-imports",
+        },
+      ],
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-misused-promises": [
+        "error",
+        {
+          checksVoidReturn: false,
+        },
+      ],
+      "@typescript-eslint/no-unnecessary-condition": "error",
+    },
+  },
+  {
+    files: e2eFiles,
+    languageOptions: {
+      globals: {
+        ...globals.browser,
         ...globals.node,
       },
       parserOptions: {
