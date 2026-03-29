@@ -5,6 +5,7 @@ import {
   formatCurrency,
   formatDate,
   formatDateTime,
+  formatLabeledMetricValue,
   formatMetricValue,
   formatPercent,
   formatSignedNumber,
@@ -30,7 +31,7 @@ export function PageHeader({
 }: {
   eyebrow: string
   title: string
-  description: string
+  description?: string
   actions?: React.ReactNode
 }) {
   return (
@@ -42,9 +43,11 @@ export function PageHeader({
           </div>
           <div className="space-y-1">
             <h1 className="text-2xl tracking-tight sm:text-3xl">{title}</h1>
-            <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              {description}
-            </p>
+            {description ? (
+              <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+                {description}
+              </p>
+            ) : null}
           </div>
         </div>
         {actions ? (
@@ -373,7 +376,7 @@ export function MetricGrid({ metrics }: { metrics: MetricStat[] }) {
         <div key={metric.label} className="bg-background px-4 py-3">
           <div className="text-xs text-muted-foreground">{metric.label}</div>
           <div className="mt-3 text-lg tracking-tight">
-            {formatMetricValue(metric.value)}
+            {formatLabeledMetricValue(metric.label, metric.value)}
           </div>
         </div>
       ))}

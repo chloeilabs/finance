@@ -10,16 +10,9 @@ export default async function CalendarPage() {
 
   return (
     <div className="pb-10">
-      <PageHeader
-        eyebrow="Calendar"
-        title="Upcoming catalysts"
-        description="Earnings, dividends, splits, and economic releases pulled into one operational calendar for the next two weeks."
-      />
+      <PageHeader eyebrow="Calendar" title="Upcoming catalysts" />
 
-      <SectionFrame
-        title="Event feed"
-        description="Sorted chronologically to keep the near-term catalyst tape readable."
-      >
+      <SectionFrame title="Event feed">
         <CalendarList events={events} />
       </SectionFrame>
     </div>

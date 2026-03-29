@@ -15,7 +15,22 @@ import { getCurrentViewer } from "@/lib/server/auth-session"
 import { listThreadsForUser } from "@/lib/server/threads"
 import { resolveDefaultModel } from "@/lib/shared"
 
-export default async function CopilotPage() {
+function getSingleParam(value: string | string[] | undefined): string | null {
+  const raw = Array.isArray(value) ? value[0] : value
+  const normalized = raw?.trim()
+
+  if (!normalized) {
+    return null
+  }
+
+  return normalized
+}
+
+export default async function CopilotPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
   if (!isAuthConfigured()) {
     redirect("/sign-in")
   }
@@ -30,6 +45,8 @@ export default async function CopilotPage() {
 
   const availableModels = getModels()
   const initialThreads = await listThreadsForUser(viewer.id)
+  const resolvedSearchParams = await searchParams
+  const initialThreadId = getSingleParam(resolvedSearchParams.thread)
   const cookieStore = await cookies()
   const sidebarCookie = cookieStore.get(SIDEBAR_COOKIE_NAME)?.value
   const initialSidebarOpen = sidebarCookie ? sidebarCookie === "true" : true
@@ -44,6 +61,7 @@ export default async function CopilotPage() {
       <ThreadsProvider initialThreads={initialThreads}>
         <HomePageContent
           initialSelectedModel={resolvedInitialSelectedModel}
+          initialThreadId={initialThreadId}
           initialSidebarOpen={initialSidebarOpen}
           viewer={viewer}
         />
