@@ -26,6 +26,7 @@ import { LogoHover } from "../../graphics/logo/logo-hover"
 import { ScrollToBottom } from "../../task/scroll-to-bottom"
 import { Messages } from "../messages/messages"
 import { PromptForm } from "../prompt-form/prompt-form"
+import { useThreads } from "./threads-context"
 import { useAgentSession } from "./use-agent-session"
 
 type ViewTransitionStarter = (updateCallback: () => void) => unknown
@@ -34,10 +35,12 @@ const MOBILE_FALLBACK_TRANSITION_MS = 110
 
 export function HomePageContent({
   initialSelectedModel,
+  initialThreadId = null,
   initialSidebarOpen = true,
   viewer,
 }: {
   initialSelectedModel?: ModelType | null
+  initialThreadId?: string | null
   initialSidebarOpen?: boolean
   viewer: AuthViewer
 }) {
@@ -46,6 +49,7 @@ export function HomePageContent({
     useState(false)
   const fallbackTransitionTimeoutRef = useRef<number | null>(null)
   const isMobile = useIsMobile()
+  const { currentThreadId, setCurrentThreadId, threads } = useThreads()
   const {
     state,
     queuedSubmission,
@@ -119,6 +123,22 @@ export function HomePageContent({
     },
     [handlePromptSubmit, isMobile, startFallbackConversationTransition]
   )
+
+  useEffect(() => {
+    if (!initialThreadId) {
+      return
+    }
+
+    if (currentThreadId === initialThreadId) {
+      return
+    }
+
+    if (!threads.some((thread) => thread.id === initialThreadId)) {
+      return
+    }
+
+    setCurrentThreadId(initialThreadId)
+  }, [currentThreadId, initialThreadId, setCurrentThreadId, threads])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

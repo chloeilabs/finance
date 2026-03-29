@@ -11,7 +11,7 @@ export function AuthShell({
   children,
 }: {
   title: string
-  description: string
+  description?: string
   footer: React.ReactNode
   children: React.ReactNode
 }) {
@@ -37,7 +37,9 @@ export function AuthShell({
                 <h1 className="font-departureMono text-2xl tracking-tight">
                   {title}
                 </h1>
-                <p className="text-sm text-muted-foreground">{description}</p>
+                {description ? (
+                  <p className="text-sm text-muted-foreground">{description}</p>
+                ) : null}
               </div>
             </div>
 

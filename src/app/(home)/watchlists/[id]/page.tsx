@@ -37,7 +37,6 @@ export default async function WatchlistPage({
       <PageHeader
         eyebrow="Watchlist"
         title={watchlist.name}
-        description="Tracked symbols for your daily research flow. Updates run through the server-side cache and respect the active plan budget."
         actions={
           <Button asChild size="sm" variant="outline">
             <Link
@@ -51,20 +50,14 @@ export default async function WatchlistPage({
         }
       />
 
-      <SectionFrame
-        title="Symbols"
-        description="Add or remove names without leaving the page."
-      >
+      <SectionFrame title="Symbols">
         <WatchlistEditor
           watchlist={watchlist}
           watchlistLimit={plan.watchlistLimit}
         />
       </SectionFrame>
 
-      <SectionFrame
-        title="Research Table"
-        description="Sortable quote, momentum, calendar, and quality context for the entire watchlist."
-      >
+      <SectionFrame title="Research Table">
         <WatchlistResearchTable rows={rows} />
       </SectionFrame>
     </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import { Sparkles, X } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { StickToBottom } from "use-stick-to-bottom"
 
 import { ThreadsProvider } from "@/components/agent/home/threads-context"
@@ -10,19 +11,32 @@ import { PromptForm } from "@/components/agent/prompt-form/prompt-form"
 import { ScrollToBottom } from "@/components/task/scroll-to-bottom"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { useModels } from "@/hooks/agent/use-models"
+import { usePersistentSelectedModel } from "@/hooks/agent/use-persistent-selected-model"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 
+const COPILOT_SUGGESTIONS = [
+  "What is the bull case and bear case for Nvidia here?",
+  "What has to go right for Tesla over the next two quarters?",
+  "Does Apple's current valuation still fit the growth outlook?",
+  "What would make you change the thesis on Microsoft here?",
+] as const
+
 function MarketCopilotPanel({ onClose }: { onClose: () => void }) {
+  const router = useRouter()
   const {
     state,
     queuedSubmission,
     streamingState,
+    resetConversation,
     clearQueuedSubmission,
     handleStopStream,
     handlePromptSubmit,
     handleEditMessage,
   } = useAgentSession()
+  const { data: availableModels = [] } = useModels()
+  const { selectedModel } = usePersistentSelectedModel(null, availableModels)
 
   const hasMessages = state.messages.length > 0
 
@@ -35,15 +49,37 @@ function MarketCopilotPanel({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        <Button
-          aria-label="Close Copilot"
-          className="-mr-1 shrink-0"
-          onClick={onClose}
-          size="iconSm"
-          variant="ghost"
-        >
-          <X className="size-4" />
-        </Button>
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            className="h-7 px-2 font-departureMono text-[10px] tracking-tight text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              router.push("/history")
+            }}
+            size="sm"
+            variant="ghost"
+          >
+            History
+          </Button>
+
+          <Button
+            className="h-7 px-2 font-departureMono text-[10px] tracking-tight text-muted-foreground hover:text-foreground"
+            onClick={resetConversation}
+            size="sm"
+            variant="ghost"
+          >
+            New Chat
+          </Button>
+
+          <Button
+            aria-label="Close Copilot"
+            className="-mr-1 shrink-0"
+            onClick={onClose}
+            size="iconSm"
+            variant="ghost"
+          >
+            <X className="size-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-hidden">
@@ -65,15 +101,37 @@ function MarketCopilotPanel({ onClose }: { onClose: () => void }) {
                 />
               ) : (
                 <div className="flex flex-1 items-center">
-                  <div className="w-full border border-border/70 bg-muted/20 p-4">
-                    <div className="font-departureMono text-sm tracking-tight">
-                      Research without context switching.
+                  <div className="w-full border border-border/70 bg-muted/20 p-3">
+                    <div className="mb-3">
+                      <div className="font-departureMono text-sm tracking-tight text-foreground">
+                        Start with one of these.
+                      </div>
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      Use Copilot for catalysts, earnings prep, quick symbol
-                      comparisons, or follow-up questions on the market data in
-                      front of you.
-                    </p>
+
+                    <div className="flex flex-col gap-2">
+                      {COPILOT_SUGGESTIONS.map((suggestion) => (
+                        <Button
+                          key={suggestion}
+                          type="button"
+                          variant="ghost"
+                          disabled={!selectedModel}
+                          className="h-auto w-full justify-start border border-border/70 px-3 py-2 text-left text-sm font-normal whitespace-normal text-foreground hover:bg-muted/70"
+                          onClick={() => {
+                            if (!selectedModel) {
+                              return
+                            }
+
+                            handlePromptSubmit(
+                              suggestion,
+                              selectedModel,
+                              streamingState
+                            )
+                          }}
+                        >
+                          {suggestion}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}

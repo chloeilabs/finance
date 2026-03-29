@@ -21,7 +21,6 @@ export default async function SignInPage({
     return (
       <AuthShell
         title="Sign In Unavailable"
-        description="Authentication is not configured on this deployment yet."
         footer="Set the required server environment variables, then reload this page."
       >
         <AuthUnavailableState />
@@ -38,7 +37,6 @@ export default async function SignInPage({
   return (
     <AuthShell
       title="Sign In"
-      description="Access your Yurie account with your email and password."
       footer="Sessions persist for 30 days unless you sign out."
     >
       <SignInForm redirectTo={redirectTo} />

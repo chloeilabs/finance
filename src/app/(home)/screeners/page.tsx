@@ -145,16 +145,9 @@ export default async function ScreenersPage({
 
   return (
     <div className="pb-10">
-      <PageHeader
-        eyebrow="Screeners"
-        title="Company screener"
-        description="Submit-based filters with hydrated FMP reference data, saved screens, and direct handoff into compare and watchlist workflows."
-      />
+      <PageHeader eyebrow="Screeners" title="Company screener" />
 
-      <SectionFrame
-        title="Presets"
-        description="Fast starting points built for common research workflows."
-      >
+      <SectionFrame title="Presets">
         <div className="market-grid-3 grid gap-px border border-border/70 bg-border/70">
           {PRESET_SCREENERS.map((preset) => (
             <Link
@@ -173,10 +166,7 @@ export default async function ScreenersPage({
         </div>
       </SectionFrame>
 
-      <SectionFrame
-        title="Filter builder"
-        description="The form executes only on submit and returns cached screener results when available."
-      >
+      <SectionFrame title="Filter builder">
         <form className="market-grid-4 grid gap-3" method="GET">
           <Input
             name="marketCapMin"
@@ -297,10 +287,7 @@ export default async function ScreenersPage({
         </form>
       </SectionFrame>
 
-      <SectionFrame
-        title="Saved screens"
-        description="Saved screener definitions can be reopened, deleted, and reused as portfolio building blocks."
-      >
+      <SectionFrame title="Saved screens">
         {savedScreeners.length > 0 ? (
           <div className="market-grid-2 grid gap-px border border-border/70 bg-border/70">
             {savedScreeners.map((screen) => (
@@ -334,10 +321,7 @@ export default async function ScreenersPage({
         )}
       </SectionFrame>
 
-      <SectionFrame
-        title="Results"
-        description="Returned companies from the active filter set."
-      >
+      <SectionFrame title="Results">
         {results.length > 0 ? (
           <div className="space-y-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

@@ -117,10 +117,8 @@ function SidebarLink({
 
 export function MarketSidebar({
   watchlists,
-  planLabel,
 }: {
   watchlists: WatchlistRecord[]
-  planLabel: string
 }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -176,9 +174,6 @@ export function MarketSidebar({
             </SidebarMenu>
 
             <div className="group-data-[collapsible=icon]:hidden">
-              <div className="px-2 pt-1 text-[10px] tracking-[0.18em] text-sidebar-foreground/45 uppercase">
-                {planLabel} plan
-              </div>
               <WatchlistsLabel
                 isExpanded={isWatchlistsExpanded}
                 onToggle={() => {

@@ -16,23 +16,13 @@ export default async function NewsPage() {
 
   return (
     <div className="pb-10">
-      <PageHeader
-        eyebrow="News"
-        title="Market news"
-        description="Stock-specific and broader market headline feeds, cached tightly enough to stay responsive across supported FMP tiers."
-      />
+      <PageHeader eyebrow="News" title="Market news" />
 
-      <SectionFrame
-        title="Stock feed"
-        description="Recent stock stories from the FMP stock news feed."
-      >
+      <SectionFrame title="Stock feed">
         <NewsList stories={stories} />
       </SectionFrame>
 
-      <SectionFrame
-        title="General feed"
-        description="Broader market and macro headlines from the general news feed."
-      >
+      <SectionFrame title="General feed">
         <NewsList stories={snapshot.generalNews} />
       </SectionFrame>
     </div>

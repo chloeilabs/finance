@@ -51,10 +51,6 @@ export default async function StockPage({
         <PageHeader
           eyebrow="Stock"
           title={profile?.companyName ?? dossier.symbol}
-          description={
-            profile?.description ??
-            "Deep company workspace with cached market, fundamentals, street context, business mix, peer comparison, and plan-aware research modules."
-          }
           actions={
             <div className="flex gap-2">
               <Button asChild size="sm" variant="outline">
@@ -95,7 +91,6 @@ export default async function StockPage({
 
       <SectionFrame
         title="Price history"
-        description="End-of-day line chart for the currently available historical window on your active FMP plan."
         aside={dossier.plan.historicalRangeLabel}
       >
         <PriceHistoryChart
@@ -106,10 +101,7 @@ export default async function StockPage({
         />
       </SectionFrame>
 
-      <SectionFrame
-        title="Company summary"
-        description="Identity, listing context, and balance-sheet scale before diving into the rest of the dossier."
-      >
+      <SectionFrame title="Company summary">
         <div className="market-grid-6 grid gap-px border border-border/70 bg-border/70">
           <div className="bg-background px-4 py-3">
             <div className="text-xs text-muted-foreground">Exchange</div>
@@ -146,17 +138,11 @@ export default async function StockPage({
         </div>
       </SectionFrame>
 
-      <SectionFrame
-        title="Headline metrics"
-        description="Cross-cut metrics from key ratios, quality scores, and balance-sheet health."
-      >
+      <SectionFrame title="Headline metrics">
         <MetricGrid metrics={dossier.headlineStats} />
       </SectionFrame>
 
-      <SectionFrame
-        title="Valuation"
-        description="Owner earnings and enterprise value summary based on the currently available plan data."
-      >
+      <SectionFrame title="Valuation">
         {dossier.valuation ? (
           <div className="market-grid-4 grid gap-px border border-border/70 bg-border/70">
             <div className="bg-background px-4 py-3">
@@ -200,83 +186,34 @@ export default async function StockPage({
         )}
       </SectionFrame>
 
-      <Suspense
-        fallback={
-          <SectionLoadingState
-            description="Intraday tape, aftermarket prints, and short-horizon price action."
-            title="Trading"
-          />
-        }
-      >
+      <Suspense fallback={<SectionLoadingState title="Trading" />}>
         <StockTradingSection
           currency={quote?.currency}
           symbol={dossier.symbol}
         />
       </Suspense>
 
-      <Suspense
-        fallback={
-          <SectionLoadingState
-            description="Targets, estimate ranges, and recent ratings history."
-            title="Street View"
-          />
-        }
-      >
+      <Suspense fallback={<SectionLoadingState title="Street View" />}>
         <StockStreetViewSection symbol={dossier.symbol} />
       </Suspense>
 
-      <Suspense
-        fallback={
-          <SectionLoadingState
-            description="Financial scores and quality signals."
-            title="Quality"
-          />
-        }
-      >
+      <Suspense fallback={<SectionLoadingState title="Quality" />}>
         <StockQualitySection symbol={dossier.symbol} />
       </Suspense>
 
-      <Suspense
-        fallback={
-          <SectionLoadingState
-            description="Statements and growth series."
-            title="Financials"
-          />
-        }
-      >
+      <Suspense fallback={<SectionLoadingState title="Financials" />}>
         <StockFinancialSection symbol={dossier.symbol} />
       </Suspense>
 
-      <Suspense
-        fallback={
-          <SectionLoadingState
-            description="Revenue segmentation, SEC profile, and operating scale history."
-            title="Business Mix"
-          />
-        }
-      >
+      <Suspense fallback={<SectionLoadingState title="Business Mix" />}>
         <StockBusinessMixSection symbol={dossier.symbol} />
       </Suspense>
 
-      <Suspense
-        fallback={
-          <SectionLoadingState
-            description="Relative valuation, quality, and peer context."
-            title="Peers"
-          />
-        }
-      >
+      <Suspense fallback={<SectionLoadingState title="Peers" />}>
         <StockPeersSection symbol={dossier.symbol} />
       </Suspense>
 
-      <Suspense
-        fallback={
-          <SectionLoadingState
-            description="Catalysts, filings, and company-specific news."
-            title="Catalysts"
-          />
-        }
-      >
+      <Suspense fallback={<SectionLoadingState title="Catalysts" />}>
         <StockCatalystsSection symbol={dossier.symbol} />
       </Suspense>
 

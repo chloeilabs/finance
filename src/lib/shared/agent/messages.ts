@@ -12,6 +12,7 @@ export const TOOL_NAMES = [
   "code_execution",
   "tavily_search",
   "tavily_extract",
+  "fmp_mcp",
 ] as const
 export type ToolName = (typeof TOOL_NAMES)[number]
 

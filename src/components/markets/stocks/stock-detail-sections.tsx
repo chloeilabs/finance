@@ -16,6 +16,7 @@ import {
   formatCompactNumber,
   formatCurrency,
   formatDate,
+  formatLabeledMetricValue,
   formatMetricValue,
 } from "@/lib/markets-format"
 import {
@@ -106,15 +107,9 @@ export function StockSectionNav() {
   )
 }
 
-export function SectionLoadingState({
-  title,
-  description,
-}: {
-  title: string
-  description: string
-}) {
+export function SectionLoadingState({ title }: { title: string }) {
   return (
-    <SectionFrame title={title} description={description}>
+    <SectionFrame title={title}>
       <div className="border border-border/70 bg-background px-4 py-8 text-sm text-muted-foreground">
         Loading {title.toLowerCase()}...
       </div>
@@ -133,10 +128,7 @@ export async function StockTradingSection({
 
   return (
     <div id="trading">
-      <SectionFrame
-        title="Trading"
-        description="Intraday tape, aftermarket prints, and multi-period price change for short-horizon context."
-      >
+      <SectionFrame title="Trading">
         <StockTradingPanel
           aftermarket={trading.aftermarket}
           currency={currency}
@@ -153,10 +145,7 @@ export async function StockStreetViewSection({ symbol }: { symbol: string }) {
 
   return (
     <div id="street-view">
-      <SectionFrame
-        title="Street View"
-        description="Targets, estimate ranges, rating distribution, and recent model score changes."
-      >
+      <SectionFrame title="Street View">
         <div className="market-split-18 grid gap-4">
           <div className="grid gap-px border border-border/70 bg-border/70">
             <div className="bg-background px-4 py-3">
@@ -305,10 +294,7 @@ export async function StockQualitySection({ symbol }: { symbol: string }) {
 
   return (
     <div id="quality">
-      <SectionFrame
-        title="Quality"
-        description="Balance-sheet resilience and accounting quality from FMP financial scores."
-      >
+      <SectionFrame title="Quality">
         <MetricGrid metrics={metrics} />
       </SectionFrame>
     </div>
@@ -320,17 +306,11 @@ export async function StockFinancialSection({ symbol }: { symbol: string }) {
 
   return (
     <div id="financials">
-      <SectionFrame
-        title="Statements"
-        description="Recent annual statement snapshots for revenue, profitability, balance-sheet strength, and cash generation."
-      >
+      <SectionFrame title="Statements">
         <StatementTables tables={financial.statements} />
       </SectionFrame>
 
-      <SectionFrame
-        title="Growth"
-        description="Recent year-over-year change points derived from the income statement growth series."
-      >
+      <SectionFrame title="Growth">
         <MetricGrid metrics={financial.growth} />
       </SectionFrame>
     </div>
@@ -342,10 +322,7 @@ export async function StockBusinessMixSection({ symbol }: { symbol: string }) {
 
   return (
     <div id="business-mix">
-      <SectionFrame
-        title="Business Mix"
-        description="Revenue segmentation, SEC classification, market-cap path, and employee history."
-      >
+      <SectionFrame title="Business Mix">
         <div className="market-grid-2 grid gap-4">
           <SegmentationBlock
             segmentation={business.productSegments}
@@ -410,10 +387,7 @@ export async function StockPeersSection({ symbol }: { symbol: string }) {
 
   return (
     <div id="peers">
-      <SectionFrame
-        title="Peers"
-        description="Relative valuation, quality, and street sentiment for the peer set."
-      >
+      <SectionFrame title="Peers">
         {business.peers.length > 0 ? (
           <div className="overflow-x-auto border border-border/70">
             <table className="min-w-full border-collapse text-sm">
@@ -465,10 +439,10 @@ export async function StockPeersSection({ symbol }: { symbol: string }) {
                       {formatMetricValue(peer.peRatio)}
                     </td>
                     <td className="px-3 py-3 text-right">
-                      {formatMetricValue(peer.fcfYield)}
+                      {formatLabeledMetricValue("FCF Yield", peer.fcfYield)}
                     </td>
                     <td className="px-3 py-3 text-right">
-                      {formatMetricValue(peer.roic)}
+                      {formatLabeledMetricValue("ROIC", peer.roic)}
                     </td>
                     <td className="px-3 py-3 text-right">
                       {formatMetricValue(peer.piotroskiScore)}
@@ -494,24 +468,15 @@ export async function StockCatalystsSection({ symbol }: { symbol: string }) {
 
   return (
     <div id="catalysts">
-      <SectionFrame
-        title="Catalysts"
-        description="Company-specific earnings, dividends, and split events."
-      >
+      <SectionFrame title="Catalysts">
         <CalendarList events={context.calendar} />
       </SectionFrame>
 
-      <SectionFrame
-        title="Filings"
-        description="Recent SEC documents sourced through the filings search feed."
-      >
+      <SectionFrame title="Filings">
         <FilingList items={context.filings} />
       </SectionFrame>
 
-      <SectionFrame
-        title="News"
-        description="Recent company-specific stories from the FMP stock news feed."
-      >
+      <SectionFrame title="News">
         <NewsList stories={context.news} />
       </SectionFrame>
     </div>
@@ -529,10 +494,7 @@ export function StockPlanLimitsSection({
 
   return (
     <div id="plan-limits">
-      <SectionFrame
-        title="Plan limits"
-        description="Sections that are ready in the shell but intentionally gated by the current FMP plan."
-      >
+      <SectionFrame title="Plan limits">
         <div className="market-grid-3 grid gap-px border border-border/70 bg-border/70">
           {sections.map((section) => (
             <div key={section.title} className="bg-background px-4 py-4">

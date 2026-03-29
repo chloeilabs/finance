@@ -21,7 +21,6 @@ export default async function SignUpPage({
     return (
       <AuthShell
         title="Sign Up Unavailable"
-        description="Authentication is not configured on this deployment yet."
         footer="Set the required server environment variables, then reload this page."
       >
         <AuthUnavailableState />
@@ -38,7 +37,6 @@ export default async function SignUpPage({
   return (
     <AuthShell
       title="Create Account"
-      description="Set up your Yurie account to save your session and use the app."
       footer="New accounts can sign in immediately after registration."
     >
       <SignUpForm redirectTo={redirectTo} />
