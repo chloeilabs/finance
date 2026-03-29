@@ -3,6 +3,7 @@
 ## Responsibilities
 
 - provider access: FMP request and mapping logic
+- provider access: FMP REST request and mapping logic plus FMP MCP access for `/copilot`
 - cache policy: TTLs, stale-on-error fallback, cache keys
 - market time: `createMarketDateClock()` for all day-based queries
 - storage: watchlists, saved screeners, symbol directory, cache entries, usage tracking
@@ -11,6 +12,7 @@
 ## Working Rules
 
 - keep live FMP request semantics centralized
+- keep FMP MCP connection setup centralized and reuse the existing FMP env/config surface
 - keep store and provider failures distinguishable
 - split focused modules by concern, then preserve stable exports from the existing facade while consumers migrate
 - search and directory hydration must stay non-blocking for user requests
@@ -31,3 +33,4 @@
 - `client/*`: domain-specific FMP fetchers and response mappers
 - `market-clock.ts`: market-day date helpers
 - `errors.ts` / `api-errors.ts`: domain error contracts
+- `../llm/ai-sdk-fmp-mcp-tools.ts`: remote FMP MCP session bootstrap and usage-tracked tool wrapping for `/copilot`
