@@ -22,7 +22,7 @@ export default async function Home() {
 
   return (
     <div className="pb-10">
-      <PageHeader eyebrow="Workspace" title="Market overview" />
+      <PageHeader title="Market overview" />
 
       <SectionFrame
         title={`${overview.watchlist.name} watchlist`}

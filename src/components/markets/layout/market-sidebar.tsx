@@ -5,13 +5,13 @@ import {
   CalendarDays,
   ChevronDown,
   GitCompareArrows,
+  HatGlasses,
   MessageSquare,
   MoreHorizontal,
   Newspaper,
   Pencil,
   Pin,
   Search,
-  Sparkles,
   Star,
   Trash2,
   X,
@@ -90,8 +90,6 @@ const SIDEBAR_COLLAPSIBLE_LABEL_CLASS =
 const SIDEBAR_MENU_BUTTON_CLASS =
   "h-auto min-h-0 cursor-pointer justify-start gap-3 rounded-none px-2.5 py-2 text-sm font-normal text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground data-active:bg-sidebar-accent/70 data-active:font-normal data-active:text-sidebar-foreground"
 const SIDEBAR_MENU_LIST_CLASS = "gap-0.5"
-const SIDEBAR_SECTION_HEADING_CLASS =
-  "px-2 py-1 font-departureMono text-[10px] tracking-[0.18em] text-sidebar-foreground/55 uppercase group-data-[collapsible=icon]:hidden"
 const SIDEBAR_EMPTY_STATE_CLASS =
   "px-2.5 py-2 text-xs leading-5 text-sidebar-foreground/60"
 
@@ -637,10 +635,6 @@ export function MarketSidebar({
               </div>
 
               <div className="space-y-1.5">
-                <div className={SIDEBAR_SECTION_HEADING_CLASS}>
-                  Copilot
-                </div>
-
                 <SidebarMenu className={SIDEBAR_MENU_LIST_CLASS}>
                   <SidebarMenuItem>
                     <SidebarMenuButton
@@ -651,7 +645,7 @@ export function MarketSidebar({
                       }}
                       className={SIDEBAR_MENU_BUTTON_CLASS}
                     >
-                      <Sparkles className="size-4 text-sidebar-foreground" />
+                      <HatGlasses className="size-4 text-sidebar-foreground" />
                       <span>Copilot</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
