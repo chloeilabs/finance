@@ -5,13 +5,18 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { HomePageContent } from "@/components/agent/home/home-content"
-import { ThreadsProvider } from "@/components/agent/home/threads-context"
+import {
+  ThreadsProvider,
+  useThreads,
+} from "@/components/agent/home/threads-context"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { useIsMobile } from "@/hooks/use-mobile"
 import type { AuthViewer } from "@/lib/shared/auth"
 import type { ModelType } from "@/lib/shared/llm/models"
 import { cn } from "@/lib/utils"
+
+import { getCopilotOpenHref } from "./market-copilot-sidebar-utils"
 
 const COPILOT_SUGGESTIONS = [
   "What is the bull case and bear case for Nvidia here?",
@@ -32,6 +37,7 @@ function MarketCopilotPanel({
   viewer: AuthViewer
 }) {
   const router = useRouter()
+  const { currentThreadId } = useThreads()
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-background">
@@ -46,7 +52,7 @@ function MarketCopilotPanel({
           <Button
             className="h-7 px-2 font-departureMono text-[10px] tracking-tight text-muted-foreground hover:text-foreground"
             onClick={() => {
-              router.push("/copilot")
+              router.push(getCopilotOpenHref(currentThreadId))
             }}
             size="sm"
             variant="ghost"
