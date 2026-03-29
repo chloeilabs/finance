@@ -6,12 +6,14 @@ import { Sparkline } from "@/components/markets/ui/sparkline"
 import {
   formatCurrency,
   formatDateTime,
+  formatLabeledMetricValue,
   formatPercent,
 } from "@/lib/markets-format"
 import type {
   AftermarketSnapshot,
   PriceChangeSnapshot,
   PricePoint,
+  TechnicalIndicatorSeries,
 } from "@/lib/shared/markets/core"
 import type { FmpIntradayInterval } from "@/lib/shared/markets/plan"
 
@@ -46,17 +48,23 @@ export function StockTradingPanel({
   intradayCharts,
   aftermarket,
   priceChange,
+  technicals,
 }: {
   currency?: string | null
   intradayCharts: Partial<Record<FmpIntradayInterval, PricePoint[]>>
   aftermarket: AftermarketSnapshot | null
   priceChange: PriceChangeSnapshot | null
+  technicals: TechnicalIndicatorSeries[]
 }) {
   const intervals = Object.keys(intradayCharts) as FmpIntradayInterval[]
   const [selectedInterval, setSelectedInterval] = useState<FmpIntradayInterval>(
     intervals[0] ?? "5min"
   )
   const points = intradayCharts[selectedInterval] ?? []
+  const technicalSnapshots = technicals.map((series) => ({
+    label: series.label,
+    value: series.points[series.points.length - 1]?.value ?? null,
+  }))
 
   return (
     <div className="space-y-4">
@@ -131,6 +139,20 @@ export function StockTradingPanel({
             <div className="text-xs text-muted-foreground">{item.label}</div>
             <div className="mt-2 font-departureMono text-sm tracking-tight">
               {formatPercent(priceChange?.[item.key])}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="market-grid-4 market-panel-grid grid">
+        {technicalSnapshots.map((item) => (
+          <div
+            key={item.label}
+            className="market-panel-tile px-3 py-2.5 sm:px-4"
+          >
+            <div className="text-xs text-muted-foreground">{item.label}</div>
+            <div className="mt-2 font-departureMono text-sm tracking-tight">
+              {formatLabeledMetricValue(item.label, item.value)}
             </div>
           </div>
         ))}

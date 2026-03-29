@@ -21,6 +21,7 @@ import {
   getStockAftermarketSnapshot,
   getStockAnalystEstimates,
   getStockEmployeeHistory,
+  getStockExecutives,
   getStockFinancialScores,
   getStockGeographicSegments,
   getStockGradesConsensus,
@@ -30,6 +31,7 @@ import {
   getStockProductSegments,
   getStockRatingsHistory,
   getStockSecProfile,
+  getStockShareFloat,
   getStockTechnicals,
 } from "./service-dossier-fetchers"
 import { getStockDossierOverview } from "./service-dossier-overview"
@@ -257,6 +259,8 @@ export async function getStockDossierBusinessSection(symbol: string) {
     marketCapHistory,
     employeeHistory,
     secProfile,
+    executives,
+    shareFloat,
     peers,
   ] = await Promise.all([
     getStockProductSegments(normalizedSymbol),
@@ -264,6 +268,8 @@ export async function getStockDossierBusinessSection(symbol: string) {
     getStockMarketCapHistory(normalizedSymbol),
     getStockEmployeeHistory(normalizedSymbol),
     getStockSecProfile(normalizedSymbol),
+    getStockExecutives(normalizedSymbol),
+    getStockShareFloat(normalizedSymbol),
     getStockPeerComparison(normalizedSymbol),
   ])
 
@@ -273,6 +279,8 @@ export async function getStockDossierBusinessSection(symbol: string) {
     marketCapHistory,
     employeeHistory,
     secProfile,
+    executives,
+    shareFloat,
     peers,
   }
 }

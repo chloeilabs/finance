@@ -34,6 +34,7 @@ export async function StockTradingSection({
           currency={currency}
           intradayCharts={trading.intradayCharts}
           priceChange={trading.priceChange}
+          technicals={trading.technicals}
         />
       </SectionFrame>
     </div>
@@ -159,7 +160,9 @@ export async function StockStreetViewSection({ symbol }: { symbol: string }) {
                           key={`${entry.date ?? "date"}:${entry.rating ?? "rating"}`}
                           className="border-b border-border/35 last:border-b-0"
                         >
-                          <td className="px-3 py-2">{formatDate(entry.date)}</td>
+                          <td className="px-3 py-2">
+                            {formatDate(entry.date)}
+                          </td>
                           <td className="px-3 py-2">{entry.rating ?? "N/A"}</td>
                           <td className="px-3 py-2 text-right">
                             {entry.overallScore ?? "N/A"}

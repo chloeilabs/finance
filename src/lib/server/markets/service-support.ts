@@ -46,7 +46,7 @@ export const MOVERS_TTL_SECONDS = 60 * 3
 export const SECTOR_TTL_SECONDS = 60 * 60
 export const RISK_PREMIUM_TTL_SECONDS = 60 * 60 * 12
 export const QUOTE_FETCH_CONCURRENCY = 4
-export const EOD_CHART_CACHE_VERSION = "v2"
+export const EOD_CHART_CACHE_VERSION = "v3"
 export const INTRADAY_CHART_CACHE_VERSION = "v1"
 export const CORE_INDEX_SYMBOLS = ["^GSPC", "^IXIC", "^DJI", "^RUT"] as const
 export const CORE_ECONOMIC_INDICATORS = [
@@ -61,6 +61,19 @@ export const CORE_SECTOR_HISTORY = [
   "Financial Services",
   "Energy",
 ] as const
+export const CORE_CRYPTO_SYMBOLS = [
+  "BTCUSD",
+  "ETHUSD",
+  "SOLUSD",
+  "XRPUSD",
+] as const
+export const CORE_FOREX_SYMBOLS = [
+  "EURUSD",
+  "GBPUSD",
+  "USDJPY",
+  "AUDUSD",
+] as const
+export const CORE_COMMODITY_SYMBOLS = ["GCUSD", "SIUSD"] as const
 export const COMPARE_SYMBOL_LIMIT = 5
 
 export interface PeerProfileSnapshot {
@@ -121,7 +134,9 @@ export function compactMetricStats(groups: MetricStat[][]): MetricStat[] {
   return groups.flat().filter((item) => item.value !== null)
 }
 
-export function compactTables(tables: (StatementTable | null)[]): StatementTable[] {
+export function compactTables(
+  tables: (StatementTable | null)[]
+): StatementTable[] {
   return tables.filter((table): table is StatementTable => table !== null)
 }
 
@@ -173,8 +188,17 @@ export function getQuoteCacheKey(symbol: string): string {
   return `quote:${normalizeSymbol(symbol)}`
 }
 
-export function getEodChartCacheKey(symbol: string): string {
-  return `stock:${normalizeSymbol(symbol)}:eod-chart:${EOD_CHART_CACHE_VERSION}`
+export function getEodChartCacheKey(
+  symbol: string,
+  variant: "full" | "compact" = "full"
+): string {
+  return [
+    "stock",
+    normalizeSymbol(symbol),
+    "eod-chart",
+    variant,
+    EOD_CHART_CACHE_VERSION,
+  ].join(":")
 }
 
 export function getIntradayChartCacheKey(

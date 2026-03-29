@@ -8,6 +8,9 @@ export const MARKET_SCREENER_SORT_KEYS = [
   "volume",
   "beta",
   "dividend",
+  "dcf",
+  "piotroskiScore",
+  "freeFloatPercentage",
 ] as const
 
 export type MarketScreenerSortKey = (typeof MARKET_SCREENER_SORT_KEYS)[number]

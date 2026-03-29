@@ -18,10 +18,12 @@ export type FmpCoverageScope = "us" | "usUkCanada" | "global"
 export const FMP_CAPABILITY_KEYS = [
   "realtimeQuotes",
   "intradayCharts",
+  "technicalIndicators",
   "batchQuotes",
   "batchIndexQuotes",
   "analystInsights",
   "insiderTrades",
+  "latestInsiderFeed",
   "ownership",
   "etfAssetExposure",
   "secFilings",
@@ -30,6 +32,11 @@ export const FMP_CAPABILITY_KEYS = [
   "dcf",
   "earningsTranscripts",
   "pressReleases",
+  "companyExecutives",
+  "shareFloatLiquidity",
+  "cryptoMarkets",
+  "forexMarkets",
+  "commodityMarkets",
   "globalCoverage",
 ] as const
 
@@ -38,10 +45,12 @@ export type FmpCapabilityKey = (typeof FMP_CAPABILITY_KEYS)[number]
 export interface FmpCapabilities {
   realtimeQuotes: boolean
   intradayCharts: boolean
+  technicalIndicators: boolean
   batchQuotes: boolean
   batchIndexQuotes: boolean
   analystInsights: boolean
   insiderTrades: boolean
+  latestInsiderFeed: boolean
   ownership: boolean
   etfAssetExposure: boolean
   secFilings: boolean
@@ -50,6 +59,11 @@ export interface FmpCapabilities {
   dcf: boolean
   earningsTranscripts: boolean
   pressReleases: boolean
+  companyExecutives: boolean
+  shareFloatLiquidity: boolean
+  cryptoMarkets: boolean
+  forexMarkets: boolean
+  commodityMarkets: boolean
   globalCoverage: boolean
   coverageScope: FmpCoverageScope
   intradayIntervals: FmpIntradayInterval[]

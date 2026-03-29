@@ -10,21 +10,20 @@ import type {
   AnalystEstimateSnapshot,
   AnalystSummary,
   EmployeeCountPoint,
+  ExecutiveEntry,
   GradesConsensus,
   MarketCapPoint,
   PeerComparisonRow,
   RatingsHistoricalEntry,
   RevenueSegmentation,
   SecProfile,
+  ShareFloatSnapshot,
   StockDossier,
 } from "@/lib/shared/markets/intelligence"
 import type { FmpIntradayInterval } from "@/lib/shared/markets/plan"
 
 import { withMarketCache } from "./cache"
-import {
-  getQuoteCacheTtlSeconds,
-  isCapabilityEnabled,
-} from "./config"
+import { getQuoteCacheTtlSeconds, isCapabilityEnabled } from "./config"
 import {
   ANALYST_TTL_SECONDS,
   client,
@@ -100,7 +99,7 @@ export async function getStockTechnicals(
     category: "technicals",
     ttlSeconds: TECHNICAL_TTL_SECONDS,
     fallback: [] as TechnicalIndicatorSeries[],
-    allowLive: isCapabilityEnabled("intradayCharts"),
+    allowLive: isCapabilityEnabled("technicalIndicators"),
     staleOnError: true,
     fetcher: () => client.technicals.getCoreIndicators(symbol),
   })
@@ -116,6 +115,20 @@ export async function getStockFinancialScores(
     fallback: null,
     staleOnError: true,
     fetcher: () => client.fundamentals.getFinancialScores(symbol),
+  })
+}
+
+export async function getStockValuationSnapshot(
+  symbol: string
+): Promise<StockDossier["valuation"]> {
+  return withMarketCache({
+    cacheKey: `stock:${symbol}:valuation`,
+    category: "valuation",
+    ttlSeconds: PROFILE_TTL_SECONDS,
+    fallback: null,
+    allowLive: isCapabilityEnabled("dcf"),
+    staleOnError: true,
+    fetcher: () => client.valuation.getSnapshot(symbol),
   })
 }
 
@@ -246,6 +259,34 @@ export async function getStockSecProfile(
   })
 }
 
+export async function getStockExecutives(
+  symbol: string
+): Promise<ExecutiveEntry[]> {
+  return withMarketCache({
+    cacheKey: `stock:${symbol}:executives`,
+    category: "profile",
+    ttlSeconds: PROFILE_TTL_SECONDS,
+    fallback: [] as ExecutiveEntry[],
+    allowLive: isCapabilityEnabled("companyExecutives"),
+    staleOnError: true,
+    fetcher: () => client.company.getKeyExecutives(symbol),
+  })
+}
+
+export async function getStockShareFloat(
+  symbol: string
+): Promise<ShareFloatSnapshot | null> {
+  return withMarketCache({
+    cacheKey: `stock:${symbol}:share-float`,
+    category: "profile",
+    ttlSeconds: PROFILE_TTL_SECONDS,
+    fallback: null,
+    allowLive: isCapabilityEnabled("shareFloatLiquidity"),
+    staleOnError: true,
+    fetcher: () => client.company.getShareFloat(symbol),
+  })
+}
+
 export async function getPeerComparisonRows(
   symbols: string[]
 ): Promise<PeerComparisonRow[]> {
@@ -255,13 +296,24 @@ export async function getPeerComparisonRows(
     normalized,
     QUOTE_FETCH_CONCURRENCY,
     async (symbol) => {
-      const [profile, quote, ratios, keyMetrics, scores, analyst]: [
+      const [
+        profile,
+        quote,
+        ratios,
+        keyMetrics,
+        scores,
+        analyst,
+        valuation,
+        shareFloat,
+      ]: [
         PeerProfileSnapshot | null,
         QuoteSnapshot | null,
         MetricStat[],
         MetricStat[],
         StockDossier["financialScores"],
         AnalystSummary | null,
+        StockDossier["valuation"],
+        ShareFloatSnapshot | null,
       ] = await Promise.all([
         withMarketCache({
           cacheKey: `stock:${symbol}:profile`,
@@ -298,6 +350,8 @@ export async function getPeerComparisonRows(
           staleOnError: true,
           fetcher: () => client.analyst.getSummary(symbol),
         }),
+        getStockValuationSnapshot(symbol),
+        getStockShareFloat(symbol),
       ])
 
       return {
@@ -311,6 +365,9 @@ export async function getPeerComparisonRows(
         roic: getMetricNumberByLabel(keyMetrics, "ROIC"),
         altmanZScore: scores?.altmanZScore ?? null,
         piotroskiScore: scores?.piotroskiScore ?? null,
+        dcf: valuation?.dcf ?? null,
+        freeFloatPercentage: shareFloat?.freeFloatPercentage ?? null,
+        floatShares: shareFloat?.floatShares ?? null,
         analystConsensus: analyst?.ratingSummary ?? null,
       } satisfies PeerComparisonRow
     }

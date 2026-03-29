@@ -2,6 +2,11 @@ import "server-only"
 
 export { withMarketCache } from "./cache"
 export {
+  getLatestInsiderFeed,
+  getLatestSecActivity,
+  getMultiAssetSnapshot,
+} from "./service-assets"
+export {
   getComparePageData,
   getStockDossier,
   getStockDossierBusinessSection,
@@ -22,6 +27,7 @@ export {
 export {
   createNewWatchlistForUser,
   deleteSavedMarketScreener,
+  getEnrichedMarketScreenerResults,
   getMarketScreenerOptions,
   getMarketSidebarData,
   getSavedMarketScreeners,

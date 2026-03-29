@@ -5,6 +5,13 @@ vi.mock("../config", async () => {
 
   return {
     ...actual,
+    getFmpPlanValidationSummary: vi.fn(() => ({
+      accessibleProbes: ["quote"],
+      restrictedProbes: [],
+      source: "test",
+      tier: "STARTER",
+      validatedAt: "2026-03-29T00:00:00.000Z",
+    })),
     getMarketPlanSummary: vi.fn(() => ({
       bandwidthLimitLabel: "test",
       capabilities: {},

@@ -22,6 +22,12 @@ pnpm markets:capabilities
 
 Use these when market storage, FMP capability assumptions, cache semantics, or route error contracts change.
 
+When FMP capability assumptions changed and you need to persist the live plan snapshot, also run:
+
+```bash
+pnpm markets:capabilities:write
+```
+
 ## Copilot Changes
 
 Run the full matrix and smoke the `/copilot` path:
