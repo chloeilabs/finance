@@ -102,22 +102,22 @@ export default async function StockPage({
       </SectionFrame>
 
       <SectionFrame title="Company summary">
-        <div className="market-grid-6 grid gap-px border border-border/70 bg-border/70">
-          <div className="bg-background px-4 py-3">
+        <div className="market-grid-6 market-panel-grid grid">
+          <div className="market-panel-tile px-3 py-2.5 sm:px-4">
             <div className="text-xs text-muted-foreground">Exchange</div>
             <div className="mt-2 text-sm">
               {profile?.exchangeShortName ?? quote?.exchange ?? "N/A"}
             </div>
           </div>
-          <div className="bg-background px-4 py-3">
+          <div className="market-panel-tile px-3 py-2.5 sm:px-4">
             <div className="text-xs text-muted-foreground">Sector</div>
             <div className="mt-2 text-sm">{profile?.sector ?? "N/A"}</div>
           </div>
-          <div className="bg-background px-4 py-3">
+          <div className="market-panel-tile px-3 py-2.5 sm:px-4">
             <div className="text-xs text-muted-foreground">Industry</div>
             <div className="mt-2 text-sm">{profile?.industry ?? "N/A"}</div>
           </div>
-          <div className="bg-background px-4 py-3">
+          <div className="market-panel-tile px-3 py-2.5 sm:px-4">
             <div className="text-xs text-muted-foreground">Market Cap</div>
             <div className="mt-2 text-sm">
               {formatCurrency(profile?.marketCap ?? quote?.marketCap, {
@@ -125,13 +125,13 @@ export default async function StockPage({
               })}
             </div>
           </div>
-          <div className="bg-background px-4 py-3">
+          <div className="market-panel-tile px-3 py-2.5 sm:px-4">
             <div className="text-xs text-muted-foreground">Employees</div>
             <div className="mt-2 text-sm">
               {formatCompactNumber(profile?.employees)}
             </div>
           </div>
-          <div className="bg-background px-4 py-3">
+          <div className="market-panel-tile px-3 py-2.5 sm:px-4">
             <div className="text-xs text-muted-foreground">IPO Date</div>
             <div className="mt-2 text-sm">{formatDate(profile?.ipoDate)}</div>
           </div>
@@ -144,20 +144,20 @@ export default async function StockPage({
 
       <SectionFrame title="Valuation">
         {dossier.valuation ? (
-          <div className="market-grid-4 grid gap-px border border-border/70 bg-border/70">
-            <div className="bg-background px-4 py-3">
+          <div className="market-grid-4 market-panel-grid grid">
+            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
               <div className="text-xs text-muted-foreground">DCF</div>
               <div className="mt-2 text-lg tracking-tight">
                 {formatCurrency(dossier.valuation.dcf)}
               </div>
             </div>
-            <div className="bg-background px-4 py-3">
+            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
               <div className="text-xs text-muted-foreground">Market Cap</div>
               <div className="mt-2 text-lg tracking-tight">
                 {formatCurrency(dossier.valuation.marketCap, { compact: true })}
               </div>
             </div>
-            <div className="bg-background px-4 py-3">
+            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
               <div className="text-xs text-muted-foreground">
                 Enterprise Value
               </div>
@@ -167,7 +167,7 @@ export default async function StockPage({
                 })}
               </div>
             </div>
-            <div className="bg-background px-4 py-3">
+            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
               <div className="text-xs text-muted-foreground">
                 Owner Earnings
               </div>

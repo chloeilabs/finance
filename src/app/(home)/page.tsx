@@ -39,7 +39,7 @@ export default async function Home() {
       <SectionFrame
         title="Market pulse"
       >
-        <div className="market-grid-3 grid gap-4">
+        <div className="market-grid-3 grid gap-3">
           {overview.movers.map((bucket) => (
             <div key={bucket.label} className="space-y-3">
               <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
@@ -66,11 +66,11 @@ export default async function Home() {
       <SectionFrame
         title="Macro rates"
       >
-        <div className="market-grid-6 grid gap-px border border-border/70 bg-border/70">
+        <div className="market-grid-6 market-panel-grid grid">
           {overview.macro.map((item) => (
             <div
               key={`${item.label}:${item.date ?? "current"}`}
-              className="bg-background px-4 py-3"
+              className="market-panel-tile px-3 py-2.5 sm:px-4"
             >
               <div className="text-xs text-muted-foreground">{item.label}</div>
               <div className="mt-3 text-lg tracking-tight">
@@ -93,9 +93,12 @@ export default async function Home() {
       <SectionFrame
         title="Exchange state"
       >
-        <div className="market-grid-3 grid gap-px border border-border/70 bg-border/70">
+        <div className="market-grid-3 market-panel-grid grid">
           {overview.marketHours.map((item) => (
-            <div key={item.exchange} className="bg-background px-4 py-3">
+            <div
+              key={item.exchange}
+              className="market-panel-tile px-3 py-2.5 sm:px-4"
+            >
               <div className="font-departureMono text-xs tracking-tight">
                 {item.exchange}
               </div>
@@ -114,11 +117,11 @@ export default async function Home() {
       <SectionFrame
         title="Upcoming holidays"
       >
-        <div className="market-grid-3 grid gap-px border border-border/70 bg-border/70">
+        <div className="market-grid-3 market-panel-grid grid">
           {overview.marketHolidays.map((item) => (
             <div
               key={`${item.exchange}:${item.date ?? ""}`}
-              className="bg-background px-4 py-3"
+              className="market-panel-tile px-3 py-2.5 sm:px-4"
             >
               <div className="font-departureMono text-xs tracking-tight">
                 {item.exchange}
@@ -135,11 +138,11 @@ export default async function Home() {
       <SectionFrame
         title="Sector valuation"
       >
-        <div className="market-grid-4 grid gap-px border border-border/70 bg-border/70">
+        <div className="market-grid-4 market-panel-grid grid">
           {overview.sectorValuations.map((item) => (
             <div
               key={`${item.sector}:${item.exchange ?? ""}`}
-              className="bg-background px-4 py-3"
+              className="market-panel-tile px-3 py-2.5 sm:px-4"
             >
               <div className="text-xs text-muted-foreground">{item.sector}</div>
               <div className="mt-2 text-lg tracking-tight">

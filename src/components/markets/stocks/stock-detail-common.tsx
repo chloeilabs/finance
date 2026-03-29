@@ -22,7 +22,7 @@ export function SegmentationBlock({
   }
 
   return (
-    <div className="space-y-3 border border-border/70 px-4 py-4">
+    <div className="market-soft-surface space-y-3 px-4 py-4">
       <div>
         <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
           {title}
@@ -62,12 +62,12 @@ export function StockSectionNav() {
   ] as const
 
   return (
-    <div className="sticky top-0 z-20 border-y border-border/70 bg-background/95 px-4 py-3 backdrop-blur sm:px-6">
+    <div className="sticky top-0 z-20 bg-background/95 px-4 py-2.5 backdrop-blur sm:px-6">
       <div className="flex gap-2 overflow-x-auto">
         {items.map(([id, label]) => (
           <a
             key={id}
-            className="shrink-0 border border-border/70 px-3 py-1 text-xs transition-colors hover:bg-muted/35"
+            className="market-chip shrink-0 px-3 py-1 text-xs transition-colors hover:bg-muted/60"
             href={`#${id}`}
           >
             {label}
@@ -81,7 +81,7 @@ export function StockSectionNav() {
 export function SectionLoadingState({ title }: { title: string }) {
   return (
     <SectionFrame title={title}>
-      <div className="border border-border/70 bg-background px-4 py-8 text-sm text-muted-foreground">
+      <div className="market-soft-surface px-4 py-8 text-sm text-muted-foreground">
         Loading {title.toLowerCase()}...
       </div>
     </SectionFrame>

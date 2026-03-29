@@ -166,11 +166,11 @@ export default async function ScreenersPage({
       <PageHeader eyebrow="Screeners" title="Company screener" />
 
       <SectionFrame title="Presets">
-        <div className="market-grid-3 grid gap-px border border-border/70 bg-border/70">
+        <div className="market-grid-3 market-panel-grid grid">
           {PRESET_SCREENERS.map((preset) => (
             <Link
               key={preset.name}
-              className="bg-background px-4 py-4 transition-colors hover:bg-muted/35"
+              className="market-panel-tile px-4 py-4 transition-colors hover:bg-muted/35"
               href={preset.href}
             >
               <div className="font-departureMono text-sm tracking-tight">
@@ -316,11 +316,11 @@ export default async function ScreenersPage({
             description="Initialize the market tables and reload this page to restore saved screeners."
           />
         ) : savedScreeners.length > 0 ? (
-          <div className="market-grid-2 grid gap-px border border-border/70 bg-border/70">
+          <div className="market-grid-2 market-panel-grid grid">
             {savedScreeners.map((screen) => (
               <div
                 key={screen.id}
-                className="flex items-start justify-between gap-3 bg-background px-4 py-3"
+                className="market-panel-tile flex items-start justify-between gap-3 px-3 py-2.5 sm:px-4"
               >
                 <div>
                   <Link
@@ -366,11 +366,11 @@ export default async function ScreenersPage({
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="market-panel-list">
               {results.map((result) => (
                 <Link
                   key={`${result.symbol}:${result.exchangeShortName ?? ""}`}
-                  className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-3 border border-border/70 px-4 py-3 transition-colors hover:bg-muted/35"
+                  className="market-panel-row grid grid-cols-[auto_minmax(0,1fr)_auto] gap-3 px-3 py-2.5 transition-colors hover:bg-muted/35 sm:px-4"
                   href={`/stocks/${encodeURIComponent(result.symbol)}`}
                 >
                   <div className="font-departureMono text-sm tracking-tight">

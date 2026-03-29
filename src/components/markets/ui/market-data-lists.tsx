@@ -22,7 +22,7 @@ export function CalendarList({ events }: { events: CalendarEvent[] }) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="market-panel-list">
       {events.map((event, index) => (
         <div
           key={[
@@ -35,7 +35,7 @@ export function CalendarList({ events }: { events: CalendarEvent[] }) {
             event.estimate ?? "",
             String(index),
           ].join(":")}
-          className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border border-border/70 px-3 py-2"
+          className="market-panel-row grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2"
         >
           <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
             {event.eventType}
@@ -69,23 +69,23 @@ export function NewsList({ stories }: { stories: NewsStory[] }) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       {stories.map((story) => (
         <a
           key={story.id}
-          className="block border border-border/70 px-4 py-3 transition-colors hover:bg-muted/35"
+          className="market-soft-surface block px-4 py-3.5 transition-colors hover:bg-muted/45"
           href={story.url}
           rel="noreferrer noopener"
           target="_blank"
         >
-          <div className="flex items-center gap-2 text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
+          <div className="flex flex-wrap items-center gap-2 text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
             <span>{story.site ?? "Market feed"}</span>
             <span>{story.symbol ?? "Macro"}</span>
             <span>{formatDateTime(story.publishedAt)}</span>
           </div>
           <div className="mt-2 text-sm leading-6">{story.title}</div>
           {story.text ? (
-            <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+            <p className="mt-1.5 line-clamp-3 text-xs leading-5 text-muted-foreground">
               {story.text}
             </p>
           ) : null}
@@ -106,33 +106,30 @@ export function StatementTables({ tables }: { tables: StatementTable[] }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {tables.map((table) => (
-        <div
-          key={table.title}
-          className="overflow-x-auto border border-border/70"
-        >
+        <div key={table.title} className="market-table-frame">
           <table className="min-w-full border-collapse text-sm">
             <thead>
-              <tr className="border-b border-border/70 bg-muted/30 text-left">
+              <tr className="border-b border-border/50 bg-background/80 text-left">
                 <th className="px-3 py-2 font-departureMono text-xs tracking-tight">
                   {table.title}
                 </th>
                 {table.columns.map((column) => (
                   <th
                     key={`${table.title}:${column}`}
-                    className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground"
-                  >
-                    {column}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
+                  className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground"
+                >
+                  {column}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
               {table.rows.map((row) => (
                 <tr
                   key={`${table.title}:${row.label}`}
-                  className="border-b border-border/40 last:border-b-0"
+                  className="border-b border-border/35 last:border-b-0"
                 >
                   <td className="px-3 py-2 text-muted-foreground">
                     {row.label}
@@ -175,7 +172,7 @@ export function FilingList({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="market-panel-list">
       {items.map((item, index) => (
         <a
           key={
@@ -186,7 +183,7 @@ export function FilingList({
               String(index),
             ].join(":")
           }
-          className="flex items-center justify-between gap-3 border border-border/70 px-4 py-3 transition-colors hover:bg-muted/35"
+          className="market-panel-row flex items-center justify-between gap-3 px-3 py-2.5 transition-colors hover:bg-muted/35 sm:px-4"
           href={item.finalLink ?? "#"}
           rel="noreferrer noopener"
           target="_blank"

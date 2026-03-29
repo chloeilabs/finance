@@ -26,8 +26,8 @@ export function StockHeadline({
   const positive = (change ?? 0) >= 0
 
   return (
-    <div className="market-split-18 grid gap-px border border-border/70 bg-border/70">
-      <div className="bg-background px-4 py-4 sm:px-6">
+    <div className="market-split-18 market-panel-grid grid">
+      <div className="market-panel-tile px-4 py-4 sm:px-5">
         <div className="font-departureMono text-[11px] tracking-[0.26em] text-muted-foreground uppercase">
           {symbol}
         </div>
@@ -50,8 +50,8 @@ export function StockHeadline({
           </div>
         </div>
       </div>
-      <div className="grid gap-px bg-border/70">
-        <div className="bg-background px-4 py-3">
+      <div className="market-panel-list">
+        <div className="market-panel-tile px-3 py-2.5 sm:px-4">
           <div className="text-xs text-muted-foreground">Session change</div>
           <div
             className={cn(
@@ -64,7 +64,7 @@ export function StockHeadline({
             {formatSignedNumber(change)} / {formatPercent(changesPercentage)}
           </div>
         </div>
-        <div className="bg-background px-4 py-3">
+        <div className="market-panel-tile px-3 py-2.5 sm:px-4">
           <div className="text-xs text-muted-foreground">Currency</div>
           <div className="mt-2 text-sm">{currency ?? "USD"}</div>
         </div>
