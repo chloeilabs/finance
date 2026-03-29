@@ -293,12 +293,7 @@ export function AssistantMessage({
             resolvedActivityLayout === "default" && "px-3"
           )}
         >
-          <div
-            className={cn(
-              "mb-1",
-              resolvedActivityLayout === "fullWidth" && "px-3"
-            )}
-          >
+          <div className="mb-1">
             <button
               type="button"
               className="inline-flex cursor-pointer items-center gap-1 bg-transparent p-0 font-departureMono text-[11px] font-medium tracking-wide text-muted-foreground/80 transition-colors hover:text-foreground"
