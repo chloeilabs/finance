@@ -99,7 +99,7 @@ export function WatchlistEditor({
   }
 
   return (
-    <div className="space-y-3 border border-border/70 px-4 py-4">
+    <div className="market-soft-surface space-y-3 px-4 py-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="font-departureMono text-sm tracking-tight">
@@ -124,7 +124,7 @@ export function WatchlistEditor({
         {symbols.map((symbol) => (
           <button
             key={symbol}
-            className="inline-flex items-center gap-2 border border-border/70 px-2 py-1 text-xs transition-colors hover:bg-muted/35"
+            className="market-chip inline-flex items-center gap-2 px-2 py-1 text-xs transition-colors hover:bg-muted/60"
             type="button"
             onClick={() => {
               syncWatchlist(symbols.filter((item) => item !== symbol))

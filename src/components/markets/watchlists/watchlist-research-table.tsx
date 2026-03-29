@@ -73,7 +73,7 @@ export function WatchlistResearchTable({
 
   if (rows.length === 0) {
     return (
-      <div className="border border-dashed border-border/70 px-4 py-8 text-sm text-muted-foreground">
+      <div className="market-soft-surface px-4 py-8 text-sm text-muted-foreground">
         <div className="font-medium text-foreground">No research rows</div>
         <p className="mt-1 max-w-2xl leading-6">
           Add symbols to the watchlist to populate the research table.
@@ -131,10 +131,10 @@ export function WatchlistResearchTable({
         </Button>
       </div>
 
-      <div className="overflow-x-auto border border-border/70">
+      <div className="market-table-frame">
         <table className="min-w-full border-collapse text-sm">
           <thead>
-            <tr className="border-b border-border/70 bg-muted/30 text-left">
+            <tr className="border-b border-border/50 bg-background/80 text-left">
               <th className="px-3 py-2 font-departureMono text-xs tracking-tight">
                 Symbol
               </th>
@@ -168,7 +168,7 @@ export function WatchlistResearchTable({
             {sortedRows.map((row) => (
               <tr
                 key={row.symbol}
-                className="border-b border-border/40 last:border-b-0"
+                className="border-b border-border/35 last:border-b-0"
               >
                 <td className="px-3 py-3">
                   <div className="flex items-center gap-3">

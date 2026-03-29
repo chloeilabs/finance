@@ -35,7 +35,7 @@ export function QuoteStrip({
   }
 
   return (
-    <div className="market-grid-4 grid gap-px border border-border/70 bg-border/70">
+    <div className="market-grid-4 market-panel-grid grid">
       {quotes.map((quote) => {
         const positive = (quote.change ?? 0) >= 0
         const content = (
@@ -76,13 +76,13 @@ export function QuoteStrip({
         return linkItems ? (
           <Link
             key={quote.symbol}
-            className="bg-background px-4 py-3 transition-colors hover:bg-muted/40"
+            className="market-panel-tile block px-3 py-2.5 transition-colors hover:bg-muted/35 sm:px-4"
             href={`${hrefBase}/${encodeURIComponent(quote.symbol)}`}
           >
             {content}
           </Link>
         ) : (
-          <div key={quote.symbol} className="bg-background px-4 py-3">
+          <div key={quote.symbol} className="market-panel-tile px-3 py-2.5 sm:px-4">
             {content}
           </div>
         )
@@ -102,11 +102,11 @@ export function MoverGrid({ quotes }: { quotes: QuoteSnapshot[] }) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="market-panel-list">
       {quotes.map((quote) => (
         <div
           key={quote.symbol}
-          className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border border-border/70 px-3 py-2"
+          className="market-panel-row grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3 py-2"
         >
           <div className="min-w-0">
             <div className="font-departureMono text-sm tracking-tight">
@@ -150,9 +150,9 @@ export function SectorGrid({
   }
 
   return (
-    <div className="market-grid-4 grid gap-px border border-border/70 bg-border/70">
+    <div className="market-grid-4 market-panel-grid grid">
       {sectors.map((sector) => (
-        <div key={sector.sector} className="bg-background px-4 py-3">
+        <div key={sector.sector} className="market-panel-tile px-3 py-2.5 sm:px-4">
           <div className="text-xs text-muted-foreground">{sector.sector}</div>
           <div
             className={cn(
@@ -181,9 +181,9 @@ export function MetricGrid({ metrics }: { metrics: MetricStat[] }) {
   }
 
   return (
-    <div className="market-grid-5 grid gap-px border border-border/70 bg-border/70">
+    <div className="market-grid-5 market-panel-grid grid">
       {metrics.map((metric) => (
-        <div key={metric.label} className="bg-background px-4 py-3">
+        <div key={metric.label} className="market-panel-tile px-3 py-2.5 sm:px-4">
           <div className="text-xs text-muted-foreground">{metric.label}</div>
           <div className="mt-3 text-lg tracking-tight">
             {formatLabeledMetricValue(metric.label, metric.value)}
@@ -204,9 +204,9 @@ export function LockedSectionGrid({
   }
 
   return (
-    <div className="market-grid-3 grid gap-px border border-border/70 bg-border/70">
+    <div className="market-grid-3 market-panel-grid grid">
       {sections.map((section) => (
-        <div key={section.title} className="bg-background px-4 py-4">
+        <div key={section.title} className="market-panel-tile px-3 py-3 sm:px-4">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Lock className="size-3.5" />
             <span className="font-departureMono text-xs tracking-[0.2em] uppercase">

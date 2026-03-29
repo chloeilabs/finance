@@ -64,7 +64,7 @@ export function StockTradingPanel({
         {intervals.map((interval) => (
           <button
             key={interval}
-            className="border border-border/70 px-3 py-1 text-xs transition-colors hover:bg-muted/35"
+            className="market-chip px-3 py-1 text-xs transition-colors hover:bg-muted/60"
             type="button"
             onClick={() => {
               setSelectedInterval(interval)
@@ -75,8 +75,8 @@ export function StockTradingPanel({
         ))}
       </div>
 
-      <div className="market-split-18 grid gap-4">
-        <div className="border border-border/70 px-4 py-4">
+      <div className="market-split-18 grid gap-3">
+        <div className="market-soft-surface px-4 py-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
@@ -93,8 +93,8 @@ export function StockTradingPanel({
           <Sparkline className="mt-6 h-32" values={getSeriesValues(points)} />
         </div>
 
-        <div className="grid gap-px border border-border/70 bg-border/70">
-          <div className="bg-background px-4 py-3">
+        <div className="market-panel-list">
+          <div className="market-panel-tile px-3 py-2.5 sm:px-4">
             <div className="text-xs text-muted-foreground">
               Aftermarket trade
             </div>
@@ -107,7 +107,7 @@ export function StockTradingPanel({
               {formatDateTime(aftermarket?.lastTradeTimestamp)}
             </div>
           </div>
-          <div className="bg-background px-4 py-3">
+          <div className="market-panel-tile px-3 py-2.5 sm:px-4">
             <div className="text-xs text-muted-foreground">Bid / Ask</div>
             <div className="mt-2 text-sm">
               {formatCurrency(aftermarket?.bidPrice, {
@@ -125,9 +125,9 @@ export function StockTradingPanel({
         </div>
       </div>
 
-      <div className="market-grid-7 grid gap-px border border-border/70 bg-border/70">
+      <div className="market-grid-7 market-panel-grid grid">
         {CHANGE_ITEMS.map((item) => (
-          <div key={item.key} className="bg-background px-4 py-3">
+          <div key={item.key} className="market-panel-tile px-3 py-2.5 sm:px-4">
             <div className="text-xs text-muted-foreground">{item.label}</div>
             <div className="mt-2 font-departureMono text-sm tracking-tight">
               {formatPercent(priceChange?.[item.key])}

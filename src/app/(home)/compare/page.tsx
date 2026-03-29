@@ -57,10 +57,10 @@ export default async function ComparePage({
 
       <SectionFrame title="Comparison grid">
         {data.entries.length > 0 ? (
-          <div className="overflow-x-auto border border-border/70">
+          <div className="market-table-frame">
             <table className="min-w-full border-collapse text-sm">
               <thead>
-                <tr className="border-b border-border/70 bg-muted/30 text-left">
+                <tr className="border-b border-border/50 bg-background/80 text-left">
                   <th className="px-3 py-2 font-departureMono text-xs tracking-tight">
                     Symbol
                   </th>
@@ -97,7 +97,7 @@ export default async function ComparePage({
                 {data.entries.map((entry) => (
                   <tr
                     key={entry.symbol}
-                    className="border-b border-border/40 last:border-b-0"
+                    className="border-b border-border/35 last:border-b-0"
                   >
                     <td className="px-3 py-3">
                       <div>

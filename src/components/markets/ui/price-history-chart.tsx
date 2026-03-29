@@ -252,7 +252,7 @@ export function PriceHistoryChart({
 
   if (series.length < 2) {
     return (
-      <div className="border border-dashed border-border/70 px-4 py-8 text-sm text-muted-foreground">
+      <div className="market-soft-surface px-4 py-8 text-sm text-muted-foreground">
         <div className="font-medium text-foreground">No price history</div>
         <p className="mt-1 max-w-2xl leading-6">
           Historical price data will appear here when the EOD series is
@@ -281,7 +281,7 @@ export function PriceHistoryChart({
 
   if (!firstPoint || !lastPoint || renderSeries.length < 2) {
     return (
-      <div className="border border-dashed border-border/70 px-4 py-8 text-sm text-muted-foreground">
+      <div className="market-soft-surface px-4 py-8 text-sm text-muted-foreground">
         <div className="font-medium text-foreground">No price history</div>
         <p className="mt-1 max-w-2xl leading-6">
           Historical price data will appear here when the EOD series is
@@ -309,10 +309,10 @@ export function PriceHistoryChart({
   const valueMarkers = [high, low + range / 2, low]
 
   return (
-    <div className="market-split-17 grid gap-px border border-border/70 bg-border/70">
-      <div className="relative overflow-hidden bg-background">
-        <div className="relative grid gap-px bg-border/70">
-          <div className="bg-background px-4 py-4">
+    <div className="market-split-17 grid gap-3">
+      <div className="market-soft-surface relative overflow-hidden">
+        <div className="market-panel-list relative">
+          <div className="market-panel-tile px-4 py-4">
             <div className="font-departureMono text-[11px] tracking-[0.24em] text-muted-foreground uppercase">
               Price action
             </div>
@@ -323,14 +323,14 @@ export function PriceHistoryChart({
             </div>
           </div>
 
-          <div className="bg-background px-4 py-3">
+          <div className="market-panel-tile px-3 py-2.5 sm:px-4">
             <div className="text-xs text-muted-foreground">Last close</div>
             <div className="mt-2 text-lg tracking-tight">
               {formatCurrency(lastPoint.close, { currency: currency ?? "USD" })}
             </div>
           </div>
 
-          <div className="bg-background px-4 py-3">
+          <div className="market-panel-tile px-3 py-2.5 sm:px-4">
             <div className="text-xs text-muted-foreground">Window move</div>
             <div
               className={cn(
@@ -345,14 +345,14 @@ export function PriceHistoryChart({
             </div>
           </div>
 
-          <div className="grid gap-px bg-border/70 sm:grid-cols-2 xl:grid-cols-1">
-            <div className="bg-background px-4 py-3">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
               <div className="text-xs text-muted-foreground">Window start</div>
               <div className="mt-2 text-sm">
                 {formatChartDate(firstPoint.date)}
               </div>
             </div>
-            <div className="bg-background px-4 py-3">
+            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
               <div className="text-xs text-muted-foreground">
                 Visible closes
               </div>
@@ -362,7 +362,7 @@ export function PriceHistoryChart({
         </div>
       </div>
 
-      <div className="bg-background px-4 py-4 sm:px-6">
+      <div className="market-soft-surface px-4 py-4 sm:px-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-1">
             <div className="font-departureMono text-[11px] tracking-[0.24em] text-muted-foreground uppercase">
@@ -375,7 +375,7 @@ export function PriceHistoryChart({
           </div>
 
           <div
-            className="inline-flex flex-wrap gap-px self-start border border-border/70 bg-border/70"
+            className="inline-flex flex-wrap gap-1 self-start"
             role="toolbar"
             aria-label="Price history timeframe"
           >
@@ -387,12 +387,12 @@ export function PriceHistoryChart({
                   type="button"
                   aria-pressed={resolvedTimeframe === option.id}
                   className={cn(
-                    "min-w-11 bg-background px-3 py-2 font-departureMono text-[11px] tracking-[0.18em] uppercase transition-colors",
+                    "market-chip min-w-11 px-3 py-2 font-departureMono text-[11px] tracking-[0.18em] uppercase transition-colors",
                     resolvedTimeframe === option.id
                       ? positive
-                        ? "bg-[color:var(--vesper-teal)]/12 text-[color:var(--vesper-teal)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--vesper-teal)_55%,transparent)]"
-                        : "bg-[color:var(--vesper-orange)]/12 text-[color:var(--vesper-orange)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--vesper-orange)_55%,transparent)]"
-                      : "text-muted-foreground hover:bg-muted/45 hover:text-foreground"
+                        ? "bg-[color:var(--vesper-teal)]/12 text-[color:var(--vesper-teal)]"
+                        : "bg-[color:var(--vesper-orange)]/12 text-[color:var(--vesper-orange)]"
+                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                   )}
                   onClick={() => {
                     setSelectedTimeframe(option.id)
@@ -404,8 +404,8 @@ export function PriceHistoryChart({
           </div>
         </div>
 
-        <div className="relative mt-5 border border-border/70 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--muted)_32%,transparent)_0%,transparent_18%,transparent_100%)] px-3 py-3 sm:px-4">
-          <div className="relative border border-border/40 bg-background/80 pr-12">
+        <div className="market-soft-surface relative mt-4 px-3 py-3 sm:px-4">
+          <div className="relative bg-background/80 pr-12">
             <svg
               aria-hidden
               className="h-60 w-full"
@@ -461,11 +461,11 @@ export function PriceHistoryChart({
           </div>
         </div>
 
-        <div className="market-grid-4 mt-4 grid gap-px border border-border/70 bg-border/70">
+        <div className="market-grid-4 market-panel-grid mt-4 grid">
           {dateMarkers.map((marker, index) => (
             <div
               key={[marker.date, String(index)].join(":")}
-              className="bg-background px-3 py-2"
+              className="market-panel-tile px-3 py-2"
             >
               <div className="text-[11px] text-muted-foreground">
                 {index === 0
@@ -477,7 +477,7 @@ export function PriceHistoryChart({
               <div className="mt-1 text-xs">{formatChartDate(marker.date)}</div>
             </div>
           ))}
-          <div className="bg-background px-3 py-2">
+          <div className="market-panel-tile px-3 py-2">
             <div className="text-[11px] text-muted-foreground">
               Available range
             </div>
