@@ -9,6 +9,7 @@ import { redirect } from "next/navigation"
 import { HomePageContent } from "@/components/agent/home/home-content"
 import { ThreadsProvider } from "@/components/agent/home/threads-context"
 import { MarketShell } from "@/components/markets/layout/market-shell"
+import { resolvePersistedOpenState } from "@/components/markets/layout/sidebar-open-state"
 import { getModels } from "@/lib/actions/api-keys"
 import { SIDEBAR_COOKIE_NAME } from "@/lib/constants"
 import { isAuthConfigured } from "@/lib/server/auth"
@@ -53,7 +54,7 @@ export default async function CopilotPage({
   const composeKey = getSingleParam(resolvedSearchParams.compose)
   const cookieStore = await cookies()
   const sidebarCookie = cookieStore.get(SIDEBAR_COOKIE_NAME)?.value
-  const initialSidebarOpen = sidebarCookie ? sidebarCookie === "true" : true
+  const initialSidebarOpen = resolvePersistedOpenState(sidebarCookie)
 
   queryClient.setQueryData(["models"], availableModels)
 
