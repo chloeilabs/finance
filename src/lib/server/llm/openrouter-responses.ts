@@ -2,9 +2,16 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider"
 import { type ModelMessage, stepCountIs, streamText, type ToolSet } from "ai"
 
 import { asRecord, asString } from "@/lib/cast"
+import { getFmpPlanTier } from "@/lib/server/markets/config"
 import type { AgentStreamEvent } from "@/lib/shared/agent/messages"
 import type { ModelType } from "@/lib/shared/llm/models"
 
+import {
+  createAiSdkFmpMcpSession,
+  getAiSdkFmpMcpToolCallMetadata,
+  getAiSdkFmpMcpToolResultMetadata,
+  isAiSdkFmpMcpToolName,
+} from "./ai-sdk-fmp-mcp-tools"
 import {
   createAiSdkTavilyTools,
   getAiSdkTavilyToolCallMetadata,
@@ -17,6 +24,7 @@ import {
   getAiSdkCodeExecutionToolResultMetadata,
   isAiSdkCodeExecutionToolName,
 } from "./code-execution-tools"
+import { withAiSdkFmpMcpInstruction } from "./system-instruction-augmentations"
 
 interface AgentInputMessage {
   role: "system" | "user" | "assistant"
@@ -35,6 +43,26 @@ interface StartOpenRouterResponseStreamParams {
 
 const OPENROUTER_REASONING_EFFORT = "high" as const
 const AGENT_TOOL_MAX_STEPS = 6
+
+function filterFmpToolsForMerge(
+  baseTools: ToolSet,
+  fmpTools: ToolSet
+): ToolSet {
+  const reservedToolNames = new Set(Object.keys(baseTools))
+
+  return Object.fromEntries(
+    Object.entries(fmpTools).filter(([toolName]) => {
+      if (!reservedToolNames.has(toolName)) {
+        return true
+      }
+
+      console.warn(
+        `[agent:fmp-mcp] Skipping MCP tool "${toolName}" because the name is already used by a local tool.`
+      )
+      return false
+    })
+  ) as ToolSet
+}
 
 function toModelMessages(messages: AgentInputMessage[]): ModelMessage[] {
   const inputMessages: ModelMessage[] = []
@@ -108,29 +136,21 @@ export async function* startOpenRouterResponseStream(
   }
 
   const normalizedTavilyApiKey = params.tavilyApiKey?.trim()
-  const tools = {
+  const localTools = {
     ...createAiSdkCodeExecutionTools(),
     ...createAiSdkTavilyTools(normalizedTavilyApiKey),
   } as ToolSet
-
-  const result = streamText({
-    model: provider.chat(params.model),
-    system: params.systemInstruction,
-    messages,
-    abortSignal: params.signal,
-    ...(params.temperature !== undefined
-      ? { temperature: params.temperature }
-      : {}),
-    providerOptions: {
-      openrouter: {
-        reasoning: {
-          effort: OPENROUTER_REASONING_EFFORT,
-        },
-      },
-    },
-    tools,
-    stopWhen: stepCountIs(AGENT_TOOL_MAX_STEPS),
-  })
+  const fmpMcpSession = await createAiSdkFmpMcpSession()
+  const fmpTools = filterFmpToolsForMerge(localTools, fmpMcpSession.tools)
+  const fmpToolNames = new Set(Object.keys(fmpTools))
+  const tools = {
+    ...localTools,
+    ...fmpTools,
+  } as ToolSet
+  const systemInstruction =
+    fmpToolNames.size > 0
+      ? withAiSdkFmpMcpInstruction(params.systemInstruction, getFmpPlanTier())
+      : params.systemInstruction
 
   const seenToolCalls = new Set<string>()
   const finalizedToolCalls = new Set<string>()
@@ -152,101 +172,127 @@ export async function* startOpenRouterResponseStream(
     return getSourceEvent(id, normalizedUrl, normalizedTitle)
   }
 
-  for await (const part of result.fullStream) {
-    if (part.type === "text-delta") {
-      if (part.text.length > 0) {
-        yield { type: "text_delta", delta: part.text }
-      }
-      continue
-    }
+  try {
+    const result = streamText({
+      model: provider.chat(params.model),
+      system: systemInstruction,
+      messages,
+      abortSignal: params.signal,
+      ...(params.temperature !== undefined
+        ? { temperature: params.temperature }
+        : {}),
+      providerOptions: {
+        openrouter: {
+          reasoning: {
+            effort: OPENROUTER_REASONING_EFFORT,
+          },
+        },
+      },
+      tools,
+      stopWhen: stepCountIs(AGENT_TOOL_MAX_STEPS),
+    })
 
-    if (part.type === "reasoning-delta") {
-      if (
-        part.text.length > 0 &&
-        !shouldSkipOpenRouterReasoningChunk(part.text, part.providerMetadata)
-      ) {
-        yield { type: "reasoning_delta", delta: part.text }
-      }
-      continue
-    }
-
-    if (part.type === "source" && part.sourceType === "url") {
-      const sourceEvent = createSourceEvent(
-        part.id,
-        part.url,
-        part.title?.trim() ?? part.url
-      )
-      if (sourceEvent) {
-        yield sourceEvent
-      }
-      continue
-    }
-
-    if (part.type === "tool-call") {
-      const metadata =
-        getAiSdkCodeExecutionToolCallMetadata(part) ??
-        getAiSdkTavilyToolCallMetadata(part)
-      if (!metadata || seenToolCalls.has(metadata.callId)) {
+    for await (const part of result.fullStream) {
+      if (part.type === "text-delta") {
+        if (part.text.length > 0) {
+          yield { type: "text_delta", delta: part.text }
+        }
         continue
       }
 
-      seenToolCalls.add(metadata.callId)
-      yield {
-        type: "tool_call",
-        callId: metadata.callId,
-        toolName: metadata.toolName,
-        label: metadata.label,
-        ...("query" in metadata && metadata.query
-          ? { query: metadata.query }
-          : {}),
-      }
-      continue
-    }
-
-    if (part.type === "tool-result") {
-      if (part.preliminary) {
+      if (part.type === "reasoning-delta") {
+        if (
+          part.text.length > 0 &&
+          !shouldSkipOpenRouterReasoningChunk(part.text, part.providerMetadata)
+        ) {
+          yield { type: "reasoning_delta", delta: part.text }
+        }
         continue
       }
 
-      const metadata =
-        getAiSdkCodeExecutionToolResultMetadata(part) ??
-        getAiSdkTavilyToolResultMetadata(part)
-      if (!metadata || finalizedToolCalls.has(metadata.callId)) {
-        continue
-      }
-
-      finalizedToolCalls.add(metadata.callId)
-      yield {
-        type: "tool_result",
-        callId: metadata.callId,
-        status: metadata.status,
-      }
-
-      for (const source of metadata.sources) {
+      if (part.type === "source" && part.sourceType === "url") {
         const sourceEvent = createSourceEvent(
-          source.id,
-          source.url,
-          source.title
+          part.id,
+          part.url,
+          part.title?.trim() ?? part.url
         )
         if (sourceEvent) {
           yield sourceEvent
         }
+        continue
       }
-      continue
-    }
 
-    if (
-      part.type === "tool-error" &&
-      (isAiSdkCodeExecutionToolName(part.toolName) ||
-        isAiSdkTavilyToolName(part.toolName)) &&
-      !finalizedToolCalls.has(part.toolCallId)
-    ) {
-      finalizedToolCalls.add(part.toolCallId)
-      yield {
-        type: "tool_result",
-        callId: part.toolCallId,
-        status: "error",
+      if (part.type === "tool-call") {
+        const metadata =
+          getAiSdkCodeExecutionToolCallMetadata(part) ??
+          getAiSdkTavilyToolCallMetadata(part) ??
+          getAiSdkFmpMcpToolCallMetadata(part, fmpToolNames)
+        if (!metadata || seenToolCalls.has(metadata.callId)) {
+          continue
+        }
+
+        seenToolCalls.add(metadata.callId)
+        yield {
+          type: "tool_call",
+          callId: metadata.callId,
+          toolName: metadata.toolName,
+          label: metadata.label,
+          ...("query" in metadata && metadata.query
+            ? { query: metadata.query }
+            : {}),
+        }
+        continue
+      }
+
+      if (part.type === "tool-result") {
+        if (part.preliminary) {
+          continue
+        }
+
+        const metadata =
+          getAiSdkCodeExecutionToolResultMetadata(part) ??
+          getAiSdkTavilyToolResultMetadata(part) ??
+          getAiSdkFmpMcpToolResultMetadata(part, fmpToolNames)
+        if (!metadata || finalizedToolCalls.has(metadata.callId)) {
+          continue
+        }
+
+        finalizedToolCalls.add(metadata.callId)
+        yield {
+          type: "tool_result",
+          callId: metadata.callId,
+          status: metadata.status,
+        }
+
+        for (const source of metadata.sources) {
+          const sourceEvent = createSourceEvent(
+            source.id,
+            source.url,
+            source.title
+          )
+          if (sourceEvent) {
+            yield sourceEvent
+          }
+        }
+        continue
+      }
+
+      if (
+        part.type === "tool-error" &&
+        (isAiSdkCodeExecutionToolName(part.toolName) ||
+          isAiSdkTavilyToolName(part.toolName) ||
+          isAiSdkFmpMcpToolName(part.toolName, fmpToolNames)) &&
+        !finalizedToolCalls.has(part.toolCallId)
+      ) {
+        finalizedToolCalls.add(part.toolCallId)
+        yield {
+          type: "tool_result",
+          callId: part.toolCallId,
+          status: "error",
+        }
       }
     }
+  } finally {
+    await fmpMcpSession.close()
   }
 }

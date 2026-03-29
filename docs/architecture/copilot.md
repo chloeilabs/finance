@@ -5,7 +5,7 @@
 - `src/app/copilot`: route entry and layout
 - `src/app/api/agent/route.ts`: authenticated streaming API
 - `src/components/agent/home`: thread list, stream accumulator, session state
-- `src/lib/server/llm/*`: model/provider and tool integration
+- `src/lib/server/llm/*`: model/provider and tool integration, including Tavily, code execution, and FMP MCP
 
 ## Working Rules
 
@@ -13,6 +13,7 @@
 - keep thread persistence independent from transient stream state
 - preserve authenticated, no-store request handling for agent routes
 - prefer narrow shared imports for models, messages, and threads
+- keep remote MCP setup and teardown server-side and normalize dynamic tool names before they reach the client timeline
 
 ## Current Focused Modules
 
@@ -23,9 +24,11 @@
 - `threads-persistence.ts`: queued thread sync, delete, rename, and migration orchestration
 - `threads-api.ts`: thread route request helpers
 - `threads-storage.ts`: local-storage migration and merge helpers
+- `openrouter-responses.ts`: provider stream orchestration and merged tool wiring
+- `ai-sdk-fmp-mcp-tools.ts`: FMP MCP session setup, usage accounting, and metadata normalization
 
 ## Verification Priorities
 
 - no regression in request-id and rate-limit handling
 - no loss of thread switching or rename/pin/delete behavior
-- streaming timeline remains stable for text, reasoning, tools, and sources
+- streaming timeline remains stable for text, reasoning, tools, and sources, including normalized `fmp_mcp` events from dynamic remote MCP tools
