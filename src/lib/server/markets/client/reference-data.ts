@@ -1,6 +1,7 @@
 import type {
   EtfExposureEntry,
   InsiderTradeEntry,
+  LatestInsiderTradeEntry,
   OwnershipEntry,
   ValuationSnapshot,
 } from "@/lib/shared/markets/intelligence"
@@ -57,6 +58,40 @@ function mapEtfExposure(item: unknown): EtfExposureEntry | null {
     etfName: pickString(record, ["name", "etfName"]),
     sharesNumber: pickNumber(record, ["sharesNumber"]),
     weightPercentage: pickNumber(record, ["weightPercentage", "weight"]),
+  }
+}
+
+function mapLatestInsiderTrade(item: unknown): LatestInsiderTradeEntry | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  const symbol = pickString(record, ["symbol"])
+
+  if (!symbol) {
+    return null
+  }
+
+  return {
+    symbol,
+    reportingName: pickString(record, [
+      "reportingName",
+      "reportingOwnerName",
+      "reportingOwner",
+    ]),
+    transactionType: pickString(record, [
+      "transactionType",
+      "acquisitionOrDisposition",
+    ]),
+    securitiesTransacted: pickNumber(record, [
+      "securitiesTransacted",
+      "securitiesOwned",
+    ]),
+    price: pickNumber(record, ["price"]),
+    filingDate: pickString(record, ["filingDate"]),
+    transactionDate: pickString(record, ["transactionDate"]),
   }
 }
 
@@ -119,6 +154,18 @@ export function createReferenceDataClient() {
         return asArray(payload)
           .map(mapInsiderTrade)
           .filter((item): item is InsiderTradeEntry => item !== null)
+      },
+      async getLatestInsiderTrades(
+        limit = 10
+      ): Promise<LatestInsiderTradeEntry[]> {
+        const payload = await fetchFmpJson("/stable/insider-trading/latest", {
+          page: 0,
+          limit,
+        })
+
+        return asArray(payload)
+          .map(mapLatestInsiderTrade)
+          .filter((item): item is LatestInsiderTradeEntry => item !== null)
       },
     },
     etf: {

@@ -1,5 +1,10 @@
+import Link from "next/link"
+
+import { AssetTeaserGrid } from "@/components/markets/assets/asset-market-grid"
 import {
   CalendarList,
+  FilingList,
+  InsiderFeedList,
   MoverGrid,
   NewsList,
   PageHeader,
@@ -7,9 +12,15 @@ import {
   SectionFrame,
   SectorGrid,
 } from "@/components/markets/ui/market-primitives"
+import { Button } from "@/components/ui/button"
 import { formatSignedNumber } from "@/lib/markets-format"
 import { getCurrentViewer } from "@/lib/server/auth-session"
-import { getMarketOverviewData } from "@/lib/server/markets/service"
+import {
+  getLatestInsiderFeed,
+  getLatestSecActivity,
+  getMarketOverviewData,
+  getMultiAssetSnapshot,
+} from "@/lib/server/markets/service"
 
 export default async function Home() {
   const viewer = await getCurrentViewer()
@@ -18,27 +29,39 @@ export default async function Home() {
     return null
   }
 
-  const overview = await getMarketOverviewData(viewer.id)
+  const [overview, assets, latestFilings, latestInsiderTrades] =
+    await Promise.all([
+      getMarketOverviewData(viewer.id),
+      getMultiAssetSnapshot(),
+      getLatestSecActivity(),
+      getLatestInsiderFeed(),
+    ])
 
   return (
     <div className="pb-10">
       <PageHeader title="Market overview" />
 
-      <SectionFrame
-        title={`${overview.watchlist.name} watchlist`}
-      >
+      <SectionFrame title={`${overview.watchlist.name} watchlist`}>
         <QuoteStrip quotes={overview.watchlist.quotes} />
       </SectionFrame>
 
-      <SectionFrame
-        title="Indexes"
-      >
+      <SectionFrame title="Indexes">
         <QuoteStrip linkItems={false} quotes={overview.indexes} />
       </SectionFrame>
 
       <SectionFrame
-        title="Market pulse"
+        title="Cross-asset tape"
+        description="Starter-validated crypto, forex, and commodity symbols surfaced without leaving the core workspace."
+        aside={
+          <Button asChild size="sm" variant="outline">
+            <Link href="/assets">Open Assets</Link>
+          </Button>
+        }
       >
+        <AssetTeaserGrid groups={assets.groups} />
+      </SectionFrame>
+
+      <SectionFrame title="Market pulse">
         <div className="market-grid-3 grid gap-3">
           {overview.movers.map((bucket) => (
             <div key={bucket.label} className="space-y-3">
@@ -51,21 +74,15 @@ export default async function Home() {
         </div>
       </SectionFrame>
 
-      <SectionFrame
-        title="Sector breadth"
-      >
+      <SectionFrame title="Sector breadth">
         <SectorGrid sectors={overview.sectors} />
       </SectionFrame>
 
-      <SectionFrame
-        title="Upcoming catalysts"
-      >
+      <SectionFrame title="Upcoming catalysts">
         <CalendarList events={overview.calendar} />
       </SectionFrame>
 
-      <SectionFrame
-        title="Macro rates"
-      >
+      <SectionFrame title="Macro rates">
         <div className="market-grid-6 market-panel-grid grid">
           {overview.macro.map((item) => (
             <div
@@ -84,15 +101,11 @@ export default async function Home() {
         </div>
       </SectionFrame>
 
-      <SectionFrame
-        title="Economic releases"
-      >
+      <SectionFrame title="Economic releases">
         <CalendarList events={overview.economicCalendar} />
       </SectionFrame>
 
-      <SectionFrame
-        title="Exchange state"
-      >
+      <SectionFrame title="Exchange state">
         <div className="market-grid-3 market-panel-grid grid">
           {overview.marketHours.map((item) => (
             <div
@@ -114,9 +127,7 @@ export default async function Home() {
         </div>
       </SectionFrame>
 
-      <SectionFrame
-        title="Upcoming holidays"
-      >
+      <SectionFrame title="Upcoming holidays">
         <div className="market-grid-3 market-panel-grid grid">
           {overview.marketHolidays.map((item) => (
             <div
@@ -135,9 +146,7 @@ export default async function Home() {
         </div>
       </SectionFrame>
 
-      <SectionFrame
-        title="Sector valuation"
-      >
+      <SectionFrame title="Sector valuation">
         <div className="market-grid-4 market-panel-grid grid">
           {overview.sectorValuations.map((item) => (
             <div
@@ -156,15 +165,19 @@ export default async function Home() {
         </div>
       </SectionFrame>
 
-      <SectionFrame
-        title="General news"
-      >
+      <SectionFrame title="General news">
         <NewsList stories={overview.generalNews} />
       </SectionFrame>
 
-      <SectionFrame
-        title="News stream"
-      >
+      <SectionFrame title="Latest SEC activity">
+        <FilingList items={latestFilings} />
+      </SectionFrame>
+
+      <SectionFrame title="Latest insider tape">
+        <InsiderFeedList items={latestInsiderTrades} />
+      </SectionFrame>
+
+      <SectionFrame title="News stream">
         <NewsList stories={overview.news} />
       </SectionFrame>
     </div>

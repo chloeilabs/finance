@@ -2,6 +2,7 @@ import "server-only"
 
 import type {
   CalendarEvent,
+  MetricStat,
   QuoteSnapshot,
   TechnicalIndicatorSeries,
 } from "@/lib/shared/markets/core"
@@ -10,7 +11,10 @@ import type {
   ResearchQuoteRow,
   StockDossier,
 } from "@/lib/shared/markets/intelligence"
-import type { ComparePageData, WatchlistResearchData } from "@/lib/shared/markets/workspace"
+import type {
+  ComparePageData,
+  WatchlistResearchData,
+} from "@/lib/shared/markets/workspace"
 
 import { withMarketCache } from "./cache"
 import { getMarketPlanSummary, isCapabilityEnabled } from "./config"
@@ -18,7 +22,9 @@ import { createMarketDateClock } from "./market-clock"
 import {
   getPeerComparisonRows,
   getStockFinancialScores,
+  getStockShareFloat,
   getStockTechnicals,
+  getStockValuationSnapshot,
 } from "./service-dossier-fetchers"
 import {
   ANALYST_TTL_SECONDS,
@@ -26,8 +32,10 @@ import {
   client,
   COMPARE_SYMBOL_LIMIT,
   getCachedQuoteSnapshot,
+  getMetricNumberByLabel,
   mapWithConcurrency,
   normalizeSymbols,
+  PROFILE_TTL_SECONDS,
   QUOTE_FETCH_CONCURRENCY,
   rethrowMarketStoreUnavailable,
 } from "./service-support"
@@ -43,12 +51,24 @@ async function buildResearchRows(
     normalized,
     QUOTE_FETCH_CONCURRENCY,
     async (symbol) => {
-      const [quote, technicals, earnings, analyst, scores]: [
+      const [
+        quote,
+        technicals,
+        earnings,
+        analyst,
+        scores,
+        keyMetrics,
+        valuation,
+        shareFloat,
+      ]: [
         QuoteSnapshot | null,
         TechnicalIndicatorSeries[],
         CalendarEvent[],
         AnalystSummary | null,
         StockDossier["financialScores"],
+        MetricStat[],
+        StockDossier["valuation"],
+        StockDossier["shareFloat"],
       ] = await Promise.all([
         getCachedQuoteSnapshot(symbol),
         getStockTechnicals(symbol),
@@ -70,6 +90,16 @@ async function buildResearchRows(
           fetcher: () => client.analyst.getSummary(symbol),
         }),
         getStockFinancialScores(symbol),
+        withMarketCache({
+          cacheKey: `stock:${symbol}:key-metrics`,
+          category: "fundamentals",
+          ttlSeconds: PROFILE_TTL_SECONDS,
+          fallback: [] as MetricStat[],
+          staleOnError: true,
+          fetcher: () => client.fundamentals.getKeyMetricsTtm(symbol),
+        }),
+        getStockValuationSnapshot(symbol),
+        getStockShareFloat(symbol),
       ])
 
       const rsiSeries = technicals.find(
@@ -93,6 +123,11 @@ async function buildResearchRows(
         analystConsensus: analyst?.ratingSummary ?? null,
         piotroskiScore: scores?.piotroskiScore ?? null,
         altmanZScore: scores?.altmanZScore ?? null,
+        fcfYield: getMetricNumberByLabel(keyMetrics, "FCF Yield"),
+        roic: getMetricNumberByLabel(keyMetrics, "ROIC"),
+        dcf: valuation?.dcf ?? null,
+        freeFloatPercentage: shareFloat?.freeFloatPercentage ?? null,
+        floatShares: shareFloat?.floatShares ?? null,
       } satisfies ResearchQuoteRow
     }
   )

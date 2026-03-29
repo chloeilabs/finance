@@ -22,10 +22,13 @@ vi.mock("@/lib/server/auth-session", () => ({
 }))
 
 vi.mock("@/lib/server/markets/service", () => ({
+  getLatestInsiderFeed: vi.fn(),
   getLatestMarketNews: vi.fn(),
+  getLatestSecActivity: vi.fn(),
   getMarketCalendarFeed: vi.fn(),
   getMarketOverviewData: vi.fn(),
   getMarketsSnapshot: vi.fn(),
+  getMultiAssetSnapshot: vi.fn(),
   getStockDossierOverview: vi.fn(),
 }))
 
@@ -44,13 +47,17 @@ vi.mock("@/components/markets/stocks/stock-detail-sections", () => ({
 
 import { getCurrentViewer } from "@/lib/server/auth-session"
 import {
+  getLatestInsiderFeed,
   getLatestMarketNews,
+  getLatestSecActivity,
   getMarketCalendarFeed,
   getMarketOverviewData,
   getMarketsSnapshot,
+  getMultiAssetSnapshot,
   getStockDossierOverview,
 } from "@/lib/server/markets/service"
 
+import AssetsPage from "../assets/page"
 import CalendarPage from "../calendar/page"
 import MarketsPage from "../markets/page"
 import NewsPage from "../news/page"
@@ -116,6 +123,12 @@ describe("market route smoke tests", () => {
     } as Awaited<ReturnType<typeof getMarketsSnapshot>>)
 
     vi.mocked(getLatestMarketNews).mockResolvedValue([])
+    vi.mocked(getLatestSecActivity).mockResolvedValue([])
+    vi.mocked(getLatestInsiderFeed).mockResolvedValue([])
+    vi.mocked(getMultiAssetSnapshot).mockResolvedValue({
+      groups: [],
+      plan: {} as never,
+    })
     vi.mocked(getMarketCalendarFeed).mockResolvedValue([])
     vi.mocked(getStockDossierOverview).mockResolvedValue({
       chart: [],
@@ -181,6 +194,13 @@ describe("market route smoke tests", () => {
 
     expect(html).toContain("Upcoming catalysts")
     expect(html).toContain("No scheduled events")
+  })
+
+  it("renders the assets page with an empty asset grid", async () => {
+    const html = renderToStaticMarkup(await AssetsPage())
+
+    expect(html).toContain("Cross-asset starter coverage")
+    expect(html).toContain("No multi-asset coverage yet")
   })
 
   it("renders the stock page without throwing when optional sections are empty", async () => {

@@ -2,6 +2,7 @@ export const AvailableModels = {
   OPENROUTER_NVIDIA_NEMOTRON_3_SUPER_FREE:
     "nvidia/nemotron-3-super-120b-a12b:free",
   OPENROUTER_MINIMAX_M2_7: "minimax/minimax-m2.7",
+  OPENROUTER_Z_AI_GLM_5: "z-ai/glm-5",
 } as const
 
 export type ModelType = (typeof AvailableModels)[keyof typeof AvailableModels]
@@ -21,6 +22,7 @@ export interface ModelInfo {
 export const OPENROUTER_MODELS = [
   AvailableModels.OPENROUTER_MINIMAX_M2_7,
   AvailableModels.OPENROUTER_NVIDIA_NEMOTRON_3_SUPER_FREE,
+  AvailableModels.OPENROUTER_Z_AI_GLM_5,
 ] as const
 
 export const ALL_MODELS = [...OPENROUTER_MODELS] as const
@@ -39,5 +41,9 @@ export const ModelInfos: Record<ModelType, ModelInfo> = {
   [AvailableModels.OPENROUTER_MINIMAX_M2_7]: {
     id: AvailableModels.OPENROUTER_MINIMAX_M2_7,
     name: "MiniMax M2.7",
+  },
+  [AvailableModels.OPENROUTER_Z_AI_GLM_5]: {
+    id: AvailableModels.OPENROUTER_Z_AI_GLM_5,
+    name: "Z.AI GLM-5",
   },
 }

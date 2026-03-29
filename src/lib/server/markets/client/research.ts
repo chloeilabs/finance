@@ -185,6 +185,7 @@ function mapFiling(item: unknown): FilingEntry | null {
   }
 
   return {
+    symbol: pickString(record, ["symbol"]),
     formType: pickString(record, ["formType"]),
     filingDate: pickString(record, ["fillingDate", "filingDate"]),
     acceptedDate: pickString(record, ["acceptedDate"]),
@@ -337,15 +338,19 @@ export function createResearchClient() {
       async getSecFilings(
         symbol: string,
         from: string,
-        to: string
+        to: string,
+        options?: { limit?: number }
       ): Promise<FilingEntry[]> {
-        const payload = await fetchFmpJson("/stable/sec-filings-search/symbol", {
-          symbol,
-          from,
-          to,
-          page: 0,
-          limit: 10,
-        })
+        const payload = await fetchFmpJson(
+          "/stable/sec-filings-search/symbol",
+          {
+            symbol,
+            from,
+            to,
+            page: 0,
+            limit: options?.limit ?? 10,
+          }
+        )
 
         return asArray(payload)
           .map(mapFiling)

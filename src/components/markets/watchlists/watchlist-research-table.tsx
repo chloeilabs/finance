@@ -154,6 +154,12 @@ export function WatchlistResearchTable({
                 Next Earnings
               </th>
               <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                DCF
+              </th>
+              <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                Free Float
+              </th>
+              <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
                 Street
               </th>
               <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
@@ -201,6 +207,14 @@ export function WatchlistResearchTable({
                 </td>
                 <td className="px-3 py-3 text-right">
                   {formatDate(row.nextEarningsDate)}
+                </td>
+                <td className="px-3 py-3 text-right">
+                  {formatCurrency(row.dcf, {
+                    currency: row.currency ?? "USD",
+                  })}
+                </td>
+                <td className="px-3 py-3 text-right">
+                  {formatPercent(row.freeFloatPercentage)}
                 </td>
                 <td className="px-3 py-3 text-right">
                   {row.analystConsensus ?? "N/A"}

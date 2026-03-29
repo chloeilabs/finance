@@ -8,6 +8,7 @@ import type {
 
 import { withMarketCache } from "./cache"
 import { getMarketPlanSummary, getQuoteCacheTtlSeconds } from "./config"
+import { getStockValuationSnapshot } from "./service-dossier-fetchers"
 import {
   buildLockedSection,
   client,
@@ -137,18 +138,9 @@ export async function getStockOverviewCore(symbol: string) {
         ttlSeconds: PROFILE_TTL_SECONDS,
         fallback: [] as MetricStat[],
         staleOnError: true,
-        fetcher: () =>
-          client.fundamentals.getRatingsSnapshot(normalizedSymbol),
+        fetcher: () => client.fundamentals.getRatingsSnapshot(normalizedSymbol),
       }),
-      withMarketCache({
-        cacheKey: `stock:${normalizedSymbol}:valuation`,
-        category: "valuation",
-        ttlSeconds: PROFILE_TTL_SECONDS,
-        fallback: null,
-        allowLive: true,
-        staleOnError: true,
-        fetcher: () => client.valuation.getSnapshot(normalizedSymbol),
-      }),
+      getStockValuationSnapshot(normalizedSymbol),
     ])
 
   const fallbackDirectoryEntry = await getSymbolDirectoryEntry(

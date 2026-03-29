@@ -1,6 +1,6 @@
 import "server-only"
 
-import type { MarketSearchResult } from "@/lib/shared/markets/core"
+import type { MarketSearchResult, MetricStat } from "@/lib/shared/markets/core"
 import type { MarketPlanSummary } from "@/lib/shared/markets/plan"
 import type {
   MarketScreenerSortKey,
@@ -12,12 +12,27 @@ import type {
 
 import { mayUseLiveFmp, withMarketCache } from "./cache"
 import { createFmpClient } from "./client"
-import { getMarketPlanSummary, isFmpConfigured } from "./config"
+import {
+  getFmpPlanValidationSummary,
+  getMarketPlanSummary,
+  isFmpConfigured,
+} from "./config"
 import {
   createMarketStoreNotInitializedError,
   isUndefinedTableError,
 } from "./errors"
-import { CORE_WATCHLIST_SYMBOLS } from "./service-support"
+import {
+  getStockFinancialScores,
+  getStockShareFloat,
+  getStockValuationSnapshot,
+} from "./service-dossier-fetchers"
+import {
+  CORE_WATCHLIST_SYMBOLS,
+  getMetricNumberByLabel,
+  mapWithConcurrency,
+  PROFILE_TTL_SECONDS,
+  QUOTE_FETCH_CONCURRENCY,
+} from "./service-support"
 import {
   createWatchlistForUser,
   deleteSavedScreenerForUser,
@@ -31,7 +46,6 @@ import {
 } from "./store"
 
 const client = createFmpClient()
-const PROFILE_TTL_SECONDS = 60 * 60 * 24
 const OUTDATED_CORE_WATCHLIST_SYMBOL_ORDERS = [
   CORE_WATCHLIST_SYMBOLS.filter((symbol) => symbol !== "AVGO"),
   ["AAPL", "MSFT", "NVDA", "AVGO", "AMZN", "META", "TSLA", "GOOGL", "BRK.B"],
@@ -82,7 +96,9 @@ function toSearchResult(entry: {
   }
 }
 
-async function hydrateSearchResultsIntoDirectory(results: MarketSearchResult[]) {
+async function hydrateSearchResultsIntoDirectory(
+  results: MarketSearchResult[]
+) {
   if (results.length === 0) {
     return
   }
@@ -143,6 +159,12 @@ function getScreenerSortValue(
       return result.beta ?? Number.NEGATIVE_INFINITY
     case "dividend":
       return result.dividend ?? Number.NEGATIVE_INFINITY
+    case "dcf":
+      return result.dcf ?? Number.NEGATIVE_INFINITY
+    case "piotroskiScore":
+      return result.piotroskiScore ?? Number.NEGATIVE_INFINITY
+    case "freeFloatPercentage":
+      return result.freeFloatPercentage ?? Number.NEGATIVE_INFINITY
   }
 }
 
@@ -184,6 +206,23 @@ export async function getMarketSidebarData(userId: string): Promise<{
 
   if (!isFmpConfigured()) {
     warnings.push("FMP_API_KEY is not configured. Market data will stay empty.")
+  }
+
+  const validation = getFmpPlanValidationSummary()
+
+  if (!validation) {
+    warnings.push(
+      "FMP capability validation is missing. Run `pnpm markets:capabilities:write` to refresh the live plan snapshot."
+    )
+  } else {
+    const ageMs = Date.now() - new Date(validation.validatedAt).getTime()
+    const thirtyDaysMs = 1000 * 60 * 60 * 24 * 30
+
+    if (Number.isFinite(ageMs) && ageMs > thirtyDaysMs) {
+      warnings.push(
+        `FMP capability validation is older than 30 days. Run \`pnpm markets:capabilities:write\` to refresh the ${validation.tier.toLowerCase()} snapshot.`
+      )
+    }
   }
 
   try {
@@ -278,6 +317,44 @@ export async function runMarketScreener(
   })
 
   return sortScreenerResults(results, filters)
+}
+
+export async function getEnrichedMarketScreenerResults(
+  filters: ScreenerFilterState
+): Promise<MarketSearchResult[]> {
+  const results = await runMarketScreener(filters)
+
+  return mapWithConcurrency(
+    results,
+    QUOTE_FETCH_CONCURRENCY,
+    async (result) => {
+      const symbol = normalizeSymbol(result.symbol)
+
+      const [scores, keyMetrics, valuation, shareFloat] = await Promise.all([
+        getStockFinancialScores(symbol),
+        withMarketCache({
+          cacheKey: `stock:${symbol}:key-metrics`,
+          category: "fundamentals",
+          ttlSeconds: PROFILE_TTL_SECONDS,
+          fallback: [] as MetricStat[],
+          staleOnError: true,
+          fetcher: () => client.fundamentals.getKeyMetricsTtm(symbol),
+        }),
+        getStockValuationSnapshot(symbol),
+        getStockShareFloat(symbol),
+      ])
+
+      return {
+        ...result,
+        dcf: valuation?.dcf ?? null,
+        altmanZScore: scores?.altmanZScore ?? null,
+        piotroskiScore: scores?.piotroskiScore ?? null,
+        fcfYield: getMetricNumberByLabel(keyMetrics, "FCF Yield"),
+        freeFloatPercentage: shareFloat?.freeFloatPercentage ?? null,
+        floatShares: shareFloat?.floatShares ?? null,
+      } satisfies MarketSearchResult
+    }
+  )
 }
 
 export async function saveMarketScreener(params: {

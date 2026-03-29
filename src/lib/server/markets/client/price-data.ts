@@ -56,10 +56,17 @@ function mapTechnicalSeries(
 export function createPriceDataClient() {
   return {
     charts: {
-      async getEodChart(symbol: string): Promise<PricePoint[]> {
-        const payload = await fetchFmpJson("/stable/historical-price-eod/light", {
-          symbol,
-        })
+      async getEodChart(
+        symbol: string,
+        options?: { limit?: number }
+      ): Promise<PricePoint[]> {
+        const payload = await fetchFmpJson(
+          "/stable/historical-price-eod/light",
+          {
+            symbol,
+            limit: options?.limit,
+          }
+        )
 
         return asArray(payload)
           .map(mapPricePoint)
@@ -70,9 +77,12 @@ export function createPriceDataClient() {
         symbol: string,
         interval: FmpIntradayInterval
       ): Promise<PricePoint[]> {
-        const payload = await fetchFmpJson(`/stable/historical-chart/${interval}`, {
-          symbol,
-        })
+        const payload = await fetchFmpJson(
+          `/stable/historical-chart/${interval}`,
+          {
+            symbol,
+          }
+        )
 
         return asArray(payload)
           .map(mapPricePoint)

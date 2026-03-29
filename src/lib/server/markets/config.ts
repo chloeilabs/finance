@@ -1,5 +1,7 @@
 import "server-only"
 
+import type { FmpPlanValidationSnapshot } from "@/lib/shared/markets/fmp-plan-validation"
+import { FMP_PLAN_VALIDATION_SNAPSHOTS } from "@/lib/shared/markets/fmp-plan-validation.generated"
 import {
   FMP_PLAN_TIERS,
   type FmpCapabilities,
@@ -29,16 +31,18 @@ const PREMIUM_INTRADAY_INTERVALS: FmpIntradayInterval[] = [
 ]
 
 // This matrix follows the public pricing/docs pages and the live Starter-key
-// validation run on March 28, 2026. When FMP plan behavior changes, refresh the
-// assumptions with `pnpm markets:capabilities`.
+// validation run on March 29, 2026. When FMP plan behavior changes, refresh the
+// assumptions with `pnpm markets:capabilities:write`.
 const PLAN_CAPABILITIES: Record<FmpPlanTier, FmpCapabilities> = {
   STARTER: {
     realtimeQuotes: true,
     intradayCharts: true,
+    technicalIndicators: true,
     batchQuotes: false,
     batchIndexQuotes: false,
     analystInsights: true,
     insiderTrades: false,
+    latestInsiderFeed: true,
     ownership: false,
     etfAssetExposure: false,
     secFilings: true,
@@ -47,6 +51,11 @@ const PLAN_CAPABILITIES: Record<FmpPlanTier, FmpCapabilities> = {
     dcf: true,
     earningsTranscripts: false,
     pressReleases: false,
+    companyExecutives: true,
+    shareFloatLiquidity: true,
+    cryptoMarkets: true,
+    forexMarkets: true,
+    commodityMarkets: true,
     globalCoverage: false,
     coverageScope: "us",
     intradayIntervals: STARTER_INTRADAY_INTERVALS,
@@ -54,10 +63,12 @@ const PLAN_CAPABILITIES: Record<FmpPlanTier, FmpCapabilities> = {
   PREMIUM: {
     realtimeQuotes: true,
     intradayCharts: true,
+    technicalIndicators: true,
     batchQuotes: false,
     batchIndexQuotes: false,
     analystInsights: true,
     insiderTrades: true,
+    latestInsiderFeed: true,
     ownership: false,
     etfAssetExposure: false,
     secFilings: true,
@@ -66,6 +77,11 @@ const PLAN_CAPABILITIES: Record<FmpPlanTier, FmpCapabilities> = {
     dcf: true,
     earningsTranscripts: false,
     pressReleases: true,
+    companyExecutives: true,
+    shareFloatLiquidity: true,
+    cryptoMarkets: true,
+    forexMarkets: true,
+    commodityMarkets: true,
     globalCoverage: false,
     coverageScope: "usUkCanada",
     intradayIntervals: PREMIUM_INTRADAY_INTERVALS,
@@ -73,10 +89,12 @@ const PLAN_CAPABILITIES: Record<FmpPlanTier, FmpCapabilities> = {
   ULTIMATE: {
     realtimeQuotes: true,
     intradayCharts: true,
+    technicalIndicators: true,
     batchQuotes: true,
     batchIndexQuotes: true,
     analystInsights: true,
     insiderTrades: true,
+    latestInsiderFeed: true,
     ownership: true,
     etfAssetExposure: true,
     secFilings: true,
@@ -85,10 +103,39 @@ const PLAN_CAPABILITIES: Record<FmpPlanTier, FmpCapabilities> = {
     dcf: true,
     earningsTranscripts: true,
     pressReleases: true,
+    companyExecutives: true,
+    shareFloatLiquidity: true,
+    cryptoMarkets: true,
+    forexMarkets: true,
+    commodityMarkets: true,
     globalCoverage: true,
     coverageScope: "global",
     intradayIntervals: PREMIUM_INTRADAY_INTERVALS,
   },
+}
+
+function getValidatedPlanSnapshot(
+  tier: FmpPlanTier
+): FmpPlanValidationSnapshot | null {
+  return FMP_PLAN_VALIDATION_SNAPSHOTS[tier] ?? null
+}
+
+function mergeCapabilitiesWithValidation(
+  tier: FmpPlanTier,
+  base: FmpCapabilities
+): FmpCapabilities {
+  const snapshot = getValidatedPlanSnapshot(tier)
+
+  if (!snapshot) {
+    return base
+  }
+
+  return {
+    ...base,
+    ...snapshot.capabilities,
+    coverageScope: snapshot.coverageScope ?? base.coverageScope,
+    intradayIntervals: snapshot.intradayIntervals ?? base.intradayIntervals,
+  }
 }
 
 function getQuoteFreshnessLabelForTier(): string {
@@ -173,7 +220,8 @@ export function getFmpPlanTier(): FmpPlanTier {
 }
 
 export function getFmpCapabilities(): FmpCapabilities {
-  return PLAN_CAPABILITIES[getFmpPlanTier()]
+  const tier = getFmpPlanTier()
+  return mergeCapabilitiesWithValidation(tier, PLAN_CAPABILITIES[tier])
 }
 
 export function getFmpCoverageScope(): FmpCoverageScope {
@@ -197,6 +245,7 @@ export function getWatchlistLimitForTier(tier: FmpPlanTier): number {
 
 export function getMarketPlanSummary(): MarketPlanSummary {
   const tier = getFmpPlanTier()
+  const capabilities = getFmpCapabilities()
 
   return {
     tier,
@@ -206,7 +255,30 @@ export function getMarketPlanSummary(): MarketPlanSummary {
     requestBudgetLabel: getRequestBudgetLabelForTier(tier),
     bandwidthLimitLabel: getBandwidthLimitLabelForTier(tier),
     watchlistLimit: getWatchlistLimitForTier(tier),
-    capabilities: PLAN_CAPABILITIES[tier],
+    capabilities,
+  }
+}
+
+export function getFmpPlanValidationSummary(): {
+  accessibleProbes: string[]
+  restrictedProbes: string[]
+  source: string
+  tier: FmpPlanTier
+  validatedAt: string
+} | null {
+  const tier = getFmpPlanTier()
+  const snapshot = getValidatedPlanSnapshot(tier)
+
+  if (!snapshot) {
+    return null
+  }
+
+  return {
+    accessibleProbes: snapshot.accessibleProbes,
+    restrictedProbes: snapshot.restrictedProbes,
+    source: snapshot.source,
+    tier,
+    validatedAt: snapshot.validatedAt,
   }
 }
 
