@@ -2,13 +2,15 @@ import type { ModelType } from "@/lib/shared/llm/models"
 
 export type PromptProvider = "openrouter"
 
-export type PromptTaskMode =
-  | "general"
-  | "instruction_following"
-  | "closed_answer"
-  | "coding"
-  | "research"
-  | "high_stakes"
+export const PROMPT_OVERLAY_ORDER = [
+  "high_stakes",
+  "research",
+  "coding",
+  "closed_answer",
+  "format_sensitive",
+] as const
+
+export type PromptOverlay = (typeof PROMPT_OVERLAY_ORDER)[number]
 
 interface PromptSteeringMessage {
   role: "user" | "assistant"
@@ -22,9 +24,9 @@ interface PromptSteeringBlock {
 
 interface CreatePromptSteeringBlocksParams {
   provider?: PromptProvider
-  taskMode?: PromptTaskMode
+  overlays?: readonly PromptOverlay[]
   providerOverlaysEnabled?: boolean
-  taskModeOverlaysEnabled?: boolean
+  overlayBlocksEnabled?: boolean
 }
 
 const CODING_PATTERN =
@@ -43,14 +45,14 @@ const PROVIDER_OVERLAYS: Record<PromptProvider, string> = {
 Use OpenRouter reasoning mode efficiently.
 - Keep the final answer tighter than the hidden reasoning.
 - On format-sensitive tasks, do a literal final-format check before finishing.
-- Treat hard word, line, and sentence caps as hard caps. Count the final output when close to the limit.
+- Treat hard word, line, sentence, and schema constraints as hard constraints.
 - Use tools only when they materially improve accuracy or freshness.
 - After tool use, synthesize and stop. Do not replay raw tool output.
 `.trim(),
 }
 
-const TASK_MODE_OVERLAYS: Record<Exclude<PromptTaskMode, "general">, string> = {
-  instruction_following: `
+const OVERLAY_BLOCKS: Record<PromptOverlay, string> = {
+  format_sensitive: `
 This request is parser-sensitive or format-sensitive.
 - Exact compliance is mandatory.
 - Return only the requested structure, wording, and delimiters.
@@ -108,6 +110,22 @@ function getLastUserMessage(
   return lastUserMessage?.content.trim() ?? null
 }
 
+function hasPatternMatch(
+  pattern: RegExp,
+  lastUserMessage: string,
+  fullUserText: string
+): boolean {
+  return pattern.test(lastUserMessage) || pattern.test(fullUserText)
+}
+
+function normalizePromptOverlays(
+  overlays: readonly PromptOverlay[]
+): PromptOverlay[] {
+  const overlaySet = new Set(overlays)
+
+  return PROMPT_OVERLAY_ORDER.filter((overlay) => overlaySet.has(overlay))
+}
+
 export function resolvePromptProvider(model: ModelType): PromptProvider {
   if (model.includes("/")) {
     return "openrouter"
@@ -116,48 +134,38 @@ export function resolvePromptProvider(model: ModelType): PromptProvider {
   throw new Error(`Unsupported model provider for model: ${model}`)
 }
 
-export function inferPromptTaskMode(
+export function inferPromptOverlays(
   messages: readonly PromptSteeringMessage[]
-): PromptTaskMode {
+): PromptOverlay[] {
   const lastUserMessage = getLastUserMessage(messages)
   if (!lastUserMessage) {
-    return "general"
+    return []
   }
 
   const fullUserText = normalizeUserText(messages)
-  const coding = CODING_PATTERN.test(lastUserMessage)
-  const strictOutput =
-    STRICT_OUTPUT_PATTERN.test(lastUserMessage) ||
-    STRICT_OUTPUT_PATTERN.test(fullUserText)
-  const highStakes = HIGH_STAKES_PATTERN.test(lastUserMessage)
-  const research =
-    RESEARCH_PATTERN.test(lastUserMessage) ||
-    RESEARCH_PATTERN.test(fullUserText)
-  const closedAnswer =
-    CLOSED_ANSWER_PATTERN.test(lastUserMessage) ||
-    CLOSED_ANSWER_PATTERN.test(fullUserText)
+  const overlays: PromptOverlay[] = []
 
-  if (coding) {
-    return "coding"
+  if (hasPatternMatch(HIGH_STAKES_PATTERN, lastUserMessage, fullUserText)) {
+    overlays.push("high_stakes")
   }
 
-  if (highStakes) {
-    return "high_stakes"
+  if (hasPatternMatch(RESEARCH_PATTERN, lastUserMessage, fullUserText)) {
+    overlays.push("research")
   }
 
-  if (research) {
-    return "research"
+  if (hasPatternMatch(CODING_PATTERN, lastUserMessage, fullUserText)) {
+    overlays.push("coding")
   }
 
-  if (closedAnswer) {
-    return "closed_answer"
+  if (hasPatternMatch(CLOSED_ANSWER_PATTERN, lastUserMessage, fullUserText)) {
+    overlays.push("closed_answer")
   }
 
-  if (strictOutput) {
-    return "instruction_following"
+  if (hasPatternMatch(STRICT_OUTPUT_PATTERN, lastUserMessage, fullUserText)) {
+    overlays.push("format_sensitive")
   }
 
-  return "general"
+  return normalizePromptOverlays(overlays)
 }
 
 export function createPromptSteeringBlocks(
@@ -172,14 +180,14 @@ export function createPromptSteeringBlocks(
     })
   }
 
-  if (
-    params.taskMode &&
-    params.taskMode !== "general" &&
-    params.taskModeOverlaysEnabled !== false
-  ) {
+  if (params.overlayBlocksEnabled === false) {
+    return blocks
+  }
+
+  for (const overlay of normalizePromptOverlays(params.overlays ?? [])) {
     blocks.push({
-      label: `TASK MODE OVERLAY: ${params.taskMode.toUpperCase()}`,
-      body: TASK_MODE_OVERLAYS[params.taskMode],
+      label: `REQUEST OVERLAY: ${overlay.toUpperCase()}`,
+      body: OVERLAY_BLOCKS[overlay],
     })
   }
 

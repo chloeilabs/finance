@@ -13,7 +13,11 @@ import {
   STREAM_TIMEOUT_FALLBACK_TEXT,
   textDeltaEvent,
 } from "./route-helpers"
-import type { AgentStreamRequest } from "./route-schema"
+
+interface AgentTextStreamMessage {
+  role: "system" | "user" | "assistant"
+  content: string
+}
 
 interface CreateAgentTextStreamParams {
   request: NextRequest
@@ -21,7 +25,7 @@ interface CreateAgentTextStreamParams {
   selectedModel: ModelType
   openRouterApiKey: string
   tavilyApiKey?: string
-  messages: AgentStreamRequest["messages"]
+  messages: readonly AgentTextStreamMessage[]
   systemInstruction: string
   streamSignal: AbortSignal
   releaseConcurrencySlot: () => void
@@ -119,7 +123,9 @@ export function createAgentTextStream(
           )
           hasTextChunk = true
           hasMeaningfulText = true
-          enqueueEvent(textDeltaEvent("Invalid OPENROUTER_API_KEY on the server."))
+          enqueueEvent(
+            textDeltaEvent("Invalid OPENROUTER_API_KEY on the server.")
+          )
         } else if (!hasMeaningfulText) {
           console.error(
             `[agent:${params.requestId}] Agent stream failed:`,

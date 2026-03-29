@@ -54,15 +54,33 @@ export async function runAgentStreamRequest(params: {
     })
   }
 
-  const response = await fetch("/api/agent", {
-    method: "POST",
-    headers: createAgentRequestHeaders(),
-    signal: params.signal,
-    body: JSON.stringify({
-      model: params.model,
-      messages: params.requestMessages,
-    }),
-  })
+  let response: Response
+  try {
+    response = await fetch("/api/agent", {
+      method: "POST",
+      headers: createAgentRequestHeaders(),
+      signal: params.signal,
+      body: JSON.stringify({
+        model: params.model,
+        messages: params.requestMessages,
+      }),
+    })
+  } catch (requestError) {
+    if (isAbortError(requestError)) {
+      return {
+        kind: "aborted",
+        accumulator: finalizeAgentStreamAccumulator(accumulator, "error"),
+      }
+    }
+
+    return {
+      kind: "error",
+      errorMessage:
+        requestError instanceof Error && requestError.message.trim()
+          ? requestError.message
+          : "Sorry, the response was interrupted.",
+    }
+  }
 
   if (response.status === 401) {
     return { kind: "unauthorized" }

@@ -95,10 +95,9 @@ vi.mock("@/lib/server/markets/config", () => ({
 }))
 
 import { startOpenRouterResponseStream } from "../openrouter-responses"
+import { withAiSdkInlineCitationInstruction } from "../system-instruction-augmentations"
 
-async function collectStream(
-  generator: AsyncGenerator
-): Promise<unknown[]> {
+async function collectStream(generator: AsyncGenerator): Promise<unknown[]> {
   const events: unknown[] = []
 
   for await (const event of generator) {
@@ -270,6 +269,71 @@ describe("startOpenRouterResponseStream", () => {
 
     expect(streamTextArguments?.tools.code_execution).toBeDefined()
     expect(streamTextArguments?.system).toBe("base instruction")
+  })
+
+  it("preserves prelude system messages while composing Tavily and FMP augmentations", async () => {
+    const close = vi.fn().mockResolvedValue(undefined)
+
+    createAiSdkFmpMcpSession.mockResolvedValue({
+      tools: {
+        quote: {
+          execute: vi.fn(),
+        },
+      },
+      toolNames: new Set(["quote"]),
+      close,
+    })
+
+    streamText.mockReturnValue({
+      fullStream: (async function* () {
+        await Promise.resolve()
+        yield {
+          type: "text-delta",
+          text: "ok",
+        }
+      })(),
+    })
+
+    const events = await collectStream(
+      startOpenRouterResponseStream({
+        model: "minimax/minimax-m2.7",
+        openRouterApiKey: "or-key",
+        messages: [
+          {
+            role: "system",
+            content:
+              "--- BEGIN RUNTIME DATE CONTEXT ---\nCurrent UTC timestamp: 2026-03-29T18:45:00.000Z\n--- END RUNTIME DATE CONTEXT ---",
+          },
+          { role: "user", content: "price AAPL" },
+        ],
+        systemInstruction: withAiSdkInlineCitationInstruction(
+          "stable prompt contract"
+        ),
+      })
+    )
+
+    expect(events).toEqual([{ type: "text_delta", delta: "ok" }])
+    const streamTextArguments = streamText.mock.calls[0]?.[0] as
+      | {
+          messages: { role: string; content: string }[]
+          system: string
+        }
+      | undefined
+
+    expect(streamTextArguments?.system).toContain("stable prompt contract")
+    expect(streamTextArguments?.system).toContain(
+      "ai_sdk_inline_citation_rules"
+    )
+    expect(streamTextArguments?.system).toContain("FMP MCP tools are available")
+    expect(streamTextArguments?.messages).toEqual([
+      {
+        role: "system",
+        content:
+          "--- BEGIN RUNTIME DATE CONTEXT ---\nCurrent UTC timestamp: 2026-03-29T18:45:00.000Z\n--- END RUNTIME DATE CONTEXT ---",
+      },
+      { role: "user", content: "price AAPL" },
+    ])
+    expect(close).toHaveBeenCalledTimes(1)
   })
 
   it("closes the MCP session when streaming aborts", async () => {
