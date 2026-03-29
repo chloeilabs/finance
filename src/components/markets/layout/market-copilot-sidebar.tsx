@@ -86,7 +86,7 @@ function MarketCopilotPanel({
           assistantActivityLayout="fullWidth"
           assistantMessageLayout="fullWidth"
           contentWidthMode="rail"
-          craftingShimmerLayout="fullWidth"
+          craftingShimmerLayout="default"
           homePromptSuggestions={COPILOT_SUGGESTIONS}
           initialSelectedModel={initialSelectedModel}
           integratedLayout

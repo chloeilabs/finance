@@ -35,7 +35,7 @@ interface StartOpenRouterResponseStreamParams {
   model: ModelType
   openRouterApiKey: string
   tavilyApiKey?: string
-  messages: AgentInputMessage[]
+  messages: readonly AgentInputMessage[]
   systemInstruction: string
   temperature?: number
   signal?: AbortSignal
@@ -64,7 +64,9 @@ function filterFmpToolsForMerge(
   ) as ToolSet
 }
 
-function toModelMessages(messages: AgentInputMessage[]): ModelMessage[] {
+function toModelMessages(
+  messages: readonly AgentInputMessage[]
+): ModelMessage[] {
   const inputMessages: ModelMessage[] = []
 
   for (const message of messages) {

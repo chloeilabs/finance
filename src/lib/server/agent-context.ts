@@ -1,6 +1,4 @@
-import {
-  type AuthViewer,
-} from "@/lib/shared/auth"
+import { type AuthViewer } from "@/lib/shared/auth"
 import {
   DEFAULT_OPERATING_INSTRUCTION,
   DEFAULT_SOUL_FALLBACK_INSTRUCTION,
@@ -8,21 +6,31 @@ import {
 
 import {
   createPromptSteeringBlocks,
+  type PromptOverlay,
   type PromptProvider,
-  type PromptTaskMode,
 } from "./agent-prompt-steering"
 
 interface RuntimePromptContext {
   now: Date
   userTimeZone?: string
   provider?: PromptProvider
-  taskMode?: PromptTaskMode
+  overlays?: readonly PromptOverlay[]
 }
 
 interface AgentContextOverrides {
   operatingInstruction?: string
   providerOverlaysEnabled?: boolean
-  taskModeOverlaysEnabled?: boolean
+  overlayBlocksEnabled?: boolean
+}
+
+export interface AgentPromptPreludeMessage {
+  role: "system"
+  content: string
+}
+
+export interface AgentPromptContract {
+  systemInstruction: string
+  preludeMessages: AgentPromptPreludeMessage[]
 }
 
 function formatPromptBlock(label: string, body: string): string {
@@ -33,16 +41,13 @@ function formatPromptBlock(label: string, body: string): string {
 
 function formatAuthUserContext(viewer: AuthViewer): string {
   const name = viewer.name.trim() || "(not provided)"
-  const email = viewer.email.trim() || "(not provided)"
 
   return [
     "# Runtime Auth User Context",
     "",
     "This section is generated from the authenticated session for the current request.",
     "",
-    `- User ID: ${viewer.id}`,
-    `- Name: ${name}`,
-    `- Email: ${email}`,
+    `- Authenticated user display name: ${name}`,
   ].join("\n")
 }
 
@@ -74,9 +79,6 @@ function formatZonedDateTime(date: Date, timeZone: string): string {
 
 function formatRuntimeDateContext(context: RuntimePromptContext): string {
   const userTimeZone = normalizeTimeZone(context.userTimeZone)
-  const serverTimeZone = normalizeTimeZone(
-    Intl.DateTimeFormat().resolvedOptions().timeZone
-  )
 
   return [
     "# Runtime Date Context",
@@ -90,7 +92,6 @@ function formatRuntimeDateContext(context: RuntimePromptContext): string {
           `- Current user-local time: ${formatZonedDateTime(context.now, userTimeZone)}`,
         ]
       : []),
-    ...(serverTimeZone ? [`- Server time zone: ${serverTimeZone}`] : []),
     "- Treat the current date/time above as authoritative for words like today, tomorrow, yesterday, latest, recent, this week, and this month.",
     "- Unless the user explicitly asks about a past period, do not rewrite current-information requests into older years or months.",
     "- When searching for current information, keep queries aligned with the current date context first and then narrow from evidence.",
@@ -99,28 +100,24 @@ function formatRuntimeDateContext(context: RuntimePromptContext): string {
 }
 
 function composeSystemInstruction(params: {
-  authUserContext: string
-  runtimeContext: RuntimePromptContext
   operatingInstruction?: string
   providerOverlaysEnabled?: boolean
-  taskModeOverlaysEnabled?: boolean
+  overlayBlocksEnabled?: boolean
+  provider?: PromptProvider
+  overlays?: readonly PromptOverlay[]
 }): string {
   const blocks = [
     formatPromptBlock(
       "OPERATING INSTRUCTIONS",
       params.operatingInstruction ?? DEFAULT_OPERATING_INSTRUCTION
     ),
-    formatPromptBlock(
-      "RUNTIME DATE CONTEXT",
-      formatRuntimeDateContext(params.runtimeContext)
-    ),
   ]
 
   const promptSteeringBlocks = createPromptSteeringBlocks({
-    provider: params.runtimeContext.provider,
-    taskMode: params.runtimeContext.taskMode,
+    provider: params.provider,
+    overlays: params.overlays,
     providerOverlaysEnabled: params.providerOverlaysEnabled,
-    taskModeOverlaysEnabled: params.taskModeOverlaysEnabled,
+    overlayBlocksEnabled: params.overlayBlocksEnabled,
   })
 
   for (const block of promptSteeringBlocks) {
@@ -134,21 +131,46 @@ function composeSystemInstruction(params: {
     )
   )
 
-  blocks.push(formatPromptBlock("AUTH USER CONTEXT", params.authUserContext))
-
   return blocks.join("\n\n")
 }
 
-export function buildAgentSystemInstruction(
+function createPreludeMessages(params: {
+  authUserContext: string
+  runtimeContext: RuntimePromptContext
+}): AgentPromptPreludeMessage[] {
+  return [
+    {
+      role: "system",
+      content: formatPromptBlock(
+        "RUNTIME DATE CONTEXT",
+        formatRuntimeDateContext(params.runtimeContext)
+      ),
+    },
+    {
+      role: "system",
+      content: formatPromptBlock("AUTH USER CONTEXT", params.authUserContext),
+    },
+  ]
+}
+
+export function buildAgentPromptContract(
   viewer: AuthViewer,
   runtimeContext: RuntimePromptContext,
   overrides: AgentContextOverrides = {}
-): string {
-  return composeSystemInstruction({
-    authUserContext: formatAuthUserContext(viewer),
-    runtimeContext,
-    operatingInstruction: overrides.operatingInstruction,
-    providerOverlaysEnabled: overrides.providerOverlaysEnabled,
-    taskModeOverlaysEnabled: overrides.taskModeOverlaysEnabled,
-  })
+): AgentPromptContract {
+  const authUserContext = formatAuthUserContext(viewer)
+
+  return {
+    systemInstruction: composeSystemInstruction({
+      operatingInstruction: overrides.operatingInstruction,
+      providerOverlaysEnabled: overrides.providerOverlaysEnabled,
+      overlayBlocksEnabled: overrides.overlayBlocksEnabled,
+      provider: runtimeContext.provider,
+      overlays: runtimeContext.overlays,
+    }),
+    preludeMessages: createPreludeMessages({
+      authUserContext,
+      runtimeContext,
+    }),
+  }
 }

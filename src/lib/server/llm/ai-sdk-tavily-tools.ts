@@ -375,7 +375,7 @@ export function createAiSdkTavilyTools(apiKey?: string) {
   return {
     tavily_search: tool({
       description:
-        "Search the live web with Tavily for fresh, multi-source retrieval. Use this when you need up-to-date external information or need to discover relevant pages before reading them in detail.",
+        "Search the live web with Tavily for fresh, multi-source retrieval. Use this when you need up-to-date external information, third-party reporting, or need to discover relevant pages before reading them in detail.",
       inputSchema: tavilySearchInputSchema,
       execute: async (input) => {
         try {
@@ -412,7 +412,7 @@ export function createAiSdkTavilyTools(apiKey?: string) {
     }),
     tavily_extract: tool({
       description:
-        "Read and extract content from specific URLs with Tavily. Use this after you already have one or more pages and need to inspect or summarize their contents.",
+        "Read and extract content from specific URLs with Tavily. Use this after you already have one or more pages and need to inspect, verify, or summarize their contents.",
       inputSchema: tavilyExtractInputSchema,
       execute: async (input) => {
         try {

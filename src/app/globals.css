@@ -402,6 +402,25 @@ img {
   }
 }
 
+@keyframes yurie-logo-slideshow {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.logo-xs[data-animate="true"],
+.logo-sm[data-animate="true"],
+.logo-md[data-animate="true"] {
+  animation: yurie-logo-slideshow 1.5s steps(15) infinite;
+}
+
+.logo-lg[data-animate="true"] {
+  animation: yurie-logo-slideshow 2s steps(15) infinite;
+}
+
 @supports (view-transition-name: none) {
   ::view-transition-old(root),
   ::view-transition-new(root) {
