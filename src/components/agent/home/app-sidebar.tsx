@@ -453,16 +453,6 @@ export function AppSidebar({ onGoHome }: { onGoHome?: () => void }) {
                 <SidebarMenu className="gap-1">
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      tooltip="New chat"
-                      onClick={handleGoHome}
-                      className="h-auto min-h-0 cursor-pointer justify-start gap-3 rounded-none px-2.5 py-2 text-sm font-normal text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
-                    >
-                      <Pencil className="size-4 text-sidebar-foreground" />
-                      <span>New chat</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
                       tooltip="Search chats"
                       onClick={openSearch}
                       className="h-auto min-h-0 cursor-pointer justify-start gap-3 rounded-none px-2.5 py-2 text-sm font-normal text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"

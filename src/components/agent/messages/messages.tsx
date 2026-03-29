@@ -62,6 +62,8 @@ function getMessageContent(message: Message): string {
 }
 
 function MessagesComponent({
+  assistantActivityLayout,
+  craftingShimmerLayout,
   messages,
   disableEditing,
   onEditMessage,
@@ -69,6 +71,8 @@ function MessagesComponent({
   userMessageLayout = "bubble",
   assistantMessageLayout = "default",
 }: {
+  assistantActivityLayout?: "default" | "fullWidth"
+  craftingShimmerLayout?: "default" | "fullWidth"
   messages: Message[]
   disableEditing: boolean
   onEditMessage?: (params: {
@@ -122,6 +126,7 @@ function MessagesComponent({
               if (isAssistantMessage(message)) {
                 return (
                   <AssistantMessage
+                    activityLayout={assistantActivityLayout}
                     key={message.id}
                     message={message}
                     layout={assistantMessageLayout}
@@ -135,7 +140,7 @@ function MessagesComponent({
             {shouldShowGenerating ? (
               <CraftingShimmer
                 key={`crafting-${String(groupIndex)}`}
-                layout={assistantMessageLayout}
+                layout={craftingShimmerLayout ?? assistantMessageLayout}
               />
             ) : null}
           </div>
