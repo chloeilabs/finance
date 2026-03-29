@@ -140,7 +140,10 @@ export function MarketCopilotSidebar({
     <ThreadsProvider key={resetToken + localResetToken}>
       {isMobile ? (
         <Sheet onOpenChange={onOpenChange} open={open}>
-          <SheetContent className="!w-full p-0 sm:!max-w-[22rem]" side="right">
+          <SheetContent
+            className="!w-full border-0 p-0 shadow-none data-[side=right]:border-l-0 sm:!max-w-[22rem]"
+            side="right"
+          >
             <MarketCopilotPanel
               initialSelectedModel={initialSelectedModel}
               onNewChat={() => {
