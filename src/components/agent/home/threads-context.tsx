@@ -79,3 +79,7 @@ export function useThreads() {
 
   return context
 }
+
+export function useOptionalThreads() {
+  return useContext(ThreadsContext)
+}

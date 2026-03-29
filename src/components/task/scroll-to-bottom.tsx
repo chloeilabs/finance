@@ -13,7 +13,7 @@ export function ScrollToBottom() {
         <button
           disabled={isAtBottom}
           className={cn(
-            "sticky z-20 rounded-none border border-border bg-background p-1.5 text-muted-foreground transition-all hover:bg-accent hover:text-foreground",
+            "sticky z-20 w-fit self-center rounded-none border border-border bg-background p-1.5 text-muted-foreground transition-all hover:bg-accent hover:text-foreground",
             isAtBottom
               ? "translate-y-2 opacity-0"
               : "translate-y-0 cursor-pointer opacity-100",
