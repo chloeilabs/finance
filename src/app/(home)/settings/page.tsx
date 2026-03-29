@@ -24,32 +24,32 @@ export default function SettingsPage() {
       <PageHeader eyebrow="Workspace" title="Settings" />
 
       <SectionFrame title="Market data plan">
-        <div className="market-grid-5 grid gap-px border border-border/70 bg-border/70 text-xs">
-          <div className="bg-background px-3 py-2">
+        <div className="market-grid-5 market-panel-grid grid text-xs">
+          <div className="market-panel-tile px-3 py-2">
             <div className="text-muted-foreground">Tier</div>
             <div className="mt-1 font-departureMono tracking-tight">
               {plan.label}
             </div>
           </div>
-          <div className="bg-background px-3 py-2">
+          <div className="market-panel-tile px-3 py-2">
             <div className="text-muted-foreground">Coverage</div>
             <div className="mt-1 font-departureMono tracking-tight">
               {formatCoverageScope(plan.capabilities.coverageScope)}
             </div>
           </div>
-          <div className="bg-background px-3 py-2">
+          <div className="market-panel-tile px-3 py-2">
             <div className="text-muted-foreground">Freshness</div>
             <div className="mt-1 font-departureMono tracking-tight">
               {plan.quoteFreshnessLabel}
             </div>
           </div>
-          <div className="bg-background px-3 py-2">
+          <div className="market-panel-tile px-3 py-2">
             <div className="text-muted-foreground">Budget</div>
             <div className="mt-1 font-departureMono tracking-tight">
               {plan.requestBudgetLabel}
             </div>
           </div>
-          <div className="bg-background px-3 py-2">
+          <div className="market-panel-tile px-3 py-2">
             <div className="text-muted-foreground">Bandwidth</div>
             <div className="mt-1 font-departureMono tracking-tight">
               {plan.bandwidthLimitLabel}

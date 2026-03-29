@@ -46,9 +46,9 @@ export async function StockStreetViewSection({ symbol }: { symbol: string }) {
   return (
     <div id="street-view">
       <SectionFrame title="Street View">
-        <div className="market-split-18 grid gap-4">
-          <div className="grid gap-px border border-border/70 bg-border/70">
-            <div className="bg-background px-4 py-3">
+        <div className="market-split-18 grid gap-3">
+          <div className="market-panel-list">
+            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
               <div className="text-xs text-muted-foreground">Consensus</div>
               <div className="mt-2 text-lg tracking-tight">
                 {street.analyst?.ratingSummary ??
@@ -56,14 +56,14 @@ export async function StockStreetViewSection({ symbol }: { symbol: string }) {
                   "N/A"}
               </div>
             </div>
-            <div className="bg-background px-4 py-3">
+            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
               <div className="text-xs text-muted-foreground">Target Range</div>
               <div className="mt-2 text-sm">
                 {formatCurrency(street.analyst?.targetLow)} to{" "}
                 {formatCurrency(street.analyst?.targetHigh)}
               </div>
             </div>
-            <div className="bg-background px-4 py-3">
+            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
               <div className="text-xs text-muted-foreground">
                 Consensus Target
               </div>
@@ -71,7 +71,7 @@ export async function StockStreetViewSection({ symbol }: { symbol: string }) {
                 {formatCurrency(street.analyst?.targetConsensus)}
               </div>
             </div>
-            <div className="bg-background px-4 py-3">
+            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
               <div className="text-xs text-muted-foreground">Grade Mix</div>
               <div className="mt-2 space-y-1 text-sm">
                 <div>
@@ -86,10 +86,10 @@ export async function StockStreetViewSection({ symbol }: { symbol: string }) {
 
           <div className="space-y-4">
             {street.analystEstimates.length > 0 ? (
-              <div className="overflow-x-auto border border-border/70">
+              <div className="market-table-frame">
                 <table className="min-w-full border-collapse text-sm">
                   <thead>
-                    <tr className="border-b border-border/70 bg-muted/30 text-left">
+                    <tr className="border-b border-border/50 bg-background/80 text-left">
                       <th className="px-3 py-2 font-departureMono text-xs tracking-tight">
                         Estimate
                       </th>
@@ -109,7 +109,7 @@ export async function StockStreetViewSection({ symbol }: { symbol: string }) {
                       (estimate: AnalystEstimateSnapshot, index: number) => (
                         <tr
                           key={`${estimate.date ?? "estimate"}:${String(index)}`}
-                          className="border-b border-border/40 last:border-b-0"
+                          className="border-b border-border/35 last:border-b-0"
                         >
                           <td className="px-3 py-2">
                             {formatDate(estimate.date)}
@@ -137,10 +137,10 @@ export async function StockStreetViewSection({ symbol }: { symbol: string }) {
             )}
 
             {street.ratingsHistory.length > 0 ? (
-              <div className="overflow-x-auto border border-border/70">
+              <div className="market-table-frame">
                 <table className="min-w-full border-collapse text-sm">
                   <thead>
-                    <tr className="border-b border-border/70 bg-muted/30 text-left">
+                    <tr className="border-b border-border/50 bg-background/80 text-left">
                       <th className="px-3 py-2 font-departureMono text-xs tracking-tight">
                         Date
                       </th>
@@ -157,7 +157,7 @@ export async function StockStreetViewSection({ symbol }: { symbol: string }) {
                       (entry: RatingsHistoricalEntry) => (
                         <tr
                           key={`${entry.date ?? "date"}:${entry.rating ?? "rating"}`}
-                          className="border-b border-border/40 last:border-b-0"
+                          className="border-b border-border/35 last:border-b-0"
                         >
                           <td className="px-3 py-2">{formatDate(entry.date)}</td>
                           <td className="px-3 py-2">{entry.rating ?? "N/A"}</td>

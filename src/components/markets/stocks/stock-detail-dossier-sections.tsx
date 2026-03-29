@@ -57,8 +57,8 @@ export async function StockBusinessMixSection({ symbol }: { symbol: string }) {
           />
         </div>
 
-        <div className="market-split-20 grid gap-4">
-          <div className="border border-border/70 px-4 py-4">
+        <div className="market-split-20 grid gap-3">
+          <div className="market-soft-surface px-4 py-4">
             <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
               Market Cap History
             </div>
@@ -67,7 +67,7 @@ export async function StockBusinessMixSection({ symbol }: { symbol: string }) {
               values={business.marketCapHistory.map((item) => item.marketCap)}
             />
           </div>
-          <div className="border border-border/70 px-4 py-4">
+          <div className="market-soft-surface px-4 py-4">
             <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
               Employee History
             </div>
@@ -78,20 +78,20 @@ export async function StockBusinessMixSection({ symbol }: { symbol: string }) {
               )}
             />
           </div>
-          <div className="grid gap-px border border-border/70 bg-border/70">
-            <div className="bg-background px-4 py-3">
+          <div className="market-panel-list">
+            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
               <div className="text-xs text-muted-foreground">Registrant</div>
               <div className="mt-2 text-sm">
                 {business.secProfile?.registrantName ?? "N/A"}
               </div>
             </div>
-            <div className="bg-background px-4 py-3">
+            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
               <div className="text-xs text-muted-foreground">CIK</div>
               <div className="mt-2 text-sm">
                 {business.secProfile?.cik ?? "N/A"}
               </div>
             </div>
-            <div className="bg-background px-4 py-3">
+            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
               <div className="text-xs text-muted-foreground">SIC</div>
               <div className="mt-2 text-sm">
                 {business.secProfile?.sicCode ?? "N/A"}{" "}
@@ -112,10 +112,10 @@ export async function StockPeersSection({ symbol }: { symbol: string }) {
     <div id="peers">
       <SectionFrame title="Peers">
         {business.peers.length > 0 ? (
-          <div className="overflow-x-auto border border-border/70">
+          <div className="market-table-frame">
             <table className="min-w-full border-collapse text-sm">
               <thead>
-                <tr className="border-b border-border/70 bg-muted/30 text-left">
+                <tr className="border-b border-border/50 bg-background/80 text-left">
                   <th className="px-3 py-2 font-departureMono text-xs tracking-tight">
                     Symbol
                   </th>
@@ -140,7 +140,7 @@ export async function StockPeersSection({ symbol }: { symbol: string }) {
                 {business.peers.map((peer) => (
                   <tr
                     key={peer.symbol}
-                    className="border-b border-border/40 last:border-b-0"
+                    className="border-b border-border/35 last:border-b-0"
                   >
                     <td className="px-3 py-3">
                       <div>
@@ -218,9 +218,12 @@ export function StockPlanLimitsSection({
   return (
     <div id="plan-limits">
       <SectionFrame title="Plan limits">
-        <div className="market-grid-3 grid gap-px border border-border/70 bg-border/70">
+        <div className="market-grid-3 market-panel-grid grid">
           {sections.map((section) => (
-            <div key={section.title} className="bg-background px-4 py-4">
+            <div
+              key={section.title}
+              className="market-panel-tile px-3 py-3 sm:px-4"
+            >
               <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
                 Locked
               </div>

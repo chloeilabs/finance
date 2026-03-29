@@ -27,7 +27,7 @@ export default async function MarketsPage() {
       </SectionFrame>
 
       <SectionFrame title="Tape leaders">
-        <div className="market-grid-3 grid gap-4">
+        <div className="market-grid-3 grid gap-3">
           {snapshot.movers.map((bucket) => (
             <div key={bucket.label} className="space-y-3">
               <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
@@ -40,11 +40,11 @@ export default async function MarketsPage() {
       </SectionFrame>
 
       <SectionFrame title="Macro context">
-        <div className="market-grid-6 grid gap-px border border-border/70 bg-border/70">
+        <div className="market-grid-6 market-panel-grid grid">
           {snapshot.macro.map((item) => (
             <div
               key={`${item.label}:${item.date ?? "current"}`}
-              className="bg-background px-4 py-3"
+              className="market-panel-tile px-3 py-2.5 sm:px-4"
             >
               <div className="text-xs text-muted-foreground">{item.label}</div>
               <div className="mt-2 text-lg tracking-tight">
@@ -63,9 +63,12 @@ export default async function MarketsPage() {
       </SectionFrame>
 
       <SectionFrame title="Exchange clock">
-        <div className="market-grid-3 grid gap-px border border-border/70 bg-border/70">
+        <div className="market-grid-3 market-panel-grid grid">
           {snapshot.marketHours.map((item) => (
-            <div key={item.exchange} className="bg-background px-4 py-3">
+            <div
+              key={item.exchange}
+              className="market-panel-tile px-3 py-2.5 sm:px-4"
+            >
               <div className="font-departureMono text-xs tracking-tight">
                 {item.exchange}
               </div>
@@ -81,11 +84,11 @@ export default async function MarketsPage() {
       </SectionFrame>
 
       <SectionFrame title="Upcoming holidays">
-        <div className="market-grid-3 grid gap-px border border-border/70 bg-border/70">
+        <div className="market-grid-3 market-panel-grid grid">
           {snapshot.marketHolidays.map((item) => (
             <div
               key={`${item.exchange}:${item.date ?? ""}`}
-              className="bg-background px-4 py-3"
+              className="market-panel-tile px-3 py-2.5 sm:px-4"
             >
               <div className="font-departureMono text-xs tracking-tight">
                 {item.exchange}
@@ -100,11 +103,11 @@ export default async function MarketsPage() {
       </SectionFrame>
 
       <SectionFrame title="Sector valuation">
-        <div className="market-grid-4 grid gap-px border border-border/70 bg-border/70">
+        <div className="market-grid-4 market-panel-grid grid">
           {snapshot.sectorValuations.map((item) => (
             <div
               key={`${item.sector}:${item.exchange ?? ""}`}
-              className="bg-background px-4 py-3"
+              className="market-panel-tile px-3 py-2.5 sm:px-4"
             >
               <div className="text-xs text-muted-foreground">{item.sector}</div>
               <div className="mt-2 text-lg tracking-tight">
@@ -119,9 +122,12 @@ export default async function MarketsPage() {
       </SectionFrame>
 
       <SectionFrame title="Historical sector performance">
-        <div className="market-grid-4 grid gap-px border border-border/70 bg-border/70">
+        <div className="market-grid-4 market-panel-grid grid">
           {snapshot.sectorHistory.map((series) => (
-            <div key={series.sector} className="bg-background px-4 py-3">
+            <div
+              key={series.sector}
+              className="market-panel-tile px-3 py-2.5 sm:px-4"
+            >
               <div className="text-xs text-muted-foreground">
                 {series.sector}
               </div>
@@ -135,8 +141,8 @@ export default async function MarketsPage() {
       </SectionFrame>
 
       <SectionFrame title="US risk premium">
-        <div className="market-grid-2 grid gap-px border border-border/70 bg-border/70">
-          <div className="bg-background px-4 py-3">
+        <div className="market-grid-2 market-panel-grid grid">
+          <div className="market-panel-tile px-3 py-2.5 sm:px-4">
             <div className="text-xs text-muted-foreground">
               Country Risk Premium
             </div>
@@ -144,7 +150,7 @@ export default async function MarketsPage() {
               {formatSignedNumber(snapshot.riskPremium?.countryRiskPremium)}
             </div>
           </div>
-          <div className="bg-background px-4 py-3">
+          <div className="market-panel-tile px-3 py-2.5 sm:px-4">
             <div className="text-xs text-muted-foreground">
               Total Equity Risk Premium
             </div>

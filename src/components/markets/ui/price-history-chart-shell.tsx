@@ -9,7 +9,7 @@ const DynamicPriceHistoryChart = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="border border-border/70 bg-background px-4 py-10 text-sm text-muted-foreground">
+      <div className="market-soft-surface px-4 py-10 text-sm text-muted-foreground">
         Loading price history...
       </div>
     ),
