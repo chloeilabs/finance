@@ -1,20 +1,20 @@
 import { headers } from "next/headers"
 
-import type { AuthViewer } from "@/lib/shared"
+import type { AuthViewer } from "@/lib/shared/auth"
 
 import { getAuthOrNull } from "./auth"
 
-interface AuthSessionUser {
+export interface AuthSessionUser {
   id: string
   name: string
   email: string
 }
 
-interface AuthSessionValue {
+export interface AuthSessionValue {
   user: AuthSessionUser
 }
 
-type AuthSession = AuthSessionValue | null
+export type AuthSession = AuthSessionValue | null
 
 function toViewer(session: AuthSession): AuthViewer | null {
   if (!session) {

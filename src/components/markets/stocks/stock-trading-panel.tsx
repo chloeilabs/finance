@@ -10,10 +10,10 @@ import {
 } from "@/lib/markets-format"
 import type {
   AftermarketSnapshot,
-  FmpIntradayInterval,
   PriceChangeSnapshot,
   PricePoint,
-} from "@/lib/shared"
+} from "@/lib/shared/markets/core"
+import type { FmpIntradayInterval } from "@/lib/shared/markets/plan"
 
 const INTERVAL_LABELS: Record<FmpIntradayInterval, string> = {
   "1min": "1m",

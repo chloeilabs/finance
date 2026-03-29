@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useDeferredValue, useEffect, useRef, useState } from "react"
 
 import { Input } from "@/components/ui/input"
-import type { MarketSearchResult } from "@/lib/shared"
+import type { MarketSearchResult } from "@/lib/shared/markets/core"
 import { cn } from "@/lib/utils"
 
 export function SymbolSearch({

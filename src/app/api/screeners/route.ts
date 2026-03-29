@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server"
-import { z } from "zod"
+import { z, ZodError } from "zod"
 
+import { createMarketApiErrorResponse } from "@/lib/server/markets/api-errors"
 import {
-  createAuthUnavailableResponse,
-  isAuthConfigured,
-} from "@/lib/server/auth"
-import { getRequestSession } from "@/lib/server/auth-session"
+  createMarketApiRequestContext,
+  requireMarketSession,
+} from "@/lib/server/markets/api-route"
+import { isMarketStoreNotInitializedError } from "@/lib/server/markets/errors"
 import {
   getSavedMarketScreeners,
   saveMarketScreener,
@@ -34,14 +35,7 @@ const payloadSchema = z
         industry: z.string().trim().min(1).max(120).optional(),
         exchange: z.string().trim().min(1).max(120).optional(),
         sortBy: z
-          .enum([
-            "symbol",
-            "marketCap",
-            "price",
-            "volume",
-            "beta",
-            "dividend",
-          ])
+          .enum(["symbol", "marketCap", "price", "volume", "beta", "dividend"])
           .optional(),
         sortDirection: z.enum(["asc", "desc"]).optional(),
       })
@@ -49,56 +43,49 @@ const payloadSchema = z
   })
   .strict()
 
-function createHeaders(requestId: string) {
-  return {
-    "Cache-Control": "no-store",
-    "X-Content-Type-Options": "nosniff",
-    "X-Request-Id": requestId,
-  }
-}
-
 export async function GET(request: Request) {
-  const requestId = crypto.randomUUID()
+  const context = createMarketApiRequestContext(request)
+  const { response, session } = await requireMarketSession(request, context)
 
-  if (!isAuthConfigured()) {
-    return createAuthUnavailableResponse(createHeaders(requestId))
-  }
-
-  const session = await getRequestSession(new Headers(request.headers))
-
-  if (!session) {
-    return NextResponse.json(
-      { error: "Unauthorized." },
-      { status: 401, headers: createHeaders(requestId) }
-    )
+  if (response) {
+    return response
   }
 
   try {
     const screeners = await getSavedMarketScreeners(session.user.id)
-    return NextResponse.json({ screeners }, { headers: createHeaders(requestId) })
-  } catch (error) {
-    console.error(`[screeners:${requestId}] Failed to load screeners:`, error)
     return NextResponse.json(
-      { error: "Failed to load screeners." },
-      { status: 500, headers: createHeaders(requestId) }
+      { screeners },
+      { headers: context.headers }
     )
+  } catch (error) {
+    if (isMarketStoreNotInitializedError(error)) {
+      return createMarketApiErrorResponse({
+        code: error.code,
+        error: error.message,
+        headers: context.headers,
+        status: 503,
+      })
+    }
+
+    console.error(
+      `[screeners:${context.requestId}] Failed to load screeners:`,
+      error
+    )
+    return createMarketApiErrorResponse({
+      code: "screeners_fetch_failed",
+      error: "Failed to load screeners.",
+      headers: context.headers,
+      status: 500,
+    })
   }
 }
 
 export async function POST(request: Request) {
-  const requestId = crypto.randomUUID()
+  const context = createMarketApiRequestContext(request)
+  const { response, session } = await requireMarketSession(request, context)
 
-  if (!isAuthConfigured()) {
-    return createAuthUnavailableResponse(createHeaders(requestId))
-  }
-
-  const session = await getRequestSession(new Headers(request.headers))
-
-  if (!session) {
-    return NextResponse.json(
-      { error: "Unauthorized." },
-      { status: 401, headers: createHeaders(requestId) }
-    )
+  if (response) {
+    return response
   }
 
   try {
@@ -111,13 +98,36 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       { screener },
-      { status: 201, headers: createHeaders(requestId) }
+      { status: 201, headers: context.headers }
     )
   } catch (error) {
-    console.error(`[screeners:${requestId}] Failed to save screener:`, error)
-    return NextResponse.json(
-      { error: "Failed to save screener." },
-      { status: 400, headers: createHeaders(requestId) }
+    if (error instanceof ZodError) {
+      return createMarketApiErrorResponse({
+        code: "invalid_screener_payload",
+        error: "Invalid screener payload.",
+        headers: context.headers,
+        status: 400,
+      })
+    }
+
+    if (isMarketStoreNotInitializedError(error)) {
+      return createMarketApiErrorResponse({
+        code: error.code,
+        error: error.message,
+        headers: context.headers,
+        status: 503,
+      })
+    }
+
+    console.error(
+      `[screeners:${context.requestId}] Failed to save screener:`,
+      error
     )
+    return createMarketApiErrorResponse({
+      code: "screener_save_failed",
+      error: "Failed to save screener.",
+      headers: context.headers,
+      status: 500,
+    })
   }
 }

@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useModels } from "@/hooks/agent/use-models"
-import { ModelInfos, type ModelType } from "@/lib/shared"
+import { ModelInfos, type ModelType } from "@/lib/shared/llm/models"
 
 export function ModelSelector({
   selectedModel,

@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { formatDateTime } from "@/lib/markets-format"
 import { getCurrentViewer } from "@/lib/server/auth-session"
 import { listThreadsForUser } from "@/lib/server/threads"
-import { type Thread } from "@/lib/shared"
+import type { Thread } from "@/lib/shared/threads"
 
 function getSingleParam(value: string | string[] | undefined): string {
   const raw = Array.isArray(value) ? value[0] : value

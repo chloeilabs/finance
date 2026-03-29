@@ -10,7 +10,7 @@ import { tool } from "ai"
 import { z } from "zod"
 
 import { asRecord, asString } from "@/lib/cast"
-import type { MessageSource, ToolName } from "@/lib/shared"
+import type { MessageSource, ToolName } from "@/lib/shared/agent/messages"
 
 const TAVILY_SEARCH_TOOL_NAME = "tavily_search" as const
 const TAVILY_EXTRACT_TOOL_NAME = "tavily_extract" as const

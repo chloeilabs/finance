@@ -1,39 +1,24 @@
 import { NextResponse } from "next/server"
 
+import { createMarketApiErrorResponse } from "@/lib/server/markets/api-errors"
 import {
-  createAuthUnavailableResponse,
-  isAuthConfigured,
-} from "@/lib/server/auth"
-import { getRequestSession } from "@/lib/server/auth-session"
+  createMarketApiRequestContext,
+  requireMarketSession,
+} from "@/lib/server/markets/api-route"
+import { isMarketStoreNotInitializedError } from "@/lib/server/markets/errors"
 import { deleteSavedMarketScreener } from "@/lib/server/markets/service"
 
 export const runtime = "nodejs"
-
-function createHeaders(requestId: string) {
-  return {
-    "Cache-Control": "no-store",
-    "X-Content-Type-Options": "nosniff",
-    "X-Request-Id": requestId,
-  }
-}
 
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const requestId = crypto.randomUUID()
+  const context = createMarketApiRequestContext(request)
+  const { response, session } = await requireMarketSession(request, context)
 
-  if (!isAuthConfigured()) {
-    return createAuthUnavailableResponse(createHeaders(requestId))
-  }
-
-  const session = await getRequestSession(new Headers(request.headers))
-
-  if (!session) {
-    return NextResponse.json(
-      { error: "Unauthorized." },
-      { status: 401, headers: createHeaders(requestId) }
-    )
+  if (response) {
+    return response
   }
 
   try {
@@ -43,12 +28,29 @@ export async function DELETE(
       screenerId: id,
     })
 
-    return NextResponse.json({ ok: true }, { headers: createHeaders(requestId) })
-  } catch (error) {
-    console.error(`[screener:${requestId}] Failed to delete screener:`, error)
     return NextResponse.json(
-      { error: "Failed to delete screener." },
-      { status: 400, headers: createHeaders(requestId) }
+      { ok: true },
+      { headers: context.headers }
     )
+  } catch (error) {
+    if (isMarketStoreNotInitializedError(error)) {
+      return createMarketApiErrorResponse({
+        code: error.code,
+        error: error.message,
+        headers: context.headers,
+        status: 503,
+      })
+    }
+
+    console.error(
+      `[screener:${context.requestId}] Failed to delete screener:`,
+      error
+    )
+    return createMarketApiErrorResponse({
+      code: "screener_delete_failed",
+      error: "Failed to delete screener.",
+      headers: context.headers,
+      status: 500,
+    })
   }
 }

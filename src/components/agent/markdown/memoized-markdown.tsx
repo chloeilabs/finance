@@ -5,7 +5,7 @@ import remarkGfm from "remark-gfm"
 
 import { ShikiCode } from "@/components/ui/shiki-code"
 import { Source, SourceContent, SourceTrigger } from "@/components/ui/source"
-import type { MessageSource } from "@/lib/shared"
+import type { MessageSource } from "@/lib/shared/agent/messages"
 import { cn } from "@/lib/utils"
 
 function extractTextFromNode(node: React.ReactNode): string {

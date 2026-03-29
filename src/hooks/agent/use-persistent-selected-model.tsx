@@ -6,7 +6,11 @@ import {
   MODEL_SELECTOR_STORAGE_KEY,
   MODEL_SELECTOR_UPDATED_EVENT,
 } from "@/lib/constants"
-import { isModelType, type ModelInfo, type ModelType } from "@/lib/shared"
+import {
+  isModelType,
+  type ModelInfo,
+  type ModelType,
+} from "@/lib/shared/llm/models"
 
 function readStoredSelectedModel(): ModelType | null {
   if (typeof window === "undefined") {

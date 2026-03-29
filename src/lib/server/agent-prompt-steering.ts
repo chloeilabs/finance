@@ -1,4 +1,4 @@
-import type { ModelType } from "@/lib/shared"
+import type { ModelType } from "@/lib/shared/llm/models"
 
 export type PromptProvider = "openrouter"
 

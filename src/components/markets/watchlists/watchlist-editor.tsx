@@ -1,12 +1,14 @@
 "use client"
 
 import { Plus, RefreshCw, X } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useMemo, useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import type { WatchlistRecord } from "@/lib/shared"
+import { readApiErrorMessage } from "@/lib/market-api"
+import type { WatchlistRecord } from "@/lib/shared/markets/workspace"
 
 export function WatchlistEditor({
   watchlist,
@@ -15,6 +17,7 @@ export function WatchlistEditor({
   watchlist: WatchlistRecord
   watchlistLimit: number
 }) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [draft, setDraft] = useState("")
   const [symbols, setSymbols] = useState(watchlist.symbols)
@@ -28,49 +31,70 @@ export function WatchlistEditor({
     [draft]
   )
 
-  const syncWatchlist = (nextSymbols: string[]) => {
+  const syncWatchlist = (
+    nextSymbols: string[],
+    options?: {
+      afterSuccess?: () => void
+    }
+  ) => {
     startTransition(async () => {
-      const response = await fetch(`/api/watchlists/${watchlist.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          symbols: nextSymbols,
-        }),
-      })
+      try {
+        const response = await fetch(`/api/watchlists/${watchlist.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            symbols: nextSymbols,
+          }),
+        })
 
-      if (!response.ok) {
+        if (!response.ok) {
+          toast.error(
+            await readApiErrorMessage(response, "Failed to update watchlist.")
+          )
+          return
+        }
+
+        const payload = (await response.json()) as {
+          watchlist?: WatchlistRecord
+        }
+        setSymbols(payload.watchlist?.symbols ?? nextSymbols)
+        options?.afterSuccess?.()
+        toast.success("Watchlist updated.")
+        router.refresh()
+      } catch {
         toast.error("Failed to update watchlist.")
-        return
       }
-
-      const payload = (await response.json()) as { watchlist?: WatchlistRecord }
-      setSymbols(payload.watchlist?.symbols ?? nextSymbols)
-      toast.success("Watchlist updated.")
     })
   }
 
   const refreshQuotes = () => {
     startTransition(async () => {
-      const response = await fetch(`/api/watchlists/${watchlist.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          symbols,
-          refresh: true,
-        }),
-      })
+      try {
+        const response = await fetch(`/api/watchlists/${watchlist.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            symbols,
+            refresh: true,
+          }),
+        })
 
-      if (!response.ok) {
+        if (!response.ok) {
+          toast.error(
+            await readApiErrorMessage(response, "Failed to refresh quotes.")
+          )
+          return
+        }
+
+        toast.success("Quote cache refreshed.")
+        router.refresh()
+      } catch {
         toast.error("Failed to refresh quotes.")
-        return
       }
-
-      toast.success("Quote cache refreshed.")
-      window.location.reload()
     })
   }
 
@@ -102,9 +126,9 @@ export function WatchlistEditor({
             key={symbol}
             className="inline-flex items-center gap-2 border border-border/70 px-2 py-1 text-xs transition-colors hover:bg-muted/35"
             type="button"
-            onClick={() =>
-              { syncWatchlist(symbols.filter((item) => item !== symbol)); }
-            }
+            onClick={() => {
+              syncWatchlist(symbols.filter((item) => item !== symbol))
+            }}
           >
             <span className="font-departureMono tracking-tight">{symbol}</span>
             <X className="size-3" />
@@ -117,7 +141,9 @@ export function WatchlistEditor({
           className="rounded-none border-border/70"
           placeholder="Add symbols, comma separated"
           value={draft}
-          onChange={(event) => { setDraft(event.target.value); }}
+          onChange={(event) => {
+            setDraft(event.target.value)
+          }}
         />
         <Button
           disabled={
@@ -127,8 +153,11 @@ export function WatchlistEditor({
           }
           onClick={() => {
             const nextSymbols = [...new Set([...symbols, ...normalizedDraft])]
-            setDraft("")
-            syncWatchlist(nextSymbols)
+            syncWatchlist(nextSymbols, {
+              afterSuccess: () => {
+                setDraft("")
+              },
+            })
           }}
         >
           <Plus className="size-3.5" />

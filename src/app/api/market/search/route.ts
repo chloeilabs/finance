@@ -1,39 +1,19 @@
 import { NextResponse } from "next/server"
 
 import {
-  createAuthUnavailableResponse,
-  isAuthConfigured,
-} from "@/lib/server/auth"
-import { getRequestSession } from "@/lib/server/auth-session"
+  createMarketApiRequestContext,
+  requireMarketSession,
+} from "@/lib/server/markets/api-route"
 import { searchMarketSymbols } from "@/lib/server/markets/service"
 
 export const runtime = "nodejs"
 
-function createHeaders(requestId: string) {
-  return {
-    "Cache-Control": "no-store",
-    "X-Content-Type-Options": "nosniff",
-    "X-Request-Id": requestId,
-  }
-}
-
 export async function GET(request: Request) {
-  const requestId = crypto.randomUUID()
+  const context = createMarketApiRequestContext(request)
+  const { response } = await requireMarketSession(request, context)
 
-  if (!isAuthConfigured()) {
-    return createAuthUnavailableResponse(createHeaders(requestId))
-  }
-
-  const session = await getRequestSession(new Headers(request.headers))
-
-  if (!session) {
-    return NextResponse.json(
-      { error: "Unauthorized." },
-      {
-        status: 401,
-        headers: createHeaders(requestId),
-      }
-    )
+  if (response) {
+    return response
   }
 
   const query = new URL(request.url).searchParams.get("q")?.trim() ?? ""
@@ -44,19 +24,19 @@ export async function GET(request: Request) {
     return NextResponse.json(
       { results },
       {
-        headers: createHeaders(requestId),
+        headers: context.headers,
       }
     )
   } catch (error) {
     console.error(
-      `[market-search:${requestId}] Failed to search symbols:`,
+      `[market-search:${context.requestId}] Failed to search symbols:`,
       error
     )
     return NextResponse.json(
       { error: "Failed to search market symbols." },
       {
         status: 500,
-        headers: createHeaders(requestId),
+        headers: context.headers,
       }
     )
   }

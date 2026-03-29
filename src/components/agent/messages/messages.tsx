@@ -4,8 +4,8 @@ import {
   isAssistantMessage,
   isUserMessage,
   type Message,
-  type ModelType,
-} from "@/lib/shared"
+} from "@/lib/shared/agent/messages"
+import type { ModelType } from "@/lib/shared/llm/models"
 
 import { AssistantMessage, CraftingShimmer } from "./assistant-message"
 import { UserMessage } from "./user-message"

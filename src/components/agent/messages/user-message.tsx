@@ -3,12 +3,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { useModels } from "@/hooks/agent/use-models"
+import type { Message } from "@/lib/shared/agent/messages"
 import {
   AvailableModels,
-  type Message,
   type ModelType,
   resolveDefaultModel,
-} from "@/lib/shared"
+} from "@/lib/shared/llm/models"
 import { cn } from "@/lib/utils"
 
 import { Button } from "../../ui/button"

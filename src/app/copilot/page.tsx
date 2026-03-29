@@ -13,7 +13,7 @@ import { SIDEBAR_COOKIE_NAME } from "@/lib/constants"
 import { isAuthConfigured } from "@/lib/server/auth"
 import { getCurrentViewer } from "@/lib/server/auth-session"
 import { listThreadsForUser } from "@/lib/server/threads"
-import { resolveDefaultModel } from "@/lib/shared"
+import { resolveDefaultModel } from "@/lib/shared/llm/models"
 
 function getSingleParam(value: string | string[] | undefined): string | null {
   const raw = Array.isArray(value) ? value[0] : value

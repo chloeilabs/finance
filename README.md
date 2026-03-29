@@ -21,6 +21,13 @@ pnpm dev
 
 The app runs on [http://localhost:3000](http://localhost:3000).
 
+## Working in this repo
+
+- Start with `AGENTS.md` for the repo contract.
+- Use local AGENTS files under `src/app/api`, `src/lib/server/markets`, and `src/components/agent` when you are working in those areas.
+- Repo-specific repeatable workflows live under `.agents/skills`.
+- Expanded repo guidance lives in `docs/agents/*` and architecture notes live in `docs/architecture/*`.
+
 ## Required environment
 
 - `DATABASE_URL`
@@ -51,6 +58,8 @@ Without `FMP_API_KEY`, the market shell still renders but the data sections rema
 - `pnpm lint:fix`: run ESLint autofixes
 - `pnpm format`: run Prettier
 - `pnpm format:check`: verify formatting
+- `pnpm test`: run the Vitest suite
+- `pnpm test:watch`: run Vitest in watch mode
 - `pnpm typecheck`: run TypeScript checks
 
 ## Product routes
@@ -79,7 +88,21 @@ Without `FMP_API_KEY`, the market shell still renders but the data sections rema
 ## Notes
 
 - FMP access is server-only. The browser never sees the API key.
+- Tests now live in domain-local `__tests__` directories to keep runtime folders lower-noise for both humans and Codex.
 - To share logins with another Yurie app, point both apps at the same Better Auth database and secret, set `BETTER_AUTH_COOKIE_DOMAIN` to the shared parent domain, and include every live subdomain in `BETTER_AUTH_TRUSTED_ORIGINS`.
 - The FMP integration uses `/stable/*` endpoints with plan-aware fallbacks for tiers that do not expose batch quotes, batch index quotes, ETF asset exposure, or DCF.
 - Set `FMP_PLAN_TIER=STARTER` for Starter access. Starter is treated as US-only with 300 calls per minute and 20 GB over a trailing 30-day window.
 - Thread metadata now supports a bound stock symbol so the copilot path can attach to a company later without creating a separate chat system.
+
+## Verification
+
+Before closing a substantial change, run:
+
+```bash
+pnpm test
+pnpm lint
+pnpm typecheck
+pnpm build
+```
+
+When market capability assumptions or storage behavior change, also run `pnpm markets:capabilities`.

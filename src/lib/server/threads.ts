@@ -3,18 +3,19 @@ import { z } from "zod"
 
 import {
   AGENT_RUN_STATUSES,
+  SEARCH_TOOL_NAMES,
+  TOOL_NAMES,
+} from "@/lib/shared/agent/messages"
+import { isModelType, type ModelType } from "@/lib/shared/llm/models"
+import {
   DEFAULT_THREAD_TITLE,
   deriveThreadTitle,
-  isModelType,
-  type ModelType,
   normalizeThread,
-  SEARCH_TOOL_NAMES,
   sortThreadsNewestFirst,
   type Thread,
   THREAD_TITLE_MAX_LENGTH,
   type ThreadMetadata,
-  TOOL_NAMES,
-} from "@/lib/shared"
+} from "@/lib/shared/threads"
 
 import { getDatabase } from "./postgres"
 

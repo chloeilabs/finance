@@ -8,7 +8,7 @@ import {
   type FmpIntradayInterval,
   type FmpPlanTier,
   type MarketPlanSummary,
-} from "@/lib/shared"
+} from "@/lib/shared/markets/plan"
 
 const DEFAULT_FMP_BASE_URL = "https://financialmodelingprep.com"
 const FMP_PLAN_TIER_SET = new Set<FmpPlanTier>(FMP_PLAN_TIERS)
