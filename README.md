@@ -38,7 +38,7 @@ The app runs on [http://localhost:3000](http://localhost:3000).
 
 - `AUTH_DATABASE_URL`: optional Better Auth database override; falls back to `DATABASE_URL` when unset
 - `BETTER_AUTH_COOKIE_DOMAIN`: optional shared cookie domain for cross-subdomain Better Auth sessions (for example `yurie.ai`)
-- `FMP_API_KEY`: enables Financial Modeling Prep market data
+- `FMP_API_KEY`: enables Financial Modeling Prep market data and FMP MCP tools inside `/copilot`
 - `FMP_PLAN_TIER`: manual Financial Modeling Prep plan label used for server-side capability gating (`STARTER`, `PREMIUM`, or `ULTIMATE`)
 - `OPENROUTER_API_KEY`: enables the `/copilot` agent workspace
 - `TAVILY_API_KEY`: enables search tools inside `/copilot`
@@ -87,10 +87,11 @@ Without `FMP_API_KEY`, the market shell still renders but the data sections rema
 
 ## Notes
 
-- FMP access is server-only. The browser never sees the API key.
+- FMP access is server-only. The browser never sees the API key. The same `FMP_API_KEY` now powers both the market workspace and FMP MCP tool access in `/copilot`.
 - Tests now live in domain-local `__tests__` directories to keep runtime folders lower-noise for both humans and Codex.
 - To share logins with another Yurie app, point both apps at the same Better Auth database and secret, set `BETTER_AUTH_COOKIE_DOMAIN` to the shared parent domain, and include every live subdomain in `BETTER_AUTH_TRUSTED_ORIGINS`.
 - The FMP integration uses `/stable/*` endpoints with plan-aware fallbacks for tiers that do not expose batch quotes, batch index quotes, ETF asset exposure, or DCF.
+- `/copilot` auto-enables the full remote FMP MCP catalog when `FMP_API_KEY` is configured and falls back to the existing tool set if MCP discovery is unavailable.
 - Set `FMP_PLAN_TIER=STARTER` for Starter access. Starter is treated as US-only with 300 calls per minute and 20 GB over a trailing 30-day window.
 - Thread metadata now supports a bound stock symbol so the copilot path can attach to a company later without creating a separate chat system.
 
