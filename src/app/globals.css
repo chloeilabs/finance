@@ -217,6 +217,39 @@
     width: 100%;
   }
 
+  .market-panel-grid {
+    gap: 0.625rem;
+  }
+
+  .market-panel-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  .market-panel-tile {
+    min-width: 0;
+    background: color-mix(in oklab, var(--muted) 44%, transparent);
+  }
+
+  .market-panel-row {
+    min-width: 0;
+    background: color-mix(in oklab, var(--muted) 38%, transparent);
+  }
+
+  .market-soft-surface {
+    background: color-mix(in oklab, var(--muted) 34%, transparent);
+  }
+
+  .market-table-frame {
+    overflow-x: auto;
+    background: color-mix(in oklab, var(--muted) 28%, transparent);
+  }
+
+  .market-chip {
+    background: color-mix(in oklab, var(--muted) 42%, transparent);
+  }
+
   .market-grid-2,
   .market-grid-3,
   .market-grid-4,

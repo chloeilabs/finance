@@ -20,24 +20,32 @@ import {
   UI_STATE_COOKIE_MAX_AGE,
 } from "@/lib/constants"
 import type { AuthViewer } from "@/lib/shared/auth"
+import type { ModelType } from "@/lib/shared/llm/models"
 import type { WatchlistRecord } from "@/lib/shared/markets/workspace"
+import { cn } from "@/lib/utils"
 
 import { MarketSidebar } from "./market-sidebar"
 
 export function MarketShell({
   children,
+  enableCopilotRail = true,
   initialCopilotOpen = false,
+  initialSelectedModel,
   initialSidebarOpen = true,
   viewer,
   watchlists,
   warnings,
+  workspaceClassName,
 }: {
   children: React.ReactNode
+  enableCopilotRail?: boolean
   initialCopilotOpen?: boolean
+  initialSelectedModel?: ModelType | null
   initialSidebarOpen?: boolean
   viewer: AuthViewer
   watchlists: WatchlistRecord[]
   warnings: string[]
+  workspaceClassName?: string
 }) {
   const [copilotOpen, setCopilotOpenState] = useState(initialCopilotOpen)
   const setCopilotOpen = useCallback(
@@ -59,8 +67,8 @@ export function MarketShell({
       <MarketSidebar watchlists={watchlists} />
       <SidebarInset className="h-svh min-h-0 overflow-hidden">
         <div className="flex h-full min-h-0 flex-col">
-          <div className="border-b border-border/70 bg-background">
-            <div className="z-10 flex h-[52px] shrink-0 items-center gap-3 px-3">
+          <div className="border-b border-border/50 bg-background/95 backdrop-blur">
+            <div className="z-10 flex h-[52px] shrink-0 items-center gap-2.5 px-3">
               <SidebarTrigger />
 
               <SymbolSearch
@@ -69,12 +77,14 @@ export function MarketShell({
               />
 
               <div className="ml-auto flex shrink-0 items-center gap-1.5">
-                <MarketCopilotToggle
-                  onToggle={() => {
-                    setCopilotOpen((currentOpen) => !currentOpen)
-                  }}
-                  open={copilotOpen}
-                />
+                {enableCopilotRail ? (
+                  <MarketCopilotToggle
+                    onToggle={() => {
+                      setCopilotOpen((currentOpen) => !currentOpen)
+                    }}
+                    open={copilotOpen}
+                  />
+                ) : null}
                 <AppLauncher className="size-7" />
                 <UserMenu viewer={viewer} className="size-7" />
               </div>
@@ -84,17 +94,25 @@ export function MarketShell({
 
           <div className="flex min-h-0 flex-1 overflow-hidden">
             <div
-              className="market-workspace min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain"
-              data-copilot-open={copilotOpen ? "true" : "false"}
+              className={cn(
+                "market-workspace min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain",
+                workspaceClassName
+              )}
+              data-copilot-open={enableCopilotRail && copilotOpen ? "true" : "false"}
             >
               {children}
             </div>
-            <MarketCopilotSidebar
-              onOpenChange={(open) => {
-                setCopilotOpen(open)
-              }}
-              open={copilotOpen}
-            />
+            {enableCopilotRail ? (
+              <MarketCopilotSidebar
+                initialSelectedModel={initialSelectedModel}
+                onOpenChange={(open) => {
+                  setCopilotOpen(open)
+                }}
+                open={copilotOpen}
+                resetToken={0}
+                viewer={viewer}
+              />
+            ) : null}
           </div>
         </div>
       </SidebarInset>

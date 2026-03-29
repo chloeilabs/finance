@@ -27,6 +27,7 @@ import { LogoHover } from "../../graphics/logo/logo-hover"
 import { ScrollToBottom } from "../../task/scroll-to-bottom"
 import { Messages } from "../messages/messages"
 import { PromptForm } from "../prompt-form/prompt-form"
+import { HomePromptSuggestions } from "./home-prompt-suggestions"
 import { useThreads } from "./threads-context"
 import { useAgentSession } from "./use-agent-session"
 
@@ -35,15 +36,29 @@ const DEFAULT_FALLBACK_TRANSITION_MS = 150
 const MOBILE_FALLBACK_TRANSITION_MS = 110
 
 export function HomePageContent({
+  assistantActivityLayout,
+  assistantMessageLayout = "default",
+  contentWidthMode = "default",
+  craftingShimmerLayout,
+  homePromptSuggestions,
   initialSelectedModel,
   initialThreadId = null,
   initialSidebarOpen = true,
+  userMessageLayout = "bubble",
   viewer,
+  integratedLayout = false,
 }: {
+  assistantActivityLayout?: "default" | "fullWidth"
+  assistantMessageLayout?: "default" | "fullWidth"
+  contentWidthMode?: "default" | "rail"
+  craftingShimmerLayout?: "default" | "fullWidth"
+  homePromptSuggestions?: readonly string[]
   initialSelectedModel?: ModelType | null
   initialThreadId?: string | null
   initialSidebarOpen?: boolean
+  userMessageLayout?: "bubble" | "fullWidth"
   viewer: AuthViewer
+  integratedLayout?: boolean
 }) {
   const [isPending, startTransition] = useTransition()
   const [isFallbackEnteringConversation, setIsFallbackEnteringConversation] =
@@ -78,6 +93,16 @@ export function HomePageContent({
       }
   const promptViewTransitionName = isMobile ? undefined : "yurie-prompt-shell"
   const showHomeView = !hasMessages || isFallbackEnteringConversation
+  const showPromptSuggestions = (homePromptSuggestions?.length ?? 0) > 0
+  const resolvedHomePromptSuggestions = homePromptSuggestions ?? []
+  const homePromptContainerClass =
+    contentWidthMode === "rail"
+      ? "flex h-full w-full flex-1 flex-col px-3 pt-3"
+      : "mx-auto flex h-full w-full max-w-3xl flex-1 flex-col px-4 pt-6 sm:px-6"
+  const messagePaneContainerClass =
+    contentWidthMode === "rail"
+      ? "relative z-0 flex w-full grow flex-col items-stretch px-3 pt-2"
+      : "relative z-0 mx-auto flex w-full max-w-3xl grow flex-col items-center px-4 sm:px-6"
 
   const startFallbackConversationTransition = useCallback(() => {
     if (fallbackTransitionTimeoutRef.current !== null) {
@@ -163,99 +188,137 @@ export function HomePageContent({
     }
   }, [])
 
+  const content = (
+    <div className="relative flex h-full w-full flex-col">
+      {!integratedLayout ? (
+        <div className="z-10 flex shrink-0 items-center justify-between bg-background p-3">
+          <SidebarTrigger />
+          <div className="flex items-center gap-1.5">
+            <AppLauncher className="size-7" />
+            <UserMenu viewer={viewer} className="size-7" />
+          </div>
+        </div>
+      ) : null}
+
+      {showHomeView ? (
+        <div
+          className={cn(
+            "relative flex h-full w-full flex-col",
+            isFallbackEnteringConversation &&
+              (isMobile
+                ? "pointer-events-none absolute inset-0 z-20 animate-[yurie-home-layer-out_110ms_var(--ease-out-cubic)_forwards] bg-background"
+                : "pointer-events-none absolute inset-0 z-20 animate-[yurie-home-layer-out_140ms_var(--ease-in-out-cubic)_forwards] bg-background")
+          )}
+        >
+          {showPromptSuggestions ? (
+            <div className={homePromptContainerClass}>
+              <div className="flex flex-1 items-center">
+                <HomePromptSuggestions
+                  initialSelectedModel={initialSelectedModel}
+                  onSelectSuggestion={(message, model) => {
+                    handleAnimatedPromptSubmit(message, model, false)
+                  }}
+                  suggestions={resolvedHomePromptSuggestions}
+                />
+              </div>
+
+              <PromptForm
+                isHome
+                onSubmit={handleAnimatedPromptSubmit}
+                onStopStream={handleStopStream}
+                dockToBottomOnHome
+                queuedMessage={queuedSubmission?.message ?? null}
+                onClearQueuedMessage={clearQueuedSubmission}
+                isStreaming={streamingState}
+                initialSelectedModel={initialSelectedModel}
+                transition={{ isPending, startTransition }}
+                viewTransitionName={promptViewTransitionName}
+              />
+            </div>
+          ) : (
+            <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center gap-10 px-4 pt-[20vh] sm:px-6">
+              <div
+                style={homeHeroTransitionStyle}
+                className="flex items-center gap-4 font-departureMono text-2xl font-medium tracking-tighter select-none"
+              >
+                <LogoHover size="lg" />
+                Welcome to <span className="text-muted-foreground">Yurie</span>
+              </div>
+
+              <PromptForm
+                isHome
+                onSubmit={handleAnimatedPromptSubmit}
+                onStopStream={handleStopStream}
+                isStreaming={streamingState}
+                initialSelectedModel={initialSelectedModel}
+                transition={{ isPending, startTransition }}
+                viewTransitionName={promptViewTransitionName}
+              />
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {hasMessages ? (
+        <StickToBottom
+          className={cn(
+            "relative flex min-h-0 w-full grow flex-col overflow-y-auto",
+            isFallbackEnteringConversation &&
+              (isMobile
+                ? "animate-[yurie-thread-layer-in_110ms_var(--ease-out-cubic)_both]"
+                : "animate-[yurie-thread-layer-in_150ms_var(--ease-out-cubic)_both]")
+          )}
+          resize="smooth"
+          initial="smooth"
+        >
+          <StickToBottom.Content className="relative flex min-h-full w-full flex-col">
+            <div className={messagePaneContainerClass}>
+              <div
+                style={threadPaneTransitionStyle}
+                className="flex w-full grow flex-col"
+              >
+                <Messages
+                  assistantActivityLayout={assistantActivityLayout}
+                  assistantMessageLayout={assistantMessageLayout}
+                  craftingShimmerLayout={craftingShimmerLayout}
+                  messages={state.messages}
+                  disableEditing={state.isSubmitting || state.isStreaming}
+                  onEditMessage={handleEditMessage}
+                  isStreamPending={state.isSubmitting && !state.isStreaming}
+                  userMessageLayout={userMessageLayout}
+                />
+              </div>
+
+              <ScrollToBottom />
+
+              <PromptForm
+                isHome
+                onSubmit={handlePromptSubmit}
+                onStopStream={handleStopStream}
+                dockToBottomOnHome
+                queuedMessage={queuedSubmission?.message ?? null}
+                onClearQueuedMessage={clearQueuedSubmission}
+                isStreaming={streamingState}
+                initialSelectedModel={initialSelectedModel}
+                transition={{ isPending, startTransition }}
+                viewTransitionName={promptViewTransitionName}
+              />
+            </div>
+          </StickToBottom.Content>
+        </StickToBottom>
+      ) : null}
+    </div>
+  )
+
+  if (integratedLayout) {
+    return content
+  }
+
   return (
     <SidebarProvider defaultOpen={initialSidebarOpen}>
       <AppSidebar onGoHome={resetConversation} />
 
-      <SidebarInset className="min-h-0 overflow-hidden">
-        <div className="relative flex h-full w-full flex-col">
-          <div className="z-10 flex shrink-0 items-center justify-between bg-background p-3">
-            <SidebarTrigger />
-            <div className="flex items-center gap-1.5">
-              <AppLauncher className="size-7" />
-              <UserMenu viewer={viewer} className="size-7" />
-            </div>
-          </div>
-
-          {showHomeView ? (
-            <div
-              className={cn(
-                "relative flex h-full w-full flex-col",
-                isFallbackEnteringConversation &&
-                  (isMobile
-                    ? "pointer-events-none absolute inset-0 z-20 animate-[yurie-home-layer-out_110ms_var(--ease-out-cubic)_forwards] bg-background"
-                    : "pointer-events-none absolute inset-0 z-20 animate-[yurie-home-layer-out_140ms_var(--ease-in-out-cubic)_forwards] bg-background")
-              )}
-            >
-              <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center gap-10 px-4 pt-[20vh] sm:px-6">
-                <div
-                  style={homeHeroTransitionStyle}
-                  className="flex items-center gap-4 font-departureMono text-2xl font-medium tracking-tighter select-none"
-                >
-                  <LogoHover size="lg" />
-                  Welcome to{" "}
-                  <span className="text-muted-foreground">Yurie</span>
-                </div>
-
-                <PromptForm
-                  isHome
-                  onSubmit={handleAnimatedPromptSubmit}
-                  onStopStream={handleStopStream}
-                  isStreaming={streamingState}
-                  initialSelectedModel={initialSelectedModel}
-                  transition={{ isPending, startTransition }}
-                  viewTransitionName={promptViewTransitionName}
-                />
-              </div>
-            </div>
-          ) : null}
-
-          {hasMessages ? (
-            <StickToBottom
-              className={cn(
-                "relative flex min-h-0 w-full grow flex-col overflow-y-auto",
-                isFallbackEnteringConversation &&
-                  (isMobile
-                    ? "animate-[yurie-thread-layer-in_110ms_var(--ease-out-cubic)_both]"
-                    : "animate-[yurie-thread-layer-in_150ms_var(--ease-out-cubic)_both]")
-              )}
-              resize="smooth"
-              initial="smooth"
-            >
-              <StickToBottom.Content className="relative flex min-h-full w-full flex-col">
-                <div className="relative z-0 mx-auto flex w-full max-w-3xl grow flex-col items-center px-4 sm:px-6">
-                  <div
-                    style={threadPaneTransitionStyle}
-                    className="flex w-full grow flex-col"
-                  >
-                    <Messages
-                      messages={state.messages}
-                      disableEditing={state.isSubmitting || state.isStreaming}
-                      onEditMessage={handleEditMessage}
-                      isStreamPending={state.isSubmitting && !state.isStreaming}
-                    />
-                  </div>
-
-                  <ScrollToBottom />
-
-                  <PromptForm
-                    isHome
-                    onSubmit={handlePromptSubmit}
-                    onStopStream={handleStopStream}
-                    dockToBottomOnHome
-                    queuedMessage={queuedSubmission?.message ?? null}
-                    onClearQueuedMessage={clearQueuedSubmission}
-                    isStreaming={streamingState}
-                    initialSelectedModel={initialSelectedModel}
-                    transition={{ isPending, startTransition }}
-                    viewTransitionName={promptViewTransitionName}
-                  />
-                </div>
-              </StickToBottom.Content>
-            </StickToBottom>
-          ) : null}
-        </div>
-      </SidebarInset>
+      <SidebarInset className="min-h-0 overflow-hidden">{content}</SidebarInset>
     </SidebarProvider>
   )
 }

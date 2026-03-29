@@ -245,9 +245,11 @@ function ToolStatusIcon({ status }: { status: ToolInvocationStatus }) {
 }
 
 export function AssistantMessage({
+  activityLayout,
   message,
   layout = "default",
 }: {
+  activityLayout?: "default" | "fullWidth"
   message: Message
   layout?: "default" | "fullWidth"
 }) {
@@ -276,6 +278,7 @@ export function AssistantMessage({
   const isActivityCollapsed =
     activityVisibility === "collapsed" ||
     (activityVisibility === "auto" && !isAssistantStreaming)
+  const resolvedActivityLayout = activityLayout ?? layout
 
   if (!hasContent && !hasActivity) {
     return null
@@ -284,8 +287,18 @@ export function AssistantMessage({
   return (
     <div className="group/assistant-message relative flex w-full min-w-0 flex-col gap-1 self-stretch">
       {showActivitySection && (
-        <div className={cn("pt-2", layout === "default" && "px-3")}>
-          <div className={cn("mb-1", layout === "fullWidth" && "px-3")}>
+        <div
+          className={cn(
+            "pt-2",
+            resolvedActivityLayout === "default" && "px-3"
+          )}
+        >
+          <div
+            className={cn(
+              "mb-1",
+              resolvedActivityLayout === "fullWidth" && "px-3"
+            )}
+          >
             <button
               type="button"
               className="inline-flex cursor-pointer items-center gap-1 bg-transparent p-0 font-departureMono text-[11px] font-medium tracking-wide text-muted-foreground/80 transition-colors hover:text-foreground"
