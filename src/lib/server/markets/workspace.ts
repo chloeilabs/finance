@@ -17,6 +17,7 @@ import {
   createMarketStoreNotInitializedError,
   isUndefinedTableError,
 } from "./errors"
+import { CORE_WATCHLIST_SYMBOLS } from "./service-support"
 import {
   createWatchlistForUser,
   deleteSavedScreenerForUser,
@@ -31,19 +32,24 @@ import {
 
 const client = createFmpClient()
 const PROFILE_TTL_SECONDS = 60 * 60 * 24
-const CORE_WATCHLIST_SYMBOLS = [
-  "AAPL",
-  "MSFT",
-  "NVDA",
-  "AMZN",
-  "META",
-  "TSLA",
-  "GOOGL",
-  "BRK.B",
+const OUTDATED_CORE_WATCHLIST_SYMBOL_ORDERS = [
+  CORE_WATCHLIST_SYMBOLS.filter((symbol) => symbol !== "AVGO"),
+  ["AAPL", "MSFT", "NVDA", "AVGO", "AMZN", "META", "TSLA", "GOOGL", "BRK.B"],
 ] as const
 
 function normalizeSymbol(symbol: string): string {
   return symbol.trim().toUpperCase()
+}
+
+function isOutdatedDefaultCoreWatchlist(watchlist: WatchlistRecord): boolean {
+  return (
+    watchlist.id === "core" &&
+    OUTDATED_CORE_WATCHLIST_SYMBOL_ORDERS.some(
+      (symbols) =>
+        watchlist.symbols.length === symbols.length &&
+        watchlist.symbols.every((symbol, index) => symbol === symbols[index])
+    )
+  )
 }
 
 function rethrowMarketStoreUnavailable(error: unknown): never {
@@ -184,6 +190,24 @@ export async function getMarketSidebarData(userId: string): Promise<{
     const watchlists = await listWatchlistsForUser(userId)
 
     if (watchlists.length > 0) {
+      const outdatedCoreWatchlist = watchlists.find(
+        isOutdatedDefaultCoreWatchlist
+      )
+
+      if (outdatedCoreWatchlist) {
+        await replaceWatchlistSymbols({
+          userId,
+          watchlistId: outdatedCoreWatchlist.id,
+          symbols: [...CORE_WATCHLIST_SYMBOLS],
+        })
+
+        return {
+          plan,
+          watchlists: await listWatchlistsForUser(userId),
+          warnings,
+        }
+      }
+
       return { plan, watchlists, warnings }
     }
 

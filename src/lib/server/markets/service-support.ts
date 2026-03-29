@@ -20,13 +20,14 @@ import { isUndefinedTableError, MarketStoreNotInitializedError } from "./errors"
 import { setCachedMarketPayload } from "./store"
 
 export const CORE_WATCHLIST_SYMBOLS = [
-  "AAPL",
-  "MSFT",
   "NVDA",
-  "AMZN",
-  "META",
-  "TSLA",
+  "AAPL",
   "GOOGL",
+  "MSFT",
+  "AMZN",
+  "AVGO",
+  "TSLA",
+  "META",
   "BRK.B",
 ] as const
 

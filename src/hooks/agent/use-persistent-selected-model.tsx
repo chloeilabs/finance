@@ -26,13 +26,17 @@ function writeStoredSelectedModel(model: ModelType | null) {
     return
   }
 
+  const previousModel = readStoredSelectedModel()
+
   if (model) {
     window.localStorage.setItem(MODEL_SELECTOR_STORAGE_KEY, model)
   } else {
     window.localStorage.removeItem(MODEL_SELECTOR_STORAGE_KEY)
   }
 
-  window.dispatchEvent(new CustomEvent(MODEL_SELECTOR_UPDATED_EVENT))
+  if (previousModel !== model) {
+    window.dispatchEvent(new CustomEvent(MODEL_SELECTOR_UPDATED_EVENT))
+  }
 }
 
 export function usePersistentSelectedModel(
