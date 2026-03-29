@@ -10,7 +10,7 @@ import {
   type MessageSource,
   type SearchToolName,
   type ToolInvocationStatus,
-} from "@/lib/shared"
+} from "@/lib/shared/agent/messages"
 import { cn } from "@/lib/utils"
 
 import { Button } from "../../ui/button"

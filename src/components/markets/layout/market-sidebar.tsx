@@ -24,7 +24,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import type { WatchlistRecord } from "@/lib/shared"
+import type { WatchlistRecord } from "@/lib/shared/markets/workspace"
 import { cn } from "@/lib/utils"
 
 const PRIMARY_NAV_ITEMS = [

@@ -10,7 +10,7 @@ import {
   formatDate,
   formatPercent,
 } from "@/lib/markets-format"
-import type { ResearchQuoteRow } from "@/lib/shared"
+import type { ResearchQuoteRow } from "@/lib/shared/markets/intelligence"
 
 const SORT_OPTIONS = [
   { value: "symbol", label: "Symbol" },

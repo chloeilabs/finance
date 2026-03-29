@@ -1,77 +1,33 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
-import { redirectToSignIn } from "@/lib/auth-client"
-import { isAbortError } from "@/lib/cast"
-import {
-  deriveThreadTitle,
-  type Message as AgentMessage,
-  type ModelType,
-  type Thread,
-} from "@/lib/shared"
+import type { Message as AgentMessage } from "@/lib/shared/agent/messages"
+import type { ModelType } from "@/lib/shared/llm/models"
+import type { Thread } from "@/lib/shared/threads"
 
 import {
-  getResponseErrorMessage,
-  parseStreamEventLine,
-  readResponseStreamLines,
-} from "./agent-stream-events"
-import {
-  type AgentStreamAccumulator,
-  appendRawStreamText,
-  applyAgentStreamEvent,
-  createAgentStreamAccumulator,
-  finalizeAgentStreamAccumulator,
-  hasAgentStreamOutput,
-} from "./agent-stream-state"
+  buildAssistantMessage,
+  CLIENT_MESSAGE_MAX_CHARS,
+  createErrorAssistantMessage,
+  createThreadSnapshot,
+  type EditMessageParams,
+  ensureAssistantContent,
+  handleUnauthorizedAgentResponse,
+  INITIAL_STATE,
+  type QueuedSubmission,
+  upsertMessageById,
+} from "./agent-session-helpers"
+import { runAgentStreamRequest } from "./agent-session-request"
+import type { AgentStreamAccumulator } from "./agent-stream-state"
 import {
   appendUserMessage,
   createClientMessageId,
-  EMPTY_ASSISTANT_RESPONSE_FALLBACK,
   toRequestMessages,
 } from "./home-agent-utils"
 import { useThreads } from "./threads-context"
 
-const CLIENT_MESSAGE_MAX_CHARS = 16_000
-
-interface AgentSessionState {
-  messages: AgentMessage[]
-  isSubmitting: boolean
-  isStreaming: boolean
-}
-
-interface EditMessageParams {
-  messageId: string
-  newContent: string
-  newModel: ModelType
-}
-
-interface QueuedSubmission {
-  message: string
-  model: ModelType
-}
-
-const INITIAL_STATE: AgentSessionState = {
-  messages: [],
-  isSubmitting: false,
-  isStreaming: false,
-}
-
-function getClientTimeZone(): string | undefined {
-  try {
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone.trim()
-    return timeZone || undefined
-  } catch {
-    return undefined
-  }
-}
-
-function createAgentRequestHeaders(): HeadersInit {
-  const timeZone = getClientTimeZone()
-
-  return {
-    "Content-Type": "application/json",
-    ...(timeZone ? { "X-User-Timezone": timeZone } : {}),
-  }
+function findThread(threads: Thread[], threadId: string) {
+  return threads.find((thread) => thread.id === threadId)
 }
 
 export function useAgentSession() {
@@ -83,13 +39,12 @@ export function useAgentSession() {
     deleteThread,
   } = useThreads()
 
-  const [state, setState] = useState<AgentSessionState>(INITIAL_STATE)
+  const [state, setState] = useState(INITIAL_STATE)
   const [queuedSubmission, setQueuedSubmission] =
     useState<QueuedSubmission | null>(null)
   const submitLockRef = useRef(false)
   const messagesRef = useRef<AgentMessage[]>([])
   const abortControllerRef = useRef<AbortController | null>(null)
-
   const currentThreadIdRef = useRef(currentThreadId)
 
   const setCurrentThreadId = useCallback(
@@ -100,6 +55,90 @@ export function useAgentSession() {
     [baseSetCurrentThreadId]
   )
 
+  const createSnapshot = useCallback(
+    (threadId: string, messages: AgentMessage[], model: ModelType): Thread =>
+      createThreadSnapshot({
+        threadId,
+        messages,
+        model,
+        existingThread: findThread(threads, threadId),
+      }),
+    [threads]
+  )
+
+  const persistMessages = useCallback(
+    (
+      threadId: string | null,
+      messages: AgentMessage[],
+      model: ModelType,
+      immediate: boolean
+    ) => {
+      if (!threadId) {
+        return
+      }
+
+      saveThread(createSnapshot(threadId, messages, model), { immediate })
+    },
+    [createSnapshot, saveThread]
+  )
+
+  const setMessagesState = useCallback(
+    (
+      messages: AgentMessage[],
+      streamFlags: {
+        isSubmitting: boolean
+        isStreaming: boolean
+      }
+    ) => {
+      messagesRef.current = messages
+      setState({
+        messages,
+        isSubmitting: streamFlags.isSubmitting,
+        isStreaming: streamFlags.isStreaming,
+      })
+    },
+    []
+  )
+
+  const upsertAssistantAccumulator = useCallback(
+    (params: {
+      activeThreadId: string | null
+      assistantId: string
+      assistantCreatedAt: string
+      accumulator: AgentStreamAccumulator
+      model: ModelType
+      streamFlags: {
+        isSubmitting: boolean
+        isStreaming: boolean
+      }
+    }) => {
+      if (params.activeThreadId !== currentThreadIdRef.current) {
+        return
+      }
+
+      const assistantMessage = buildAssistantMessage({
+        accumulator: params.accumulator,
+        assistantId: params.assistantId,
+        assistantCreatedAt: params.assistantCreatedAt,
+        model: params.model,
+        isStreaming: params.streamFlags.isStreaming,
+      })
+      const updatedMessages = upsertMessageById(
+        messagesRef.current,
+        assistantMessage
+      )
+
+      persistMessages(
+        params.activeThreadId,
+        updatedMessages,
+        params.model,
+        !params.streamFlags.isStreaming
+      )
+      setMessagesState(updatedMessages, params.streamFlags)
+    },
+    [persistMessages, setMessagesState]
+  )
+
   useEffect(() => {
     if (currentThreadId !== currentThreadIdRef.current) {
       currentThreadIdRef.current = currentThreadId
@@ -108,7 +147,7 @@ export function useAgentSession() {
 
   const streamingState = state.isSubmitting || state.isStreaming
   const activeThread = currentThreadId
-    ? threads.find((thread) => thread.id === currentThreadId)
+    ? findThread(threads, currentThreadId)
     : undefined
 
   useEffect(() => {
@@ -121,18 +160,18 @@ export function useAgentSession() {
         return
       }
 
-      setState({
-        messages: activeThread.messages,
+      setMessagesState(activeThread.messages, {
         isSubmitting: false,
         isStreaming: false,
       })
-      messagesRef.current = activeThread.messages
       return
     }
 
-    setState(INITIAL_STATE)
-    messagesRef.current = []
-  }, [activeThread, currentThreadId])
+    setMessagesState([], {
+      isSubmitting: false,
+      isStreaming: false,
+    })
+  }, [activeThread, currentThreadId, setMessagesState])
 
   useEffect(() => {
     messagesRef.current = state.messages
@@ -175,34 +214,6 @@ export function useAgentSession() {
     abortControllerRef.current?.abort()
   }, [])
 
-  const createThreadSnapshot = useCallback(
-    (threadId: string, messages: AgentMessage[], model: ModelType): Thread => {
-      const existingThread = threads.find((thread) => thread.id === threadId)
-      const nextDerivedTitle = deriveThreadTitle(messages)
-      const previousDerivedTitle = existingThread
-        ? deriveThreadTitle(existingThread.messages)
-        : nextDerivedTitle
-      const existingTitle = existingThread?.title.trim() ?? ""
-      const hasCustomTitle =
-        existingTitle !== "" && existingTitle !== previousDerivedTitle
-
-      return {
-        id: threadId,
-        title: hasCustomTitle ? existingTitle : nextDerivedTitle,
-        messages,
-        model,
-        isPinned: existingThread?.isPinned ?? false,
-        metadata: existingThread?.metadata,
-        createdAt:
-          existingThread?.createdAt ??
-          messages[0]?.createdAt ??
-          new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-    },
-    [threads]
-  )
-
   const runAgentRequest = useCallback(
     async (nextMessages: AgentMessage[], model: ModelType) => {
       if (submitLockRef.current) {
@@ -220,167 +231,58 @@ export function useAgentSession() {
         setCurrentThreadId(activeThreadId)
       }
 
-      setState({
-        messages: nextMessages,
+      setMessagesState(nextMessages, {
         isSubmitting: true,
         isStreaming: false,
       })
+      persistMessages(activeThreadId, nextMessages, model, true)
 
-      saveThread(createThreadSnapshot(activeThreadId, nextMessages, model), {
-        immediate: true,
-      })
-
-      const requestMessages = toRequestMessages(nextMessages)
       const assistantId = createClientMessageId()
       const assistantCreatedAt = new Date().toISOString()
-      let accumulator = createAgentStreamAccumulator()
-
-      const upsertAssistantMessage = (
-        nextAccumulator: AgentStreamAccumulator,
-        streamFlags: Pick<AgentSessionState, "isSubmitting" | "isStreaming">
-      ) => {
-        if (activeThreadId !== currentThreadIdRef.current) {
-          return
-        }
-
-        const assistantMessage: AgentMessage = {
-          id: assistantId,
-          role: "assistant",
-          content: nextAccumulator.content,
-          llmModel: model,
-          createdAt: assistantCreatedAt,
-          metadata: {
-            isStreaming: streamFlags.isStreaming,
-            parts: [{ type: "text", text: nextAccumulator.content }],
-            ...(nextAccumulator.reasoning.trim().length > 0
-              ? { reasoning: nextAccumulator.reasoning }
-              : {}),
-            ...(nextAccumulator.toolInvocations.length > 0
-              ? { toolInvocations: nextAccumulator.toolInvocations }
-              : {}),
-            ...(nextAccumulator.activityTimeline.length > 0
-              ? { activityTimeline: nextAccumulator.activityTimeline }
-              : {}),
-            ...(nextAccumulator.sources.length > 0
-              ? { sources: nextAccumulator.sources }
-              : {}),
-          },
-        }
-
-        const currentMessages = messagesRef.current
-        const existingIndex = currentMessages.findIndex(
-          (message) => message.id === assistantId
-        )
-
-        const updatedMessages =
-          existingIndex === -1
-            ? [...currentMessages, assistantMessage]
-            : currentMessages.map((message) =>
-                message.id === assistantId ? assistantMessage : message
-              )
-
-        messagesRef.current = updatedMessages
-
-        if (activeThreadId) {
-          saveThread(
-            createThreadSnapshot(activeThreadId, updatedMessages, model),
-            {
-              immediate: !streamFlags.isStreaming,
-            }
-          )
-        }
-
-        setState({
-          messages: updatedMessages,
-          isSubmitting: streamFlags.isSubmitting,
-          isStreaming: streamFlags.isStreaming,
-        })
-      }
-
-      const processLine = (line: string, appendNewline: boolean) => {
-        const normalizedLine = line.endsWith("\r") ? line.slice(0, -1) : line
-        const parsedEvent = parseStreamEventLine(normalizedLine)
-
-        accumulator = parsedEvent
-          ? applyAgentStreamEvent(accumulator, parsedEvent)
-          : appendRawStreamText(
-              accumulator,
-              appendNewline ? `${normalizedLine}\n` : normalizedLine
-            )
-
-        upsertAssistantMessage(accumulator, {
-          isSubmitting: false,
-          isStreaming: true,
-        })
-      }
 
       try {
-        const response = await fetch("/api/agent", {
-          method: "POST",
-          headers: createAgentRequestHeaders(),
+        const outcome = await runAgentStreamRequest({
           signal: abortController.signal,
-          body: JSON.stringify({
-            model,
-            messages: requestMessages,
-          }),
+          model,
+          requestMessages: toRequestMessages(nextMessages),
+          onProgress: ({ accumulator, isSubmitting, isStreaming }) => {
+            upsertAssistantAccumulator({
+              activeThreadId,
+              assistantId,
+              assistantCreatedAt,
+              accumulator,
+              model,
+              streamFlags: { isSubmitting, isStreaming },
+            })
+          },
         })
 
-        if (response.status === 401) {
-          setState({
-            messages: nextMessages,
-            isSubmitting: false,
-            isStreaming: false,
-          })
-          redirectToSignIn()
+        if (outcome.kind === "unauthorized") {
+          handleUnauthorizedAgentResponse(nextMessages, setState)
           return true
         }
 
-        if (!response.ok || !response.body) {
-          throw new Error(await getResponseErrorMessage(response))
+        if (outcome.kind === "completed") {
+          upsertAssistantAccumulator({
+            activeThreadId,
+            assistantId,
+            assistantCreatedAt,
+            accumulator: ensureAssistantContent(outcome.accumulator),
+            model,
+            streamFlags: { isSubmitting: false, isStreaming: false },
+          })
+          return true
         }
 
-        try {
-          await readResponseStreamLines(response.body, processLine)
-        } catch (streamError) {
-          if (isAbortError(streamError)) {
-            throw streamError
-          }
-
-          accumulator = finalizeAgentStreamAccumulator(accumulator, "error")
-
-          if (hasAgentStreamOutput(accumulator)) {
-            upsertAssistantMessage(accumulator, {
-              isSubmitting: false,
-              isStreaming: false,
-            })
-            return true
-          }
-
-          throw new Error("Sorry, the response was interrupted.")
-        }
-
-        accumulator = finalizeAgentStreamAccumulator(accumulator, "success")
-
-        if (!accumulator.content.trim()) {
-          accumulator = {
-            ...accumulator,
-            content: EMPTY_ASSISTANT_RESPONSE_FALLBACK,
-          }
-        }
-
-        upsertAssistantMessage(accumulator, {
-          isSubmitting: false,
-          isStreaming: false,
-        })
-        return true
-      } catch (error) {
-        if (isAbortError(error)) {
-          accumulator = finalizeAgentStreamAccumulator(accumulator, "error")
-
-          if (hasAgentStreamOutput(accumulator)) {
-            upsertAssistantMessage(accumulator, {
-              isSubmitting: false,
-              isStreaming: false,
+        if (outcome.kind === "aborted") {
+          if (outcome.accumulator.content.trim()) {
+            upsertAssistantAccumulator({
+              activeThreadId,
+              assistantId,
+              assistantCreatedAt,
+              accumulator: outcome.accumulator,
+              model,
+              streamFlags: { isSubmitting: false, isStreaming: false },
             })
             return true
           }
@@ -399,41 +301,19 @@ export function useAgentSession() {
           return true
         }
 
-        const errorMessage =
-          error instanceof Error ? error.message : "Unknown error occurred"
-        toast.error("Failed to send message", { description: errorMessage })
+        toast.error("Failed to send message", {
+          description: outcome.errorMessage,
+        })
 
-        const fallback = `Sorry, I hit an error: ${errorMessage}`
-        const assistantMessage: AgentMessage = {
-          id: createClientMessageId(),
-          role: "assistant",
-          content: fallback,
-          llmModel: model,
-          createdAt: new Date().toISOString(),
-          metadata: {
-            isStreaming: false,
-            parts: [{ type: "text", text: fallback }],
-          },
-        }
-
-        const updatedMessages = [...messagesRef.current, assistantMessage]
-        messagesRef.current = updatedMessages
-
-        if (activeThreadId) {
-          saveThread(
-            createThreadSnapshot(activeThreadId, updatedMessages, model),
-            {
-              immediate: true,
-            }
-          )
-        }
-
-        setState({
-          messages: updatedMessages,
+        const updatedMessages = [
+          ...messagesRef.current,
+          createErrorAssistantMessage(outcome.errorMessage, model),
+        ]
+        persistMessages(activeThreadId, updatedMessages, model, true)
+        setMessagesState(updatedMessages, {
           isSubmitting: false,
           isStreaming: false,
         })
-
         return true
       } finally {
         if (abortControllerRef.current === abortController) {
@@ -442,7 +322,12 @@ export function useAgentSession() {
         }
       }
     },
-    [createThreadSnapshot, saveThread, setCurrentThreadId]
+    [
+      persistMessages,
+      setCurrentThreadId,
+      setMessagesState,
+      upsertAssistantAccumulator,
+    ]
   )
 
   const handleSubmit = useCallback(
@@ -514,22 +399,10 @@ export function useAgentSession() {
         throw new Error("Please wait for the current response to finish.")
       }
 
-      if (currentThreadIdRef.current) {
-        saveThread(
-          createThreadSnapshot(
-            currentThreadIdRef.current,
-            nextMessages,
-            newModel
-          ),
-          {
-            immediate: true,
-          }
-        )
-      }
-
+      persistMessages(currentThreadIdRef.current, nextMessages, newModel, true)
       void runAgentRequest(nextMessages, newModel)
     },
-    [createThreadSnapshot, runAgentRequest, saveThread]
+    [persistMessages, runAgentRequest]
   )
 
   const handlePromptSubmit = useCallback(

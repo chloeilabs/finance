@@ -2,10 +2,9 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 
 import {
-  createAuthUnavailableResponse,
-  isAuthConfigured,
-} from "@/lib/server/auth"
-import { getRequestSession } from "@/lib/server/auth-session"
+  createMarketApiRequestContext,
+  requireMarketSession,
+} from "@/lib/server/markets/api-route"
 import { runMarketScreener } from "@/lib/server/markets/service"
 
 export const runtime = "nodejs"
@@ -34,31 +33,12 @@ const screenerPayloadSchema = z
   })
   .strict()
 
-function createHeaders(requestId: string) {
-  return {
-    "Cache-Control": "no-store",
-    "X-Content-Type-Options": "nosniff",
-    "X-Request-Id": requestId,
-  }
-}
-
 export async function POST(request: Request) {
-  const requestId = crypto.randomUUID()
+  const context = createMarketApiRequestContext(request)
+  const { response } = await requireMarketSession(request, context)
 
-  if (!isAuthConfigured()) {
-    return createAuthUnavailableResponse(createHeaders(requestId))
-  }
-
-  const session = await getRequestSession(new Headers(request.headers))
-
-  if (!session) {
-    return NextResponse.json(
-      { error: "Unauthorized." },
-      {
-        status: 401,
-        headers: createHeaders(requestId),
-      }
-    )
+  if (response) {
+    return response
   }
 
   try {
@@ -68,19 +48,19 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { results },
       {
-        headers: createHeaders(requestId),
+        headers: context.headers,
       }
     )
   } catch (error) {
     console.error(
-      `[market-screener:${requestId}] Failed to run screener:`,
+      `[market-screener:${context.requestId}] Failed to run screener:`,
       error
     )
     return NextResponse.json(
       { error: "Failed to run screener." },
       {
         status: 400,
-        headers: createHeaders(requestId),
+        headers: context.headers,
       }
     )
   }

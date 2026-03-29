@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 
 import { redirectToSignIn } from "@/lib/auth-client"
-import { type ModelInfo } from "@/lib/shared"
+import { type ModelInfo } from "@/lib/shared/llm/models"
 
 type HttpError = Error & { status?: number }
 

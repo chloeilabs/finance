@@ -7,7 +7,7 @@ import { tool } from "ai"
 import { z } from "zod"
 
 import { asRecord } from "@/lib/cast"
-import type { ToolName } from "@/lib/shared"
+import type { ToolName } from "@/lib/shared/agent/messages"
 
 const CODE_EXECUTION_TOOL_NAME = "code_execution" as const
 const CODE_EXECUTION_LABEL = "Running code" as const

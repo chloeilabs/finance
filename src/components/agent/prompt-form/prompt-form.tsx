@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useModels } from "@/hooks/agent/use-models"
 import { usePersistentSelectedModel } from "@/hooks/agent/use-persistent-selected-model"
-import { type ModelType } from "@/lib/shared"
+import type { ModelType } from "@/lib/shared/llm/models"
 import { cn } from "@/lib/utils"
 
 import { QueuedAction } from "../messages/queued-message"

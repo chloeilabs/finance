@@ -4,7 +4,7 @@ import {
   type AgentRunStatus,
   type AgentStreamEvent,
   isToolName,
-} from "@/lib/shared"
+} from "@/lib/shared/agent/messages"
 
 const AGENT_RUN_STATUS_SET: ReadonlySet<AgentRunStatus> = new Set(
   AGENT_RUN_STATUSES

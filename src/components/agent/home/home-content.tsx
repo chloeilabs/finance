@@ -19,7 +19,8 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { useIsMobile } from "@/hooks/use-mobile"
-import type { AuthViewer, ModelType } from "@/lib/shared"
+import type { AuthViewer } from "@/lib/shared/auth"
+import type { ModelType } from "@/lib/shared/llm/models"
 import { cn } from "@/lib/utils"
 
 import { LogoHover } from "../../graphics/logo/logo-hover"

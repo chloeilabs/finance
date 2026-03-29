@@ -1,4 +1,8 @@
-import { type ModelInfo, ModelInfos, OPENROUTER_MODELS } from "@/lib/shared"
+import {
+  type ModelInfo,
+  ModelInfos,
+  OPENROUTER_MODELS,
+} from "@/lib/shared/llm/models"
 
 /** Returns models for configured providers. */
 export function getModels(): ModelInfo[] {
