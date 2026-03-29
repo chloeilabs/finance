@@ -435,7 +435,7 @@ export function createAiSdkCodeExecutionTools() {
   return {
     code_execution: tool({
       description:
-        "Execute small self-contained JavaScript or Python snippets for arithmetic, logic checks, data transformations, or quick validation. This tool cannot access the network, filesystem, or subprocesses.",
+        "Execute small self-contained JavaScript or Python snippets for arithmetic, logic checks, data transformations, or quick validation. Use this for calculation and verification, not for web, filesystem, or subprocess access.",
       inputSchema: codeExecutionInputSchema,
       execute: async (input) =>
         executeCode({

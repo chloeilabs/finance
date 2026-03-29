@@ -1,9 +1,9 @@
 import { type NextRequest } from "next/server"
 
 import { getModels } from "@/lib/actions/api-keys"
-import { buildAgentSystemInstruction } from "@/lib/server/agent-context"
+import { buildAgentPromptContract } from "@/lib/server/agent-context"
 import {
-  inferPromptTaskMode,
+  inferPromptOverlays,
   resolvePromptProvider,
 } from "@/lib/server/agent-prompt-steering"
 import {
@@ -23,7 +23,7 @@ import {
   tryAcquireConcurrencySlot,
 } from "@/lib/server/rate-limit"
 import { isThreadStoreNotInitializedError } from "@/lib/server/threads"
-import { type ModelType,resolveDefaultModel } from "@/lib/shared/llm/models"
+import { type ModelType, resolveDefaultModel } from "@/lib/shared/llm/models"
 
 import {
   applyRateLimitHeaders,
@@ -140,8 +140,8 @@ export async function POST(request: NextRequest) {
     const requestNow = new Date()
     const userTimeZone = resolveUserTimeZone(request)
     const promptProvider = resolvePromptProvider(selectedModel)
-    const promptTaskMode = inferPromptTaskMode(parsed.data.messages)
-    const systemInstruction = buildAgentSystemInstruction(
+    const promptOverlays = inferPromptOverlays(parsed.data.messages)
+    const promptContract = buildAgentPromptContract(
       {
         id: session.user.id,
         name: session.user.name,
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
         now: requestNow,
         userTimeZone,
         provider: promptProvider,
-        taskMode: promptTaskMode,
+        overlays: promptOverlays,
       }
     )
 
@@ -202,8 +202,8 @@ export async function POST(request: NextRequest) {
       selectedModel,
       openRouterApiKey,
       tavilyApiKey,
-      messages: parsed.data.messages,
-      systemInstruction,
+      messages: [...promptContract.preludeMessages, ...parsed.data.messages],
+      systemInstruction: promptContract.systemInstruction,
       streamSignal,
       releaseConcurrencySlot,
     })
