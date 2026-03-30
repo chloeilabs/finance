@@ -22,7 +22,10 @@ export function AssetTeaserGrid({ groups }: { groups: AssetMarketGroup[] }) {
   return (
     <div className="market-grid-3 market-panel-grid grid">
       {groups.map((group) => {
-        const lead = group.items[0]?.quote ?? null
+        const leadItem = group.items[0]
+        const lead = leadItem?.quote ?? null
+        const chart =
+          leadItem?.intradayChart.length ? leadItem.intradayChart : leadItem?.eodChart
 
         return (
           <Link
@@ -43,6 +46,10 @@ export function AssetTeaserGrid({ groups }: { groups: AssetMarketGroup[] }) {
                   })} • ${formatPercent(lead.changesPercentage)}`
                 : group.description}
             </div>
+            <Sparkline
+              className="mt-4 h-14"
+              values={(chart ?? []).map((point) => point.close)}
+            />
             <div className="mt-3 text-xs text-muted-foreground">
               {group.items.length} tracked symbols
             </div>

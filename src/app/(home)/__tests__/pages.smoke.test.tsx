@@ -79,6 +79,7 @@ describe("market route smoke tests", () => {
       economicCalendar: [],
       generalNews: [],
       indexes: [],
+      indexSparklines: {},
       macro: [],
       marketHours: [],
       marketHolidays: [],
@@ -99,6 +100,7 @@ describe("market route smoke tests", () => {
         id: "wl_1",
         name: "Core",
         quotes: [],
+        sparklines: {},
       },
     })
 
@@ -106,6 +108,7 @@ describe("market route smoke tests", () => {
       economicCalendar: [],
       generalNews: [],
       indexes: [],
+      indexSparklines: {},
       macro: [],
       marketHours: [],
       marketHolidays: [],

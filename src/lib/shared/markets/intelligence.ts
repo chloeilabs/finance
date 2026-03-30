@@ -308,8 +308,10 @@ export interface MarketOverviewData {
     id: string | null
     name: string
     quotes: QuoteSnapshot[]
+    sparklines: Record<string, number[]>
   }
   indexes: QuoteSnapshot[]
+  indexSparklines: Record<string, number[]>
   movers: MarketMoverBucket[]
   sectors: SectorSnapshot[]
   sectorValuations: SectorValuationSnapshot[]
