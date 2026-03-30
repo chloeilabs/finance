@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useId, useState } from "react"
 
 import {
   formatCurrency,
@@ -16,6 +16,11 @@ interface ChartSeriesPoint {
   date: string
   close: number
   timestamp: number
+}
+
+interface ChartCoordinate extends ChartSeriesPoint {
+  x: number
+  y: number
 }
 
 const MAX_TIMEFRAME = {
@@ -44,6 +49,11 @@ const chartDateFormatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
   timeZone: "UTC",
 })
+const CHART_VIEWBOX_WIDTH = 100
+const CHART_VIEWBOX_HEIGHT = 56
+const CHART_PADDING_X = 2.5
+const CHART_TOP_Y = 4
+const CHART_BOTTOM_Y = 52
 
 function getFullRangeLabel(historicalRangeLabel: string) {
   const normalized = historicalRangeLabel.trim()
@@ -211,6 +221,80 @@ function getDefaultTimeframe(availableTimeframes: ChartTimeframeId[]) {
   return availableTimeframes[availableTimeframes.length - 1] ?? "MAX"
 }
 
+function getChartY(value: number, low: number, range: number) {
+  return CHART_BOTTOM_Y - ((value - low) / range) * (CHART_BOTTOM_Y - CHART_TOP_Y)
+}
+
+function buildChartCoordinates(
+  series: ChartSeriesPoint[],
+  params: { low: number; range: number }
+): ChartCoordinate[] {
+  return series.map((point, index) => ({
+    ...point,
+    x:
+      CHART_PADDING_X +
+      (index / (series.length - 1)) *
+        (CHART_VIEWBOX_WIDTH - CHART_PADDING_X * 2),
+    y: getChartY(point.close, params.low, params.range),
+  }))
+}
+
+function buildSmoothPath(coordinates: ChartCoordinate[]): string {
+  if (coordinates.length === 0) {
+    return ""
+  }
+
+  if (coordinates.length === 1) {
+    const point = coordinates[0]
+
+    return point ? `M ${point.x.toFixed(2)} ${point.y.toFixed(2)}` : ""
+  }
+
+  const [firstPoint, ...rest] = coordinates
+
+  if (!firstPoint) {
+    return ""
+  }
+
+  let path = `M ${firstPoint.x.toFixed(2)} ${firstPoint.y.toFixed(2)}`
+
+  rest.forEach((point, index) => {
+    const previous = coordinates[index]
+
+    if (!previous) {
+      return
+    }
+
+    const controlX = (previous.x + point.x) / 2
+
+    path += [
+      " C",
+      ` ${controlX.toFixed(2)} ${previous.y.toFixed(2)}`,
+      ` ${controlX.toFixed(2)} ${point.y.toFixed(2)}`,
+      ` ${point.x.toFixed(2)} ${point.y.toFixed(2)}`,
+    ].join("")
+  })
+
+  return path
+}
+
+function buildAreaPath(coordinates: ChartCoordinate[]): string {
+  const linePath = buildSmoothPath(coordinates)
+  const firstPoint = coordinates[0]
+  const lastPoint = coordinates[coordinates.length - 1]
+
+  if (!linePath || !firstPoint || !lastPoint) {
+    return ""
+  }
+
+  return [
+    linePath,
+    `L ${lastPoint.x.toFixed(2)} ${CHART_BOTTOM_Y.toFixed(2)}`,
+    `L ${firstPoint.x.toFixed(2)} ${CHART_BOTTOM_Y.toFixed(2)}`,
+    "Z",
+  ].join(" ")
+}
+
 export function PriceHistoryChart({
   symbol,
   points,
@@ -246,6 +330,7 @@ export function PriceHistoryChart({
   const [selectedTimeframe, setSelectedTimeframe] = useState<ChartTimeframeId>(
     () => getDefaultTimeframe(availableTimeframes)
   )
+  const gradientId = useId().replace(/:/g, "")
   const resolvedTimeframe = availableTimeframes.includes(selectedTimeframe)
     ? selectedTimeframe
     : getDefaultTimeframe(availableTimeframes)
@@ -298,15 +383,42 @@ export function PriceHistoryChart({
       : null
   const positive = absoluteChange >= 0
   const accentColor = positive ? "var(--vesper-teal)" : "var(--vesper-orange)"
-  const linePath = renderSeries
-    .map((point, index) => {
-      const x = (index / (renderSeries.length - 1)) * 100
-      const y = 50 - ((point.close - low) / range) * 38
-      return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`
-    })
-    .join(" ")
+  const chartCoordinates = buildChartCoordinates(renderSeries, { low, range })
+  const linePath = buildSmoothPath(chartCoordinates)
+  const areaPath = buildAreaPath(chartCoordinates)
   const dateMarkers = buildDateMarkers(visibleSeries)
-  const valueMarkers = [high, low + range / 2, low]
+  const lastCoordinate = chartCoordinates[chartCoordinates.length - 1]
+  const rangeLabel = `${formatCurrency(low, {
+    currency: currency ?? "USD",
+  })} to ${formatCurrency(high, {
+    currency: currency ?? "USD",
+  })}`
+  const footerItems = [
+    {
+      label: "Start",
+      value: formatChartDate(firstPoint.date),
+    },
+    ...(dateMarkers[1]
+      ? [
+          {
+            label: "Midpoint",
+            value: formatChartDate(dateMarkers[1].date),
+          },
+        ]
+      : []),
+    {
+      label: "Last",
+      value: formatChartDate(lastPoint.date),
+    },
+    {
+      label: "Close range",
+      value: rangeLabel,
+    },
+    {
+      label: "Available range",
+      value: historicalRangeLabel,
+    },
+  ]
 
   return (
     <div className="market-split-17 grid gap-3">
@@ -372,6 +484,14 @@ export function PriceHistoryChart({
               {formatChartDate(firstPoint.date)} to{" "}
               {formatChartDate(lastPoint.date)}
             </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <div className="market-chip px-2.5 py-1 text-[11px] text-muted-foreground">
+                {visibleSeries.length} closes
+              </div>
+              <div className="market-chip px-2.5 py-1 text-[11px] text-muted-foreground">
+                {rangeLabel}
+              </div>
+            </div>
           </div>
 
           <div
@@ -405,22 +525,72 @@ export function PriceHistoryChart({
         </div>
 
         <div className="market-soft-surface relative mt-4 px-3 py-3 sm:px-4">
-          <div className="relative bg-background/80 pr-12">
+          <div className="relative overflow-hidden rounded-[0.4rem] bg-background/80 pr-16">
+            <div
+              aria-hidden
+              className="absolute inset-0 opacity-70"
+              style={{
+                background: `radial-gradient(circle at 85% 18%, color-mix(in oklab, ${accentColor} 22%, transparent) 0%, transparent 34%)`,
+              }}
+            />
             <svg
               aria-hidden
-              className="h-60 w-full"
-              viewBox="0 0 100 56"
+              className="relative h-60 w-full"
+              viewBox={`${String(CHART_VIEWBOX_WIDTH)} ${String(CHART_VIEWBOX_HEIGHT)}`.replace(
+                /^/,
+                "0 0 "
+              )}
               preserveAspectRatio="none"
             >
-              {[10, 20, 30, 40, 50].map((y) => (
+              <defs>
+                <linearGradient
+                  id={`${gradientId}-area`}
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2={String(CHART_VIEWBOX_HEIGHT)}
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop offset="0%" stopColor={accentColor} stopOpacity="0.3" />
+                  <stop offset="55%" stopColor={accentColor} stopOpacity="0.12" />
+                  <stop offset="100%" stopColor={accentColor} stopOpacity="0" />
+                </linearGradient>
+                <linearGradient
+                  id={`${gradientId}-line`}
+                  x1="0"
+                  y1="0"
+                  x2={String(CHART_VIEWBOX_WIDTH)}
+                  y2="0"
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop offset="0%" stopColor={accentColor} stopOpacity="0.5" />
+                  <stop offset="45%" stopColor={accentColor} stopOpacity="0.92" />
+                  <stop offset="100%" stopColor={accentColor} stopOpacity="1" />
+                </linearGradient>
+                <filter
+                  id={`${gradientId}-glow`}
+                  x="-10%"
+                  y="-20%"
+                  width="120%"
+                  height="140%"
+                >
+                  <feGaussianBlur result="blur" stdDeviation="1.5" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+
+              {[12, 24, 36, 48].map((y) => (
                 <line
                   key={y}
-                  x1="0"
-                  x2="100"
+                  x1={String(CHART_PADDING_X)}
+                  x2={String(CHART_VIEWBOX_WIDTH - CHART_PADDING_X)}
                   y1={String(y)}
                   y2={String(y)}
-                  stroke="color-mix(in oklab, var(--border) 82%, transparent)"
-                  strokeDasharray="1.5 2.5"
+                  stroke="color-mix(in oklab, var(--border) 68%, transparent)"
+                  strokeDasharray="1.5 3.5"
                   strokeWidth="0.5"
                   vectorEffect="non-scaling-stroke"
                 />
@@ -431,58 +601,100 @@ export function PriceHistoryChart({
                   key={x}
                   x1={String(x)}
                   x2={String(x)}
-                  y1="0"
-                  y2="56"
-                  stroke="color-mix(in oklab, var(--border) 70%, transparent)"
-                  strokeDasharray="1.5 3"
+                  y1={String(CHART_TOP_Y)}
+                  y2={String(CHART_BOTTOM_Y)}
+                  stroke="color-mix(in oklab, var(--border) 48%, transparent)"
+                  strokeDasharray="1.5 4"
                   strokeWidth="0.4"
                   vectorEffect="non-scaling-stroke"
                 />
               ))}
 
+              <line
+                x1={String(CHART_PADDING_X)}
+                x2={String(CHART_VIEWBOX_WIDTH - CHART_PADDING_X)}
+                y1={String(CHART_BOTTOM_Y)}
+                y2={String(CHART_BOTTOM_Y)}
+                stroke="color-mix(in oklab, var(--border) 82%, transparent)"
+                strokeDasharray="2.2 4.4"
+                strokeWidth="0.55"
+                vectorEffect="non-scaling-stroke"
+              />
+
+              {lastCoordinate ? (
+                <line
+                  x1={String(CHART_PADDING_X)}
+                  x2={String(CHART_VIEWBOX_WIDTH - CHART_PADDING_X)}
+                  y1={lastCoordinate.y.toFixed(2)}
+                  y2={lastCoordinate.y.toFixed(2)}
+                  stroke={accentColor}
+                  strokeDasharray="2 3"
+                  strokeOpacity="0.28"
+                  strokeWidth="0.6"
+                  vectorEffect="non-scaling-stroke"
+                />
+              ) : null}
+
+              <path d={areaPath} fill={`url(#${gradientId}-area)`} />
               <path
                 d={linePath}
                 fill="none"
+                filter={`url(#${gradientId}-glow)`}
                 stroke={accentColor}
-                strokeLinecap="square"
-                strokeLinejoin="miter"
-                strokeWidth="1.7"
+                strokeOpacity="0.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.8"
                 vectorEffect="non-scaling-stroke"
               />
+              <path
+                d={linePath}
+                fill="none"
+                stroke={`url(#${gradientId}-line)`}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.9"
+                vectorEffect="non-scaling-stroke"
+              />
+
             </svg>
           </div>
 
           <div className="pointer-events-none absolute inset-y-3 right-3 flex flex-col justify-between text-[11px] text-muted-foreground">
-            {valueMarkers.map((value, index) => (
-              <div key={index}>
-                {formatCurrency(value, { currency: currency ?? "USD" })}
-              </div>
-            ))}
+            <div>{formatCurrency(high, { currency: currency ?? "USD" })}</div>
+            <div>{formatCurrency(low, { currency: currency ?? "USD" })}</div>
           </div>
+
+          {lastCoordinate ? (
+            <div
+              className="pointer-events-none absolute right-3 rounded-full border px-2.5 py-1 font-departureMono text-[11px] shadow-[0_0_0_1px_color-mix(in_oklab,var(--background)_70%,transparent)]"
+              style={{
+                borderColor: `color-mix(in oklab, ${accentColor} 28%, transparent)`,
+                color: accentColor,
+                top: `calc(${((lastCoordinate.y / CHART_VIEWBOX_HEIGHT) * 100).toFixed(
+                  2
+                )}% + 0.75rem)`,
+                transform: "translateY(-50%)",
+                background: `color-mix(in oklab, ${accentColor} 10%, var(--background))`,
+              }}
+            >
+              {formatCurrency(lastPoint.close, { currency: currency ?? "USD" })}
+            </div>
+          ) : null}
         </div>
 
-        <div className="market-grid-4 market-panel-grid mt-4 grid">
-          {dateMarkers.map((marker, index) => (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {footerItems.map((item) => (
             <div
-              key={[marker.date, String(index)].join(":")}
-              className="market-panel-tile px-3 py-2"
+              key={item.label}
+              className="market-chip min-w-28 px-3 py-2 text-xs text-muted-foreground"
             >
-              <div className="text-[11px] text-muted-foreground">
-                {index === 0
-                  ? "Start"
-                  : index === dateMarkers.length - 1
-                    ? "Last"
-                    : "Midpoint"}
-              </div>
-              <div className="mt-1 text-xs">{formatChartDate(marker.date)}</div>
+              <span className="font-departureMono text-[10px] tracking-[0.18em] uppercase">
+                {item.label}
+              </span>
+              <div className="mt-1 text-foreground">{item.value}</div>
             </div>
           ))}
-          <div className="market-panel-tile px-3 py-2">
-            <div className="text-[11px] text-muted-foreground">
-              Available range
-            </div>
-            <div className="mt-1 text-xs">{historicalRangeLabel}</div>
-          </div>
         </div>
       </div>
     </div>

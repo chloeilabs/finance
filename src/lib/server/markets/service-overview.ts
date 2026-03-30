@@ -4,6 +4,7 @@ import type {
   CalendarEvent,
   MacroRate,
   NewsStory,
+  PricePoint,
   QuoteSnapshot,
 } from "@/lib/shared/markets/core"
 import type {
@@ -29,7 +30,9 @@ import {
   dedupeCalendarEvents,
   dedupeNews,
   ECONOMIC_INDICATORS_TTL_SECONDS,
+  EOD_TTL_SECONDS,
   getCachedQuoteSnapshot,
+  getEodChartCacheKey,
   mapWithConcurrency,
   MARKET_STRUCTURE_TTL_SECONDS,
   MOVERS_TTL_SECONDS,
@@ -269,6 +272,45 @@ async function getQuotesForSymbols(symbols: string[]): Promise<QuoteSnapshot[]> 
   })
 }
 
+function toSparklineValues(points: PricePoint[]): number[] {
+  return points.flatMap((point) =>
+    typeof point.close === "number" && Number.isFinite(point.close)
+      ? [point.close]
+      : []
+  )
+}
+
+async function getSparklineForSymbol(symbol: string): Promise<number[]> {
+  const points = await withMarketCache({
+    cacheKey: getEodChartCacheKey(symbol, "compact"),
+    category: "chart",
+    ttlSeconds: EOD_TTL_SECONDS,
+    fallback: [] as PricePoint[],
+    staleOnError: true,
+    fetcher: () => client.charts.getEodChart(symbol, { limit: 30 }),
+  })
+
+  return toSparklineValues(points.slice(-30))
+}
+
+async function getSparklinesForSymbols(
+  symbols: string[]
+): Promise<Record<string, number[]>> {
+  const normalized = normalizeSymbols(symbols)
+
+  if (normalized.length === 0) {
+    return {}
+  }
+
+  const entries = await mapWithConcurrency(
+    normalized,
+    QUOTE_FETCH_CONCURRENCY,
+    async (symbol) => [symbol, await getSparklineForSymbol(symbol)] as const
+  )
+
+  return Object.fromEntries(entries)
+}
+
 export async function primeQuoteCacheForSymbols(
   symbols: string[]
 ): Promise<QuoteSnapshot[]> {
@@ -306,9 +348,13 @@ export async function getMarketOverviewData(
   const clock = createMarketDateClock()
   const { plan, watchlists, warnings } = await getMarketSidebarData(userId)
   const primaryWatchlist = watchlists[0]
+  const watchlistSymbols =
+    primaryWatchlist?.symbols ?? [...CORE_WATCHLIST_SYMBOLS]
   const [
     watchlistQuotes,
+    watchlistSparklines,
     indexes,
+    indexSparklines,
     movers,
     sectors,
     earnings,
@@ -323,10 +369,10 @@ export async function getMarketOverviewData(
     sectorHistory,
     riskPremium,
   ] = await Promise.all([
-    getQuotesForSymbols(
-      primaryWatchlist?.symbols ?? [...CORE_WATCHLIST_SYMBOLS]
-    ),
+    getQuotesForSymbols(watchlistSymbols),
+    getSparklinesForSymbols(watchlistSymbols),
     getOverviewIndexQuotes(),
+    getSparklinesForSymbols([...CORE_INDEX_SYMBOLS]),
     withMarketCache({
       cacheKey: "overview:movers",
       category: "quotes",
@@ -385,8 +431,10 @@ export async function getMarketOverviewData(
       id: primaryWatchlist?.id ?? null,
       name: primaryWatchlist?.name ?? "Core",
       quotes: watchlistQuotes,
+      sparklines: watchlistSparklines,
     },
     indexes,
+    indexSparklines,
     movers,
     sectors: sectors.slice(0, 8),
     sectorValuations: sectorValuations.slice(0, 8),
@@ -451,6 +499,7 @@ export async function getMarketsSnapshot() {
   const clock = createMarketDateClock()
   const [
     indexes,
+    indexSparklines,
     movers,
     sectors,
     macro,
@@ -463,6 +512,7 @@ export async function getMarketsSnapshot() {
     generalNews,
   ] = await Promise.all([
     getOverviewIndexQuotes(),
+    getSparklinesForSymbols([...CORE_INDEX_SYMBOLS]),
     withMarketCache({
       cacheKey: "overview:movers",
       category: "quotes",
@@ -492,6 +542,7 @@ export async function getMarketsSnapshot() {
   return {
     plan: getMarketPlanSummary(),
     indexes,
+    indexSparklines,
     movers,
     sectors,
     macro,

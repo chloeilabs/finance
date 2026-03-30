@@ -42,11 +42,18 @@ export default async function Home() {
       <PageHeader title="Market overview" />
 
       <SectionFrame title={`${overview.watchlist.name} watchlist`}>
-        <QuoteStrip quotes={overview.watchlist.quotes} />
+        <QuoteStrip
+          quotes={overview.watchlist.quotes}
+          sparklines={overview.watchlist.sparklines}
+        />
       </SectionFrame>
 
       <SectionFrame title="Indexes">
-        <QuoteStrip linkItems={false} quotes={overview.indexes} />
+        <QuoteStrip
+          linkItems={false}
+          quotes={overview.indexes}
+          sparklines={overview.indexSparklines}
+        />
       </SectionFrame>
 
       <SectionFrame
