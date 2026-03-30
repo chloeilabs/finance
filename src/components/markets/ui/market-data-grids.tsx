@@ -15,15 +15,18 @@ import type { LockedMarketSection } from "@/lib/shared/markets/intelligence"
 import { cn } from "@/lib/utils"
 
 import { EmptyState } from "./market-layout-primitives"
+import { Sparkline } from "./sparkline"
 
 export function QuoteStrip({
   quotes,
   hrefBase = "/stocks",
   linkItems = true,
+  sparklines,
 }: {
   quotes: QuoteSnapshot[]
   hrefBase?: string
   linkItems?: boolean
+  sparklines?: Record<string, (number | null | undefined)[]>
 }) {
   if (quotes.length === 0) {
     return (
@@ -38,6 +41,12 @@ export function QuoteStrip({
     <div className="market-grid-4 market-panel-grid grid">
       {quotes.map((quote) => {
         const positive = (quote.change ?? 0) >= 0
+        const sparklineValues = sparklines?.[quote.symbol] ?? []
+        const hasSparkline =
+          sparklineValues.filter(
+            (value): value is number =>
+              typeof value === "number" && Number.isFinite(value)
+          ).length >= 2
         const content = (
           <>
             <div className="flex items-start justify-between gap-3">
@@ -60,7 +69,10 @@ export function QuoteStrip({
                 {formatPercent(quote.changesPercentage)}
               </div>
             </div>
-            <div className="mt-4 flex items-end justify-between gap-3">
+            {hasSparkline ? (
+              <Sparkline className="mt-4 h-14" values={sparklineValues} />
+            ) : null}
+            <div className="mt-3 flex items-end justify-between gap-3">
               <div className="text-lg tracking-tight">
                 {formatCurrency(quote.price, {
                   currency: quote.currency ?? "USD",

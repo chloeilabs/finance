@@ -29,7 +29,11 @@ export default async function MarketsPage() {
       <PageHeader eyebrow="Markets" title="Broad market snapshot" />
 
       <SectionFrame title="Benchmarks">
-        <QuoteStrip linkItems={false} quotes={snapshot.indexes} />
+        <QuoteStrip
+          linkItems={false}
+          quotes={snapshot.indexes}
+          sparklines={snapshot.indexSparklines}
+        />
       </SectionFrame>
 
       <SectionFrame
