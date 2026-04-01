@@ -23,8 +23,8 @@ describe("getModels", () => {
         name: "MiniMax M2.7",
       },
       {
-        id: "nvidia/nemotron-3-super-120b-a12b:free",
-        name: "NVIDIA Nemotron 3 Super",
+        id: "qwen/qwen3.6-plus-preview:free",
+        name: "Qwen 3.6 Plus Preview",
       },
       {
         id: "z-ai/glm-5",
