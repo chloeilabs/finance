@@ -1,22 +1,13 @@
 import "./globals.css"
 
+import { GeistMono } from "geist/font/mono"
+import { GeistSans } from "geist/font/sans"
 import type { Metadata, Viewport } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
 import localFont from "next/font/local"
 import { Toaster } from "sonner"
 
 import { QueryClientProvider } from "@/components/layout/query-client-provider"
 import { cn } from "@/lib/utils"
-
-const geistSans = Geist({
-  variable: "--font-sans",
-  subsets: ["latin"],
-})
-
-const geistMono = Geist_Mono({
-  variable: "--font-mono",
-  subsets: ["latin"],
-})
 
 const departureMono = localFont({
   src: "./fonts/DepartureMono-Regular.woff2",
@@ -68,7 +59,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("dark font-sans", geistSans.variable, geistMono.variable)}
+      className={cn("dark font-sans", GeistSans.variable, GeistMono.variable)}
     >
       <body
         className={cn(departureMono.variable, "overscroll-none antialiased")}
