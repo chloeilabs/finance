@@ -82,7 +82,8 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
   --font-departureMono: var(--font-departure-mono);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
