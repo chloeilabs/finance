@@ -1,6 +1,6 @@
 export const AvailableModels = {
-  OPENROUTER_NVIDIA_NEMOTRON_3_SUPER_FREE:
-    "nvidia/nemotron-3-super-120b-a12b:free",
+  OPENROUTER_QWEN_3_6_PLUS_PREVIEW_FREE:
+    "qwen/qwen3.6-plus-preview:free",
   OPENROUTER_MINIMAX_M2_7: "minimax/minimax-m2.7",
   OPENROUTER_Z_AI_GLM_5: "z-ai/glm-5",
 } as const
@@ -21,7 +21,7 @@ export interface ModelInfo {
 
 export const OPENROUTER_MODELS = [
   AvailableModels.OPENROUTER_MINIMAX_M2_7,
-  AvailableModels.OPENROUTER_NVIDIA_NEMOTRON_3_SUPER_FREE,
+  AvailableModels.OPENROUTER_QWEN_3_6_PLUS_PREVIEW_FREE,
   AvailableModels.OPENROUTER_Z_AI_GLM_5,
 ] as const
 
@@ -34,9 +34,9 @@ export function resolveDefaultModel(
 }
 
 export const ModelInfos: Record<ModelType, ModelInfo> = {
-  [AvailableModels.OPENROUTER_NVIDIA_NEMOTRON_3_SUPER_FREE]: {
-    id: AvailableModels.OPENROUTER_NVIDIA_NEMOTRON_3_SUPER_FREE,
-    name: "NVIDIA Nemotron 3 Super",
+  [AvailableModels.OPENROUTER_QWEN_3_6_PLUS_PREVIEW_FREE]: {
+    id: AvailableModels.OPENROUTER_QWEN_3_6_PLUS_PREVIEW_FREE,
+    name: "Qwen 3.6 Plus Preview",
   },
   [AvailableModels.OPENROUTER_MINIMAX_M2_7]: {
     id: AvailableModels.OPENROUTER_MINIMAX_M2_7,
