@@ -19,6 +19,8 @@ const screenerPayloadSchema = z
     volumeMax: z.number().optional(),
     dividendMin: z.number().optional(),
     dividendMax: z.number().optional(),
+    dividendYieldMin: z.number().optional(),
+    dividendYieldMax: z.number().optional(),
     priceMin: z.number().optional(),
     priceMax: z.number().optional(),
     isEtf: z.boolean().optional(),
@@ -27,7 +29,15 @@ const screenerPayloadSchema = z
     industry: z.string().trim().min(1).max(120).optional(),
     exchange: z.string().trim().min(1).max(120).optional(),
     sortBy: z
-      .enum(["symbol", "marketCap", "price", "volume", "beta", "dividend"])
+      .enum([
+        "symbol",
+        "marketCap",
+        "price",
+        "volume",
+        "beta",
+        "dividend",
+        "dividendYield",
+      ])
       .optional(),
     sortDirection: z.enum(["asc", "desc"]).optional(),
   })

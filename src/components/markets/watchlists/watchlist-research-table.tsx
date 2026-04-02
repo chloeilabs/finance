@@ -3,7 +3,6 @@
 import Link from "next/link"
 import { useState } from "react"
 
-import { Button } from "@/components/ui/button"
 import {
   formatCompactNumber,
   formatCurrency,
@@ -17,6 +16,7 @@ const SORT_OPTIONS = [
   { value: "marketCap", label: "Market Cap" },
   { value: "price", label: "Price" },
   { value: "changesPercentage", label: "Change" },
+  { value: "dividendYieldTtm", label: "Dividend Yield" },
   { value: "rsi14", label: "RSI 14" },
   { value: "nextEarningsDate", label: "Next Earnings" },
   { value: "piotroskiScore", label: "Piotroski" },
@@ -36,6 +36,8 @@ function getSortValue(row: ResearchQuoteRow, sortBy: SortKey) {
       return row.price ?? Number.NEGATIVE_INFINITY
     case "changesPercentage":
       return row.changesPercentage ?? Number.NEGATIVE_INFINITY
+    case "dividendYieldTtm":
+      return row.dividendYieldTtm ?? Number.NEGATIVE_INFINITY
     case "rsi14":
       return row.rsi14 ?? Number.NEGATIVE_INFINITY
     case "piotroskiScore":
@@ -43,11 +45,7 @@ function getSortValue(row: ResearchQuoteRow, sortBy: SortKey) {
   }
 }
 
-export function WatchlistResearchTable({
-  rows,
-}: {
-  rows: ResearchQuoteRow[]
-}) {
+export function WatchlistResearchTable({ rows }: { rows: ResearchQuoteRow[] }) {
   const [sortBy, setSortBy] = useState<SortKey>("marketCap")
   const [direction, setDirection] = useState<"asc" | "desc">("desc")
 
@@ -84,51 +82,36 @@ export function WatchlistResearchTable({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap gap-3">
-          <label className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Sort</span>
-            <select
-              className="border border-border/70 bg-background px-2 py-1 text-sm"
-              value={sortBy}
-              onChange={(event) => {
-                setSortBy(event.target.value as SortKey)
-              }}
-            >
-              {SORT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Direction</span>
-            <select
-              className="border border-border/70 bg-background px-2 py-1 text-sm"
-              value={direction}
-              onChange={(event) => {
-                setDirection(event.target.value as "asc" | "desc")
-              }}
-            >
-              <option value="desc">Descending</option>
-              <option value="asc">Ascending</option>
-            </select>
-          </label>
-        </div>
-
-        <Button asChild size="sm" variant="outline">
-          <Link
-            href={`/compare?symbols=${encodeURIComponent(
-              sortedRows
-                .slice(0, 5)
-                .map((row) => row.symbol)
-                .join(",")
-            )}`}
+      <div className="flex flex-wrap gap-3">
+        <label className="flex items-center gap-2 text-sm">
+          <span className="text-muted-foreground">Sort</span>
+          <select
+            className="border border-border/70 bg-background px-2 py-1 text-sm"
+            value={sortBy}
+            onChange={(event) => {
+              setSortBy(event.target.value as SortKey)
+            }}
           >
-            Compare Top 5
-          </Link>
-        </Button>
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <span className="text-muted-foreground">Direction</span>
+          <select
+            className="border border-border/70 bg-background px-2 py-1 text-sm"
+            value={direction}
+            onChange={(event) => {
+              setDirection(event.target.value as "asc" | "desc")
+            }}
+          >
+            <option value="desc">Descending</option>
+            <option value="asc">Ascending</option>
+          </select>
+        </label>
       </div>
 
       <div className="market-table-frame">
@@ -149,6 +132,9 @@ export function WatchlistResearchTable({
               </th>
               <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
                 RSI 14
+              </th>
+              <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                Dividend Yield
               </th>
               <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
                 Next Earnings
@@ -204,6 +190,9 @@ export function WatchlistResearchTable({
                 </td>
                 <td className="px-3 py-3 text-right">
                   {row.rsi14?.toFixed(2) ?? "N/A"}
+                </td>
+                <td className="px-3 py-3 text-right">
+                  {formatPercent(row.dividendYieldTtm, { scale: "fraction" })}
                 </td>
                 <td className="px-3 py-3 text-right">
                   {formatDate(row.nextEarningsDate)}

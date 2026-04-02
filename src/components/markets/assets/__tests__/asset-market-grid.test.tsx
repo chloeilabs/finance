@@ -97,5 +97,6 @@ describe("AssetTeaserGrid", () => {
     expect(html).toContain("BTCUSD")
     expect(html).toContain("<svg")
     expect(html).toContain("<path")
+    expect(html).not.toContain("/assets#crypto")
   })
 })

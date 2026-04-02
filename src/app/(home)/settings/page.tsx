@@ -7,6 +7,7 @@ import {
   getFmpPlanValidationSummary,
   getMarketPlanSummary,
 } from "@/lib/server/markets/config"
+import { getStarterDatasetCategorySummaries } from "@/lib/server/markets/service"
 import type { FmpCoverageScope } from "@/lib/shared/markets/plan"
 
 function formatCoverageScope(scope: FmpCoverageScope) {
@@ -22,6 +23,15 @@ function formatCoverageScope(scope: FmpCoverageScope) {
 
 export default function SettingsPage() {
   const plan = getMarketPlanSummary()
+  const datasetSummaries = getStarterDatasetCategorySummaries()
+  const accessibleDatasetCount = datasetSummaries.reduce(
+    (total, summary) => total + summary.accessible.length,
+    0
+  )
+  const restrictedDatasetCount = datasetSummaries.reduce(
+    (total, summary) => total + summary.restricted.length,
+    0
+  )
   const validation = getFmpPlanValidationSummary()
 
   return (
@@ -74,15 +84,15 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div className="market-panel-tile px-3 py-2">
-                <div className="text-muted-foreground">Accessible probes</div>
+                <div className="text-muted-foreground">Accessible datasets</div>
                 <div className="mt-1 font-departureMono tracking-tight">
-                  {validation.accessibleProbes.length}
+                  {accessibleDatasetCount}
                 </div>
               </div>
               <div className="market-panel-tile px-3 py-2">
-                <div className="text-muted-foreground">Restricted probes</div>
+                <div className="text-muted-foreground">Restricted datasets</div>
                 <div className="mt-1 font-departureMono tracking-tight">
-                  {validation.restrictedProbes.length}
+                  {restrictedDatasetCount}
                 </div>
               </div>
               <div className="market-panel-tile px-3 py-2">
@@ -93,33 +103,33 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="market-grid-2 market-panel-grid grid text-xs">
-              <div className="market-panel-tile px-3 py-2">
-                <div className="text-muted-foreground">Validated access</div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {validation.accessibleProbes.map((probe) => (
-                    <span
-                      key={probe}
-                      className="border border-border/60 px-2 py-1 font-departureMono tracking-tight"
-                    >
-                      {probe}
-                    </span>
-                  ))}
+            <div className="market-grid-3 market-panel-grid grid text-xs">
+              {datasetSummaries.map((summary) => (
+                <div key={summary.category} className="market-panel-tile px-3 py-2">
+                  <div className="text-muted-foreground">{summary.category}</div>
+                  <div className="mt-1 font-departureMono tracking-tight">
+                    {summary.accessible.length} open / {summary.restricted.length} locked
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {summary.accessible.map((entry) => (
+                      <span
+                        key={entry.definition.id}
+                        className="border border-border/60 px-2 py-1 font-departureMono tracking-tight"
+                      >
+                        {entry.definition.id}
+                      </span>
+                    ))}
+                    {summary.restricted.map((entry) => (
+                      <span
+                        key={entry.definition.id}
+                        className="border border-dashed border-border/60 px-2 py-1 font-departureMono tracking-tight text-muted-foreground"
+                      >
+                        {entry.definition.id}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="market-panel-tile px-3 py-2">
-                <div className="text-muted-foreground">Still restricted</div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {validation.restrictedProbes.map((probe) => (
-                    <span
-                      key={probe}
-                      className="border border-border/60 px-2 py-1 font-departureMono tracking-tight"
-                    >
-                      {probe}
-                    </span>
-                  ))}
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         ) : (

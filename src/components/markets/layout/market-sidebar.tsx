@@ -2,10 +2,7 @@
 
 import {
   BarChart3,
-  CalendarDays,
   ChevronDown,
-  GitCompareArrows,
-  Globe,
   HatGlasses,
   MessageSquare,
   MoreHorizontal,
@@ -13,7 +10,6 @@ import {
   Pencil,
   Pin,
   Search,
-  Star,
   Trash2,
   X,
 } from "lucide-react"
@@ -66,34 +62,9 @@ const PRIMARY_NAV_ITEMS = [
     icon: BarChart3,
   },
   {
-    href: "/markets",
-    label: "Markets",
-    icon: Star,
-  },
-  {
-    href: "/assets",
-    label: "Assets",
-    icon: Globe,
-  },
-  {
-    href: "/calendar",
-    label: "Calendar",
-    icon: CalendarDays,
-  },
-  {
     href: "/news",
     label: "News",
     icon: Newspaper,
-  },
-  {
-    href: "/screeners",
-    label: "Screeners",
-    icon: Search,
-  },
-  {
-    href: "/compare",
-    label: "Compare",
-    icon: GitCompareArrows,
   },
 ] as const
 

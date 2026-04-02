@@ -260,7 +260,9 @@ export function getMarketPlanSummary(): MarketPlanSummary {
 }
 
 export function getFmpPlanValidationSummary(): {
+  accessibleDatasets: string[]
   accessibleProbes: string[]
+  restrictedDatasets: string[]
   restrictedProbes: string[]
   source: string
   tier: FmpPlanTier
@@ -274,7 +276,9 @@ export function getFmpPlanValidationSummary(): {
   }
 
   return {
+    accessibleDatasets: snapshot.accessibleDatasets,
     accessibleProbes: snapshot.accessibleProbes,
+    restrictedDatasets: snapshot.restrictedDatasets,
     restrictedProbes: snapshot.restrictedProbes,
     source: snapshot.source,
     tier,

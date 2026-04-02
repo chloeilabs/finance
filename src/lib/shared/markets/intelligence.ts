@@ -2,6 +2,7 @@ import type {
   AftermarketSnapshot,
   CalendarEvent,
   CompanyProfile,
+  DividendSnapshot,
   FinancialScoreSnapshot,
   MacroRate,
   MarketMoverBucket,
@@ -169,6 +170,9 @@ export interface PeerComparisonRow {
   marketCap: number | null
   peRatio: number | null
   fcfYield: number | null
+  dividendYieldTtm: number | null
+  dividendPerShareTtm: number | null
+  dividendPayoutRatioTtm: number | null
   roic: number | null
   altmanZScore: number | null
   piotroskiScore: number | null
@@ -191,6 +195,9 @@ export interface ResearchQuoteRow {
   piotroskiScore: number | null
   altmanZScore: number | null
   fcfYield: number | null
+  dividendYieldTtm: number | null
+  dividendPerShareTtm: number | null
+  dividendPayoutRatioTtm: number | null
   roic: number | null
   dcf: number | null
   freeFloatPercentage: number | null
@@ -278,6 +285,7 @@ export interface StockDossier {
   technicals: TechnicalIndicatorSeries[]
   headlineStats: MetricStat[]
   financialScores: FinancialScoreSnapshot | null
+  dividendSnapshot: DividendSnapshot | null
   valuation: ValuationSnapshot | null
   statements: StatementTable[]
   growth: MetricStat[]

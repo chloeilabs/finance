@@ -1,12 +1,15 @@
 import { writeFile } from "node:fs/promises"
 import process from "node:process"
 
-import { createMarketDateClock } from "./src/lib/shared/markets/market-clock.ts"
 import {
   FMP_CAPABILITY_KEYS,
-  FMP_INTRADAY_INTERVALS,
   FMP_PLAN_TIERS,
 } from "./src/lib/shared/markets/plan.ts"
+import {
+  deriveStarterCapabilitiesFromDatasetIds,
+  deriveStarterIntradayIntervalsFromDatasetIds,
+  getStarterDatasetDefinitions,
+} from "./src/lib/shared/markets/starter-datasets.ts"
 
 const apiKey = process.env.FMP_API_KEY?.trim()
 const shouldWriteSnapshot = process.argv.includes("--write")
@@ -15,12 +18,6 @@ const generatedSnapshotUrl = new URL(
   import.meta.url
 )
 const planTier = getPlanTier()
-const clock = createMarketDateClock()
-const calendarFrom = clock.minusDays(1)
-const calendarTo = clock.plusDays(14)
-const filingsFrom = clock.minusDays(180)
-const filingsTo = clock.today
-const sectorPeDate = findPreviousWeekdayIsoDate(clock)
 const coverageScopeByTier = {
   PREMIUM: "usUkCanada",
   STARTER: "us",
@@ -32,76 +29,28 @@ if (!apiKey) {
   process.exit(1)
 }
 
-const probes = [
-  ["quote", "/stable/quote?symbol=AAPL"],
-  ...FMP_INTRADAY_INTERVALS.map((interval) => [
-    `intraday-${interval}`,
-    `/stable/historical-chart/${interval}?symbol=AAPL`,
-  ]),
-  [
-    "technical-rsi",
-    "/stable/technical-indicators/rsi?symbol=AAPL&periodLength=14&timeframe=1day",
-  ],
-  ["price-target-consensus", "/stable/price-target-consensus?symbol=AAPL"],
-  ["grades-consensus", "/stable/grades-consensus?symbol=AAPL"],
-  ["analyst-estimates", "/stable/analyst-estimates?symbol=AAPL&period=annual"],
-  [
-    "earnings-calendar",
-    `/stable/earnings-calendar?from=${calendarFrom}&to=${calendarTo}`,
-  ],
-  [
-    "economic-calendar",
-    `/stable/economic-calendar?from=${calendarFrom}&to=${calendarTo}`,
-  ],
-  [
-    "sec-filings",
-    `/stable/sec-filings-search/symbol?symbol=AAPL&from=${filingsFrom}&to=${filingsTo}`,
-  ],
-  ["dcf", "/stable/levered-discounted-cash-flow?symbol=AAPL"],
-  ["financial-scores", "/stable/financial-scores?symbol=AAPL"],
-  ["product-segmentation", "/stable/revenue-product-segmentation?symbol=AAPL"],
-  ["employee-history", "/stable/historical-employee-count?symbol=AAPL"],
-  ["market-hours", "/stable/exchange-market-hours?exchange=NASDAQ"],
-  ["sector-pe", `/stable/sector-pe-snapshot?date=${sectorPeDate}`],
-  ["risk-premium", "/stable/market-risk-premium"],
-  ["general-news", "/stable/news/general-latest?page=0&limit=5"],
-  ["key-executives", "/stable/key-executives?symbol=AAPL"],
-  ["shares-float", "/stable/shares-float?symbol=AAPL"],
-  [
-    "insider-trading-symbol",
-    "/stable/insider-trading?symbol=AAPL&page=0&limit=5",
-  ],
-  ["insider-latest", "/stable/insider-trading/latest?page=0&limit=5"],
-  ["esg-ratings", "/stable/esg-ratings?symbol=AAPL"],
-  [
-    "earnings-transcripts",
-    "/stable/earning-call-transcript?symbol=AAPL&year=2025&quarter=4",
-  ],
-  ["crypto-quote", "/stable/quote?symbol=BTCUSD"],
-  ["crypto-intraday-5m", "/stable/historical-chart/5min?symbol=BTCUSD"],
-  ["forex-quote", "/stable/quote?symbol=EURUSD"],
-  ["forex-intraday-5m", "/stable/historical-chart/5min?symbol=EURUSD"],
-  ["commodity-quote", "/stable/quote?symbol=GCUSD"],
-  ["commodity-intraday-5m", "/stable/historical-chart/5min?symbol=GCUSD"],
-  ["batch-quote", "/stable/batch-quote?symbols=AAPL,MSFT"],
-  ["batch-index-quotes", "/stable/batch-index-quotes"],
-  ["etf-exposure", "/stable/etf/asset-exposure?symbol=AAPL"],
-  [
-    "institutional-ownership",
-    "/stable/institutional-ownership/extract-analytics/holder?symbol=AAPL&year=2025&quarter=4",
-  ],
-  ["press-releases", "/stable/news/press-releases?symbols=AAPL&page=0&limit=5"],
-]
+const datasets = getStarterDatasetDefinitions()
 
-function buildUrl(path) {
-  return `https://financialmodelingprep.com${path}${path.includes("?") ? "&" : "?"}apikey=${encodeURIComponent(apiKey)}`
+function buildUrl(path, params = {}) {
+  const url = new URL(`https://financialmodelingprep.com${path}`)
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null) {
+      continue
+    }
+
+    url.searchParams.set(key, String(value))
+  }
+
+  url.searchParams.set("apikey", apiKey)
+  return url.toString()
 }
 
 const results = []
 
-for (const [name, path] of probes) {
+for (const dataset of datasets) {
   try {
-    const response = await fetch(buildUrl(path), {
+    const response = await fetch(buildUrl(dataset.path, dataset.probeParams), {
       headers: { Accept: "application/json" },
     })
     const rawBody = await response.text()
@@ -116,7 +65,8 @@ for (const [name, path] of probes) {
 
     results.push({
       accessible,
-      name,
+      category: dataset.category,
+      name: dataset.id,
       ok: response.ok,
       restricted,
       sample: body,
@@ -125,7 +75,8 @@ for (const [name, path] of probes) {
   } catch (error) {
     results.push({
       accessible: false,
-      name,
+      category: dataset.category,
+      name: dataset.id,
       ok: false,
       restricted: false,
       sample: String(error),
@@ -176,24 +127,6 @@ function getPlanTier() {
   return "STARTER"
 }
 
-function findPreviousWeekdayIsoDate(marketClock) {
-  let offset = 0
-
-  while (offset < 7) {
-    const isoDate =
-      offset === 0 ? marketClock.today : marketClock.minusDays(offset)
-    const day = new Date(`${isoDate}T00:00:00.000Z`).getUTCDay()
-
-    if (day !== 0 && day !== 6) {
-      return isoDate
-    }
-
-    offset += 1
-  }
-
-  return marketClock.minusDays(1)
-}
-
 function parseJson(value) {
   try {
     return JSON.parse(value)
@@ -223,73 +156,28 @@ function hasProbeData(payload) {
 }
 
 function createSnapshot(results) {
-  const accessibleProbes = results
+  const accessibleDatasets = results
     .filter((result) => result.accessible)
     .map((result) => result.name)
     .sort()
-  const restrictedProbes = results
+  const restrictedDatasets = results
     .filter((result) => !result.accessible)
     .map((result) => result.name)
     .sort()
-  const accessibleProbeSet = new Set(accessibleProbes)
-  const intradayIntervals = FMP_INTRADAY_INTERVALS.filter((interval) =>
-    accessibleProbeSet.has(`intraday-${interval}`)
-  )
+  const intradayIntervals =
+    deriveStarterIntradayIntervalsFromDatasetIds(accessibleDatasets)
 
   return {
-    accessibleProbes,
-    capabilities: deriveCapabilities(accessibleProbeSet, intradayIntervals),
+    accessibleDatasets,
+    accessibleProbes: accessibleDatasets,
+    capabilities: deriveStarterCapabilitiesFromDatasetIds(accessibleDatasets),
     coverageScope: coverageScopeByTier[planTier],
     intradayIntervals,
-    restrictedProbes,
+    restrictedDatasets,
+    restrictedProbes: restrictedDatasets,
     source: "pnpm markets:capabilities:write",
     validatedAt: new Date().toISOString(),
   }
-}
-
-function deriveCapabilities(accessibleProbeSet, intradayIntervals) {
-  const derived = {
-    realtimeQuotes: accessibleProbeSet.has("quote"),
-    intradayCharts: intradayIntervals.length > 0,
-    technicalIndicators: accessibleProbeSet.has("technical-rsi"),
-    batchQuotes: accessibleProbeSet.has("batch-quote"),
-    batchIndexQuotes: accessibleProbeSet.has("batch-index-quotes"),
-    analystInsights:
-      accessibleProbeSet.has("price-target-consensus") &&
-      accessibleProbeSet.has("grades-consensus") &&
-      accessibleProbeSet.has("analyst-estimates"),
-    insiderTrades: accessibleProbeSet.has("insider-trading-symbol"),
-    latestInsiderFeed: accessibleProbeSet.has("insider-latest"),
-    ownership: accessibleProbeSet.has("institutional-ownership"),
-    etfAssetExposure: accessibleProbeSet.has("etf-exposure"),
-    secFilings: accessibleProbeSet.has("sec-filings"),
-    economics:
-      accessibleProbeSet.has("earnings-calendar") &&
-      accessibleProbeSet.has("economic-calendar") &&
-      accessibleProbeSet.has("market-hours"),
-    esgRatings: accessibleProbeSet.has("esg-ratings"),
-    dcf: accessibleProbeSet.has("dcf"),
-    earningsTranscripts: accessibleProbeSet.has("earnings-transcripts"),
-    pressReleases: accessibleProbeSet.has("press-releases"),
-    companyExecutives: accessibleProbeSet.has("key-executives"),
-    shareFloatLiquidity: accessibleProbeSet.has("shares-float"),
-    cryptoMarkets:
-      accessibleProbeSet.has("crypto-quote") &&
-      accessibleProbeSet.has("crypto-intraday-5m"),
-    forexMarkets:
-      accessibleProbeSet.has("forex-quote") &&
-      accessibleProbeSet.has("forex-intraday-5m"),
-    commodityMarkets:
-      accessibleProbeSet.has("commodity-quote") &&
-      accessibleProbeSet.has("commodity-intraday-5m"),
-  }
-
-  return Object.fromEntries(
-    FMP_CAPABILITY_KEYS.filter((key) => key in derived).map((key) => [
-      key,
-      derived[key],
-    ])
-  )
 }
 
 async function loadExistingSnapshots() {
@@ -309,7 +197,7 @@ function renderGeneratedSnapshots(snapshots) {
   )
 
   return [
-    'import type { FmpPlanValidationSnapshots } from "./fmp-plan-validation"',
+    'import type { FmpPlanValidationSnapshots } from "./fmp-plan-validation.ts"',
     "",
     "export const FMP_PLAN_VALIDATION_SNAPSHOTS: FmpPlanValidationSnapshots = {",
     sections.join("\n"),
@@ -329,6 +217,7 @@ function renderSnapshot(tier, snapshot) {
 
   return [
     `  ${tier}: {`,
+    renderStringArray("accessibleDatasets", snapshot.accessibleDatasets, 4),
     renderStringArray("accessibleProbes", snapshot.accessibleProbes, 4),
     "    capabilities: {",
     ...capabilityEntries.map(
@@ -337,6 +226,7 @@ function renderSnapshot(tier, snapshot) {
     "    },",
     `    coverageScope: ${JSON.stringify(snapshot.coverageScope)},`,
     renderStringArray("intradayIntervals", snapshot.intradayIntervals, 4),
+    renderStringArray("restrictedDatasets", snapshot.restrictedDatasets, 4),
     renderStringArray("restrictedProbes", snapshot.restrictedProbes, 4),
     `    source: ${JSON.stringify(snapshot.source)},`,
     `    validatedAt: ${JSON.stringify(snapshot.validatedAt)},`,

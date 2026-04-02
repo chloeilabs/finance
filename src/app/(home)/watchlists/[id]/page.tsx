@@ -1,4 +1,3 @@
-import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import {
@@ -9,7 +8,6 @@ import {
 } from "@/components/markets/ui/market-primitives"
 import { WatchlistEditor } from "@/components/markets/watchlists/watchlist-editor"
 import { WatchlistResearchTable } from "@/components/markets/watchlists/watchlist-research-table"
-import { Button } from "@/components/ui/button"
 import { getCurrentViewer } from "@/lib/server/auth-session"
 import { isMarketStoreNotInitializedError } from "@/lib/server/markets/errors"
 import { getWatchlistPageData } from "@/lib/server/markets/service"
@@ -60,21 +58,7 @@ export default async function WatchlistPage({
 
   return (
     <div className="pb-10">
-      <PageHeader
-        eyebrow="Watchlist"
-        title={watchlist.name}
-        actions={
-          <Button asChild size="sm" variant="outline">
-            <Link
-              href={`/compare?symbols=${encodeURIComponent(
-                watchlist.symbols.slice(0, 5).join(",")
-              )}`}
-            >
-              Compare Top 5
-            </Link>
-          </Button>
-        }
-      />
+      <PageHeader eyebrow="Watchlist" title={watchlist.name} />
 
       <SectionFrame title="Symbols">
         <WatchlistEditor

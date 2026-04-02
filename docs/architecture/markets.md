@@ -21,16 +21,19 @@
 
 - `cache.ts`: market cache orchestration and stale fallback
 - `service.ts`: stable facade plus higher-level page orchestration
-- `service-overview.ts`: home, markets, news, and calendar aggregation
-- `service-dossier.ts`: stable dossier facade for stock, compare, and watchlist flows
+- `service-overview.ts`: home and news aggregation
+- `service-dossier.ts`: stable dossier facade for stock and watchlist flows
 - `service-dossier-overview.ts`: stock summary and locked-section resolution
 - `service-dossier-sections.ts`: trading, financial, context, street-view, and business section builders
-- `service-dossier-research.ts`: compare and watchlist research assembly
+- `service-dossier-research.ts`: watchlist research assembly
 - `service-dossier-fetchers.ts`: reusable cached stock fetch helpers
+- `service-data.ts`: Starter dataset catalog, access-state resolution, and generic dataset fetch helpers
 - `store.ts`: stable Postgres persistence facade
 - `store-*.ts`: focused persistence modules for watchlists, directory, cache/usage, and screeners
 - `client.ts`: stable FMP client facade
 - `client/*`: domain-specific FMP fetchers and response mappers
 - `market-clock.ts`: market-day date helpers
+- `starter-datasets.ts`: checked-in Starter dataset registry, query-field metadata, and capability derivation helpers
+- `fmp-plan-validation*.ts`: validated Starter dataset access snapshot plus coarse capability compatibility layer
 - `errors.ts` / `api-errors.ts`: domain error contracts
 - `../llm/ai-sdk-fmp-mcp-tools.ts`: remote FMP MCP session bootstrap and usage-tracked tool wrapping for `/copilot`

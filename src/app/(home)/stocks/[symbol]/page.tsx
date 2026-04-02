@@ -1,4 +1,3 @@
-import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 
@@ -52,26 +51,17 @@ export default async function StockPage({
           eyebrow="Stock"
           title={profile?.companyName ?? dossier.symbol}
           actions={
-            <div className="flex gap-2">
+            profile?.website ? (
               <Button asChild size="sm" variant="outline">
-                <Link
-                  href={`/compare?symbols=${encodeURIComponent(dossier.symbol)}`}
+                <a
+                  href={profile.website}
+                  rel="noreferrer noopener"
+                  target="_blank"
                 >
-                  Compare
-                </Link>
+                  Company Site
+                </a>
               </Button>
-              {profile?.website ? (
-                <Button asChild size="sm" variant="outline">
-                  <a
-                    href={profile.website}
-                    rel="noreferrer noopener"
-                    target="_blank"
-                  >
-                    Company Site
-                  </a>
-                </Button>
-              ) : null}
-            </div>
+            ) : null
           }
         />
       </div>

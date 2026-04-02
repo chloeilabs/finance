@@ -27,6 +27,9 @@ export interface MarketSearchResult {
   volume?: number | null
   beta?: number | null
   dividend?: number | null
+  dividendYieldTtm?: number | null
+  dividendPerShareTtm?: number | null
+  dividendPayoutRatioTtm?: number | null
   dcf?: number | null
   altmanZScore?: number | null
   piotroskiScore?: number | null
@@ -74,6 +77,11 @@ export interface CalendarEvent {
   time: string | null
   value: string | null
   estimate: string | null
+  yield?: number | null
+  recordDate?: string | null
+  paymentDate?: string | null
+  declarationDate?: string | null
+  frequency?: string | null
 }
 
 export interface NewsStory {
@@ -154,6 +162,19 @@ export interface CompanyProfile {
   beta: number | null
   marketCap: number | null
   image: string | null
+}
+
+export interface DividendSnapshot {
+  dividendYieldTtm: number | null
+  dividendPerShareTtm: number | null
+  dividendPayoutRatioTtm: number | null
+  latestDividendPerShare: number | null
+  latestDividendYield: number | null
+  latestDividendDate: string | null
+  latestRecordDate: string | null
+  latestPaymentDate: string | null
+  latestDeclarationDate: string | null
+  frequency: string | null
 }
 
 export interface MetricStat {

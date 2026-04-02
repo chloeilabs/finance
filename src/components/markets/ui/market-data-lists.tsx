@@ -4,6 +4,7 @@ import {
   formatDate,
   formatDateTime,
   formatMetricValue,
+  formatPercent,
 } from "@/lib/markets-format"
 import type {
   CalendarEvent,
@@ -51,8 +52,17 @@ export function CalendarList({ events }: { events: CalendarEvent[] }) {
               {event.symbol}{" "}
               <span className="text-muted-foreground">{event.name}</span>
             </div>
-            <div className="text-xs text-muted-foreground">
-              {event.value ?? event.estimate ?? "Scheduled"}
+            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+              <span>{event.value ?? event.estimate ?? "Scheduled"}</span>
+              {event.yield !== null && event.yield !== undefined ? (
+                <span>{formatPercent(event.yield)}</span>
+              ) : null}
+              {event.recordDate ? (
+                <span>Record {formatDate(event.recordDate)}</span>
+              ) : null}
+              {event.paymentDate ? (
+                <span>Pay {formatDate(event.paymentDate)}</span>
+              ) : null}
             </div>
           </div>
           <div className="text-xs text-muted-foreground">

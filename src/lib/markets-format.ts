@@ -157,6 +157,8 @@ export function formatMetricValue(value: number | string | null | undefined) {
 function isFractionalPercentMetricLabel(label: string) {
   return (
     label === "FCF Yield" ||
+    label === "Dividend Yield" ||
+    label === "Payout Ratio" ||
     label === "ROE" ||
     label === "ROIC" ||
     label.endsWith(" Margin") ||
