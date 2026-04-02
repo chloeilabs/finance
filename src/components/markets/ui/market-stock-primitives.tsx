@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button"
 import {
   formatCurrency,
   formatPercent,
@@ -15,6 +16,10 @@ export function StockHeadline({
   change,
   changesPercentage,
   currency,
+  exchange,
+  sector,
+  industry,
+  website,
 }: {
   symbol: string
   name: string | null
@@ -22,51 +27,54 @@ export function StockHeadline({
   change: number | null
   changesPercentage: number | null
   currency?: string | null
+  exchange?: string | null
+  sector?: string | null
+  industry?: string | null
+  website?: string | null
 }) {
   const positive = (change ?? 0) >= 0
+  const businessLine = [sector, industry].filter(Boolean).join(" / ")
+  const headlineEyebrow = `${exchange ?? "Stock"} / ${symbol}`
 
   return (
-    <div className="market-split-18 market-panel-grid grid">
-      <div className="market-panel-tile px-4 py-4 sm:px-5">
-        <div className="font-departureMono text-[11px] tracking-[0.26em] text-muted-foreground uppercase">
-          {symbol}
-        </div>
-        <div className="mt-2 text-2xl tracking-tight sm:text-3xl">
-          {name ?? symbol}
-        </div>
-        <div className="mt-4 flex flex-wrap items-end gap-4">
-          <div className="text-2xl tracking-tight">
-            {formatCurrency(price, { currency: currency ?? "USD" })}
+    <div className="market-soft-surface px-4 py-5 sm:px-6">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <div className="font-departureMono text-[11px] tracking-[0.26em] text-muted-foreground uppercase">
+            {headlineEyebrow}
           </div>
-          <div
-            className={cn(
-              "font-departureMono text-sm",
-              positive
-                ? "text-[color:var(--vesper-teal)]"
-                : "text-[color:var(--vesper-orange)]"
-            )}
-          >
-            {formatSignedNumber(change)} / {formatPercent(changesPercentage)}
+          <div className="mt-3 text-3xl tracking-tight sm:text-4xl">
+            {name ?? symbol}
           </div>
+          {businessLine ? (
+            <div className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+              {businessLine}
+            </div>
+          ) : null}
         </div>
+
+        {website ? (
+          <Button asChild size="sm" variant="outline">
+            <a href={website} rel="noreferrer noopener" target="_blank">
+              Company Site
+            </a>
+          </Button>
+        ) : null}
       </div>
-      <div className="market-panel-list">
-        <div className="market-panel-tile px-3 py-2.5 sm:px-4">
-          <div className="text-xs text-muted-foreground">Session change</div>
-          <div
-            className={cn(
-              "mt-2 font-departureMono text-sm",
-              positive
-                ? "text-[color:var(--vesper-teal)]"
-                : "text-[color:var(--vesper-orange)]"
-            )}
-          >
-            {formatSignedNumber(change)} / {formatPercent(changesPercentage)}
-          </div>
+
+      <div className="mt-6 flex flex-wrap items-end gap-x-4 gap-y-3">
+        <div className="text-3xl tracking-tight sm:text-4xl">
+          {formatCurrency(price, { currency: currency ?? "USD" })}
         </div>
-        <div className="market-panel-tile px-3 py-2.5 sm:px-4">
-          <div className="text-xs text-muted-foreground">Currency</div>
-          <div className="mt-2 text-sm">{currency ?? "USD"}</div>
+        <div
+          className={cn(
+            "font-departureMono text-sm sm:text-base",
+            positive
+              ? "text-[color:var(--vesper-teal)]"
+              : "text-[color:var(--vesper-orange)]"
+          )}
+        >
+          {formatSignedNumber(change)} / {formatPercent(changesPercentage)}
         </div>
       </div>
     </div>
