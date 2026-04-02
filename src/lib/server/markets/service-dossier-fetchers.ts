@@ -2,6 +2,7 @@ import "server-only"
 
 import type {
   AftermarketSnapshot,
+  DividendSnapshot,
   MetricStat,
   QuoteSnapshot,
   TechnicalIndicatorSeries,
@@ -115,6 +116,51 @@ export async function getStockFinancialScores(
     fallback: null,
     staleOnError: true,
     fetcher: () => client.fundamentals.getFinancialScores(symbol),
+  })
+}
+
+function parseEventValue(value: string | null | undefined): number | null {
+  if (!value) {
+    return null
+  }
+
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+export async function getStockDividendSnapshot(
+  symbol: string
+): Promise<DividendSnapshot | null> {
+  return withMarketCache({
+    cacheKey: `stock:${symbol}:dividend-snapshot`,
+    category: "fundamentals",
+    ttlSeconds: PROFILE_TTL_SECONDS,
+    fallback: null,
+    staleOnError: true,
+    fetcher: async () => {
+      const [ratios, dividends] = await Promise.all([
+        client.fundamentals.getRatiosTtm(symbol),
+        client.calendar.getDividends(symbol),
+      ])
+
+      const latestDividend = dividends[0] ?? null
+      const snapshot: DividendSnapshot = {
+        dividendYieldTtm: getMetricNumberByLabel(ratios, "Dividend Yield"),
+        dividendPerShareTtm: getMetricNumberByLabel(ratios, "Dividend / Share"),
+        dividendPayoutRatioTtm: getMetricNumberByLabel(ratios, "Payout Ratio"),
+        latestDividendPerShare: parseEventValue(latestDividend?.value),
+        latestDividendYield: latestDividend?.yield ?? null,
+        latestDividendDate: latestDividend?.eventDate ?? null,
+        latestRecordDate: latestDividend?.recordDate ?? null,
+        latestPaymentDate: latestDividend?.paymentDate ?? null,
+        latestDeclarationDate: latestDividend?.declarationDate ?? null,
+        frequency: latestDividend?.frequency ?? null,
+      }
+
+      return Object.values(snapshot).some((value) => value !== null)
+        ? snapshot
+        : null
+    },
   })
 }
 
@@ -303,6 +349,7 @@ export async function getPeerComparisonRows(
         keyMetrics,
         scores,
         analyst,
+        dividendSnapshot,
         valuation,
         shareFloat,
       ]: [
@@ -312,6 +359,7 @@ export async function getPeerComparisonRows(
         MetricStat[],
         StockDossier["financialScores"],
         AnalystSummary | null,
+        DividendSnapshot | null,
         StockDossier["valuation"],
         ShareFloatSnapshot | null,
       ] = await Promise.all([
@@ -350,6 +398,7 @@ export async function getPeerComparisonRows(
           staleOnError: true,
           fetcher: () => client.analyst.getSummary(symbol),
         }),
+        getStockDividendSnapshot(symbol),
         getStockValuationSnapshot(symbol),
         getStockShareFloat(symbol),
       ])
@@ -362,6 +411,10 @@ export async function getPeerComparisonRows(
         marketCap: profile?.marketCap ?? quote?.marketCap ?? null,
         peRatio: getMetricNumberByLabel(ratios, "P / E"),
         fcfYield: getMetricNumberByLabel(keyMetrics, "FCF Yield"),
+        dividendYieldTtm: dividendSnapshot?.dividendYieldTtm ?? null,
+        dividendPerShareTtm: dividendSnapshot?.dividendPerShareTtm ?? null,
+        dividendPayoutRatioTtm:
+          dividendSnapshot?.dividendPayoutRatioTtm ?? null,
         roic: getMetricNumberByLabel(keyMetrics, "ROIC"),
         altmanZScore: scores?.altmanZScore ?? null,
         piotroskiScore: scores?.piotroskiScore ?? null,

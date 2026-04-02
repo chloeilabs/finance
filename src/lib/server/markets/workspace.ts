@@ -22,6 +22,7 @@ import {
   isUndefinedTableError,
 } from "./errors"
 import {
+  getStockDividendSnapshot,
   getStockFinancialScores,
   getStockShareFloat,
   getStockValuationSnapshot,
@@ -46,6 +47,7 @@ import {
 } from "./store"
 
 const client = createFmpClient()
+const DIVIDEND_YIELD_SCREENER_LIMIT = 100
 const OUTDATED_CORE_WATCHLIST_SYMBOL_ORDERS = [
   CORE_WATCHLIST_SYMBOLS.filter((symbol) => symbol !== "AVGO"),
   ["AAPL", "MSFT", "NVDA", "AVGO", "AMZN", "META", "TSLA", "GOOGL", "BRK.B"],
@@ -138,7 +140,9 @@ function toScreenerParams(filters: ScreenerFilterState) {
     sector: filters.sector,
     industry: filters.industry,
     exchange: filters.exchange,
-    limit: 25,
+    limit: shouldUseLocalDividendYieldPass(filters)
+      ? DIVIDEND_YIELD_SCREENER_LIMIT
+      : 25,
   }
 }
 
@@ -159,6 +163,8 @@ function getScreenerSortValue(
       return result.beta ?? Number.NEGATIVE_INFINITY
     case "dividend":
       return result.dividend ?? Number.NEGATIVE_INFINITY
+    case "dividendYield":
+      return result.dividendYieldTtm ?? Number.NEGATIVE_INFINITY
     case "dcf":
       return result.dcf ?? Number.NEGATIVE_INFINITY
     case "piotroskiScore":
@@ -193,6 +199,80 @@ function sortScreenerResults(
     return direction === "asc"
       ? leftNumber - rightNumber
       : rightNumber - leftNumber
+  })
+}
+
+function normalizeDividendYieldThreshold(value: number | undefined) {
+  if (value === undefined) {
+    return undefined
+  }
+
+  if (Math.abs(value) > 1) {
+    return value / 100
+  }
+
+  return value
+}
+
+function shouldUseLocalDividendYieldPass(filters: ScreenerFilterState) {
+  return (
+    filters.dividendYieldMin !== undefined ||
+    filters.dividendYieldMax !== undefined ||
+    filters.sortBy === "dividendYield"
+  )
+}
+
+async function enrichScreenerResultsWithDividendData(
+  results: MarketSearchResult[]
+): Promise<MarketSearchResult[]> {
+  return mapWithConcurrency(
+    results,
+    QUOTE_FETCH_CONCURRENCY,
+    async (result) => {
+      const dividendSnapshot = await getStockDividendSnapshot(
+        normalizeSymbol(result.symbol)
+      )
+
+      return {
+        ...result,
+        dividendYieldTtm: dividendSnapshot?.dividendYieldTtm ?? null,
+        dividendPerShareTtm: dividendSnapshot?.dividendPerShareTtm ?? null,
+        dividendPayoutRatioTtm:
+          dividendSnapshot?.dividendPayoutRatioTtm ?? null,
+      } satisfies MarketSearchResult
+    }
+  )
+}
+
+function applyDividendYieldFilters(
+  results: MarketSearchResult[],
+  filters: ScreenerFilterState
+) {
+  const minThreshold = normalizeDividendYieldThreshold(filters.dividendYieldMin)
+  const maxThreshold = normalizeDividendYieldThreshold(filters.dividendYieldMax)
+
+  return results.filter((result) => {
+    const dividendYieldTtm = result.dividendYieldTtm
+
+    if (
+      minThreshold !== undefined &&
+      (dividendYieldTtm === null ||
+        dividendYieldTtm === undefined ||
+        dividendYieldTtm < minThreshold)
+    ) {
+      return false
+    }
+
+    if (
+      maxThreshold !== undefined &&
+      (dividendYieldTtm === null ||
+        dividendYieldTtm === undefined ||
+        dividendYieldTtm > maxThreshold)
+    ) {
+      return false
+    }
+
+    return true
   })
 }
 
@@ -316,7 +396,13 @@ export async function runMarketScreener(
     fetcher: () => client.directory.screenCompanies(toScreenerParams(filters)),
   })
 
-  return sortScreenerResults(results, filters)
+  const resultsWithDividendData =
+    await enrichScreenerResultsWithDividendData(results)
+
+  return sortScreenerResults(
+    applyDividendYieldFilters(resultsWithDividendData, filters),
+    filters
+  ).slice(0, 25)
 }
 
 export async function getEnrichedMarketScreenerResults(

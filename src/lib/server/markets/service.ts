@@ -7,7 +7,10 @@ export {
   getMultiAssetSnapshot,
 } from "./service-assets"
 export {
-  getComparePageData,
+  getStarterDatasetCatalogEntries,
+  getStarterDatasetCategorySummaries,
+} from "./service-data"
+export {
   getStockDossier,
   getStockDossierBusinessSection,
   getStockDossierContextSection,
@@ -18,21 +21,15 @@ export {
   getWatchlistPageData,
 } from "./service-dossier"
 export {
+  getLatestGeneralMarketNews,
   getLatestMarketNews,
-  getMarketCalendarFeed,
   getMarketOverviewData,
-  getMarketsSnapshot,
   primeQuoteCacheForSymbols,
 } from "./service-overview"
 export {
   createNewWatchlistForUser,
-  deleteSavedMarketScreener,
-  getEnrichedMarketScreenerResults,
-  getMarketScreenerOptions,
   getMarketSidebarData,
-  getSavedMarketScreeners,
   runMarketScreener,
-  saveMarketScreener,
   searchMarketSymbols,
   updateWatchlistSymbolsForUser,
 } from "./workspace"

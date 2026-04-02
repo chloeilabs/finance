@@ -17,7 +17,7 @@ import type {
 } from "@/lib/shared/markets/intelligence"
 
 import { mayUseLiveFmp, withMarketCache } from "./cache"
-import { getMarketPlanSummary, getQuoteCacheTtlSeconds, isCapabilityEnabled } from "./config"
+import { getQuoteCacheTtlSeconds, isCapabilityEnabled } from "./config"
 import { createMarketDateClock } from "./market-clock"
 import {
   CALENDAR_TTL_SECONDS,
@@ -245,7 +245,9 @@ async function getLatestSectorPerformanceSnapshot(): Promise<
   })
 }
 
-async function getQuotesForSymbols(symbols: string[]): Promise<QuoteSnapshot[]> {
+async function getQuotesForSymbols(
+  symbols: string[]
+): Promise<QuoteSnapshot[]> {
   const normalized = normalizeSymbols(symbols)
 
   if (normalized.length === 0) {
@@ -348,8 +350,9 @@ export async function getMarketOverviewData(
   const clock = createMarketDateClock()
   const { plan, watchlists, warnings } = await getMarketSidebarData(userId)
   const primaryWatchlist = watchlists[0]
-  const watchlistSymbols =
-    primaryWatchlist?.symbols ?? [...CORE_WATCHLIST_SYMBOLS]
+  const watchlistSymbols = primaryWatchlist?.symbols ?? [
+    ...CORE_WATCHLIST_SYMBOLS,
+  ]
   const [
     watchlistQuotes,
     watchlistSparklines,
@@ -409,14 +412,7 @@ export async function getMarketOverviewData(
       staleOnError: true,
       fetcher: () => client.news.getLatestStockNews(12),
     }),
-    withMarketCache({
-      cacheKey: `news:general:${clock.today}`,
-      category: "news",
-      ttlSeconds: NEWS_TTL_SECONDS,
-      fallback: [] as NewsStory[],
-      staleOnError: true,
-      fetcher: () => client.news.getLatestGeneralNews(8),
-    }),
+    getLatestGeneralMarketNews(8),
     getEconomicCalendarSnapshot(),
     getMarketHoursSnapshot(),
     getMarketHolidaySnapshot(),
@@ -466,92 +462,18 @@ export async function getLatestMarketNews(limit = 24): Promise<NewsStory[]> {
   })
 }
 
-export async function getMarketCalendarFeed(): Promise<CalendarEvent[]> {
+export async function getLatestGeneralMarketNews(
+  limit = 8
+): Promise<NewsStory[]> {
   const clock = createMarketDateClock()
-  const [earnings, dividends, economic] = await Promise.all([
-    withMarketCache({
-      cacheKey: `calendar:earnings:${clock.today}:${clock.plusDays(14)}`,
-      category: "calendar",
-      ttlSeconds: CALENDAR_TTL_SECONDS,
-      fallback: [] as CalendarEvent[],
-      staleOnError: true,
-      fetcher: () =>
-        client.calendar.getEarningsCalendar(clock.today, clock.plusDays(14)),
-    }),
-    withMarketCache({
-      cacheKey: `calendar:dividends:${clock.today}:${clock.plusDays(14)}`,
-      category: "calendar",
-      ttlSeconds: CALENDAR_TTL_SECONDS,
-      fallback: [] as CalendarEvent[],
-      staleOnError: true,
-      fetcher: () =>
-        client.calendar.getDividendsCalendar(clock.today, clock.plusDays(14)),
-    }),
-    getEconomicCalendarSnapshot(),
-  ])
 
-  return dedupeCalendarEvents([...earnings, ...dividends, ...economic]).sort(
-    (left, right) => left.eventDate.localeCompare(right.eventDate)
-  )
-}
-
-export async function getMarketsSnapshot() {
-  const clock = createMarketDateClock()
-  const [
-    indexes,
-    indexSparklines,
-    movers,
-    sectors,
-    macro,
-    economicCalendar,
-    marketHours,
-    marketHolidays,
-    sectorValuations,
-    sectorHistory,
-    riskPremium,
-    generalNews,
-  ] = await Promise.all([
-    getOverviewIndexQuotes(),
-    getSparklinesForSymbols([...CORE_INDEX_SYMBOLS]),
-    withMarketCache({
-      cacheKey: "overview:movers",
-      category: "quotes",
-      ttlSeconds: MOVERS_TTL_SECONDS,
-      fallback: [],
-      staleOnError: true,
-      fetcher: () => client.quotes.getMovers(),
-    }),
-    getLatestSectorPerformanceSnapshot(),
-    getMacroSnapshot(),
-    getEconomicCalendarSnapshot(),
-    getMarketHoursSnapshot(),
-    getMarketHolidaySnapshot(),
-    getSectorValuationSnapshot(),
-    getSectorHistorySnapshot(),
-    getMarketRiskPremiumSnapshot(),
-    withMarketCache({
-      cacheKey: `news:general:${clock.today}`,
-      category: "news",
-      ttlSeconds: NEWS_TTL_SECONDS,
-      fallback: [] as NewsStory[],
-      staleOnError: true,
-      fetcher: () => client.news.getLatestGeneralNews(8),
-    }),
-  ])
-
-  return {
-    plan: getMarketPlanSummary(),
-    indexes,
-    indexSparklines,
-    movers,
-    sectors,
-    macro,
-    economicCalendar: dedupeCalendarEvents(economicCalendar).slice(0, 10),
-    marketHours,
-    marketHolidays: marketHolidays.slice(0, 6),
-    sectorValuations: sectorValuations.slice(0, 8),
-    sectorHistory,
-    riskPremium,
-    generalNews: dedupeNews(generalNews).slice(0, 8),
-  }
+  return withMarketCache({
+    cacheKey: ["news", "general", clock.today, String(limit)].join(":"),
+    category: "news",
+    ttlSeconds: NEWS_TTL_SECONDS,
+    fallback: [] as NewsStory[],
+    staleOnError: true,
+    fetcher: async () =>
+      dedupeNews(await client.news.getLatestGeneralNews(limit)),
+  })
 }

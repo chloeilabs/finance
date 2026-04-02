@@ -8,7 +8,10 @@ import type {
 
 import { withMarketCache } from "./cache"
 import { getMarketPlanSummary, getQuoteCacheTtlSeconds } from "./config"
-import { getStockValuationSnapshot } from "./service-dossier-fetchers"
+import {
+  getStockDividendSnapshot,
+  getStockValuationSnapshot,
+} from "./service-dossier-fetchers"
 import {
   buildLockedSection,
   client,
@@ -90,7 +93,16 @@ function resolveLockedSections(
 
 export async function getStockOverviewCore(symbol: string) {
   const normalizedSymbol = normalizeSymbol(symbol)
-  const [profile, quote, chart, keyMetrics, ratioMetrics, ratings, valuation] =
+  const [
+    profile,
+    quote,
+    chart,
+    keyMetrics,
+    ratioMetrics,
+    ratings,
+    dividendSnapshot,
+    valuation,
+  ] =
     await Promise.all([
       withMarketCache({
         cacheKey: `stock:${normalizedSymbol}:profile`,
@@ -140,6 +152,7 @@ export async function getStockOverviewCore(symbol: string) {
         staleOnError: true,
         fetcher: () => client.fundamentals.getRatingsSnapshot(normalizedSymbol),
       }),
+      getStockDividendSnapshot(normalizedSymbol),
       getStockValuationSnapshot(normalizedSymbol),
     ])
 
@@ -173,10 +186,25 @@ export async function getStockOverviewCore(symbol: string) {
     quote,
     chart,
     headlineStats: compactMetricStats([
+      [
+        {
+          label: "Dividend Yield",
+          value: dividendSnapshot?.dividendYieldTtm ?? null,
+        },
+        {
+          label: "Dividend / Share",
+          value: dividendSnapshot?.dividendPerShareTtm ?? null,
+        },
+        {
+          label: "Payout Ratio",
+          value: dividendSnapshot?.dividendPayoutRatioTtm ?? null,
+        },
+      ],
       keyMetrics,
       ratioMetrics,
       ratings,
     ]).slice(0, 10),
+    dividendSnapshot,
     valuation,
   }
 }

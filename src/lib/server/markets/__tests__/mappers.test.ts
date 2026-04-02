@@ -10,9 +10,12 @@ vi.mock("../store", async () => {
 })
 
 import { createCompanyClient } from "../client/company"
+import { createDirectoryClient } from "../client/directory"
+import { createFundamentalsClient } from "../client/fundamentals"
 import { createPriceDataClient } from "../client/price-data"
 import { createQuotesClient } from "../client/quotes"
 import { createReferenceDataClient } from "../client/reference-data"
+import { createResearchClient } from "../client/research"
 
 describe("market client mappers", () => {
   const originalFetch = globalThis.fetch
@@ -192,6 +195,100 @@ describe("market client mappers", () => {
         open: 66490.1,
         volume: 222164543,
       },
+    ])
+  })
+
+  it("preserves dividend scaling across ratios, events, and screener rows", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify([
+            {
+              dividendPerShareTTM: 1.04,
+              dividendPayoutRatioTTM: 0.18,
+              dividendYieldTTM: 0.00406838,
+              grossProfitMarginTTM: 0.45,
+              operatingProfitMarginTTM: 0.31,
+            },
+          ]),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify([
+            {
+              date: "2026-05-01",
+              declarationDate: "2026-04-10",
+              dividend: 0.26,
+              frequency: "quarterly",
+              paymentDate: "2026-05-15",
+              recordDate: "2026-05-12",
+              symbol: "AAPL",
+              yield: 0.3787051198019081,
+            },
+          ]),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify([
+            {
+              beta: 1.2,
+              companyName: "Apple Inc.",
+              lastAnnualDividend: 1.04,
+              marketCap: 100,
+              price: 10,
+              symbol: "AAPL",
+              volume: 5000,
+            },
+          ]),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        )
+      ) as typeof fetch
+
+    const fundamentalsClient = createFundamentalsClient()
+    const researchClient = createResearchClient()
+    const directoryClient = createDirectoryClient()
+
+    await expect(fundamentalsClient.getRatiosTtm("AAPL")).resolves.toEqual(
+      expect.arrayContaining([
+        { label: "Dividend Yield", value: 0.00406838 },
+        { label: "Dividend / Share", value: 1.04 },
+        { label: "Payout Ratio", value: 0.18 },
+      ])
+    )
+
+    await expect(researchClient.calendar.getDividends("AAPL")).resolves.toEqual([
+      expect.objectContaining({
+        declarationDate: "2026-04-10",
+        eventDate: "2026-05-01",
+        eventType: "dividend",
+        frequency: "quarterly",
+        paymentDate: "2026-05-15",
+        recordDate: "2026-05-12",
+        symbol: "AAPL",
+        value: "0.26",
+        yield: 0.3787051198019081,
+      }),
+    ])
+
+    await expect(directoryClient.screenCompanies({ symbol: "AAPL" })).resolves.toEqual([
+      expect.objectContaining({
+        dividend: 1.04,
+        symbol: "AAPL",
+      }),
     ])
   })
 })

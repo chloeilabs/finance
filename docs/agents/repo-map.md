@@ -8,7 +8,7 @@
 
 ## UI
 
-- `src/components/markets`: market layout, search, watchlists, screeners, stocks, and primitives
+- `src/components/markets`: market layout, search, watchlists, stocks, and primitives
 - `src/components/agent`: copilot home, messages, markdown, and prompt form
 - `src/components/auth`: auth screens and user menu
 - `src/components/ui`: shared UI primitives

@@ -4,10 +4,7 @@ export {
   getStockDossierOverview,
   getStockOverviewCore,
 } from "./service-dossier-overview"
-export {
-  getComparePageData,
-  getWatchlistPageData,
-} from "./service-dossier-research"
+export { getWatchlistPageData } from "./service-dossier-research"
 export {
   getStockDossier,
   getStockDossierBusinessSection,
