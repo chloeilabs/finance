@@ -386,7 +386,7 @@ export function MarketSidebar({
   return (
     <>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="px-3 pt-3 pb-2 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:pb-1">
+        <SidebarHeader className="px-3 pt-3 pb-2 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:pt-2.5 group-data-[collapsible=icon]:pb-1">
           <div
             role="button"
             tabIndex={0}
