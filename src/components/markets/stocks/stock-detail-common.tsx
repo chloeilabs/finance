@@ -58,7 +58,6 @@ export function StockSectionNav() {
     ["business-mix", "Business Mix"],
     ["peers", "Peers"],
     ["catalysts", "Catalysts"],
-    ["plan-limits", "Plan Limits"],
   ] as const
 
   return (

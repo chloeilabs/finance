@@ -13,11 +13,17 @@ import { Sparkline } from "@/components/markets/ui/sparkline"
 import {
   formatCompactNumber,
   formatCurrency,
+  formatDate,
   formatLabeledMetricValue,
   formatMetricValue,
   formatPercent,
 } from "@/lib/markets-format"
-import type { LockedMarketSection } from "@/lib/shared/markets/intelligence"
+import type {
+  EmployeeCountPoint,
+  LockedMarketSection,
+  MarketCapPoint,
+} from "@/lib/shared/markets/intelligence"
+import { cn } from "@/lib/utils"
 
 import { SegmentationBlock } from "./stock-detail-common"
 import {
@@ -25,6 +31,166 @@ import {
   getContextSection,
   getFinancialSection,
 } from "./stock-detail-data"
+
+function formatSignedHistoryDelta(
+  value: number,
+  formatter: (point: number) => string
+) {
+  const prefix = value > 0 ? "+" : value < 0 ? "-" : ""
+
+  return `${prefix}${formatter(Math.abs(value))}`
+}
+
+function getHistorySummary<T>({
+  points,
+  getDate,
+  getValue,
+}: {
+  points: T[]
+  getDate: (point: T) => string | null | undefined
+  getValue: (point: T) => number | null | undefined
+}) {
+  const validPoints = points.filter((point) => {
+    const value = getValue(point)
+    return typeof value === "number" && Number.isFinite(value)
+  })
+
+  if (validPoints.length < 2) {
+    return null
+  }
+
+  const firstPoint = validPoints[0]
+  const lastPoint = validPoints[validPoints.length - 1]
+
+  if (!firstPoint || !lastPoint) {
+    return null
+  }
+
+  const firstValue = getValue(firstPoint)
+  const lastValue = getValue(lastPoint)
+
+  if (
+    firstValue === null ||
+    firstValue === undefined ||
+    lastValue === null ||
+    lastValue === undefined
+  ) {
+    return null
+  }
+
+  const change = lastValue - firstValue
+  const percentChange = firstValue === 0 ? null : (change / firstValue) * 100
+
+  return {
+    firstDate: getDate(firstPoint),
+    firstValue,
+    lastDate: getDate(lastPoint),
+    lastValue,
+    change,
+    percentChange,
+    positive: change >= 0,
+    values: validPoints.map((point) => getValue(point) ?? null),
+  }
+}
+
+function HistoryTrendPanel({
+  title,
+  description,
+  latestLabel,
+  emptyTitle,
+  emptyDescription,
+  latestFormatter,
+  deltaFormatter,
+  points,
+}: {
+  title: string
+  description: string
+  latestLabel: string
+  emptyTitle: string
+  emptyDescription: string
+  latestFormatter: (value: number) => string
+  deltaFormatter: (value: number) => string
+  points: {
+    date: string | null | undefined
+    value: number | null | undefined
+  }[]
+}) {
+  const summary = getHistorySummary({
+    points,
+    getDate: (point) => point.date,
+    getValue: (point) => point.value,
+  })
+
+  if (!summary) {
+    return (
+      <EmptyState title={emptyTitle} description={emptyDescription} />
+    )
+  }
+
+  const deltaLabel = [
+    formatSignedHistoryDelta(summary.change, deltaFormatter),
+    summary.percentChange === null ? null : formatPercent(summary.percentChange),
+  ]
+    .filter(Boolean)
+    .join(" / ")
+
+  return (
+    <div className="market-soft-surface px-4 py-4 sm:px-5">
+      <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
+        {title}
+      </div>
+      <div className="mt-2 text-xs leading-5 text-muted-foreground">
+        {description}
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <div className="text-xs text-muted-foreground">{latestLabel}</div>
+          <div className="mt-1.5 text-2xl tracking-tight">
+            {latestFormatter(summary.lastValue)}
+          </div>
+        </div>
+        <div
+          className={cn(
+            "font-departureMono text-xs sm:text-sm",
+            summary.positive
+              ? "text-[color:var(--vesper-teal)]"
+              : "text-[color:var(--vesper-orange)]"
+          )}
+        >
+          {deltaLabel}
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-[0.4rem] border border-border/45 bg-background/55 px-3 py-3 sm:px-4">
+        <Sparkline
+          className="h-28"
+          positive={summary.positive}
+          values={summary.values}
+        />
+      </div>
+
+      <div className="mt-4 grid gap-4 border-t border-border/45 pt-4 sm:grid-cols-2">
+        <div className="min-w-0">
+          <div className="text-xs text-muted-foreground">
+            {formatDate(summary.firstDate)}
+          </div>
+          <div className="mt-1.5 text-sm tracking-tight">
+            {latestFormatter(summary.firstValue)}
+          </div>
+        </div>
+        <div className="min-w-0 sm:text-right">
+          <div className="text-xs text-muted-foreground">
+            {formatDate(summary.lastDate)}
+          </div>
+          <div className="mt-1.5 text-sm tracking-tight">
+            {latestFormatter(summary.lastValue)}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export async function StockFinancialSection({ symbol }: { symbol: string }) {
   const financial = await getFinancialSection(symbol)
@@ -60,26 +226,40 @@ export async function StockBusinessMixSection({ symbol }: { symbol: string }) {
         </div>
 
         <div className="market-split-20 grid gap-3">
-          <div className="market-soft-surface px-4 py-4">
-            <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
-              Market Cap History
-            </div>
-            <Sparkline
-              className="mt-5 h-20"
-              values={business.marketCapHistory.map((item) => item.marketCap)}
-            />
-          </div>
-          <div className="market-soft-surface px-4 py-4">
-            <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
-              Employee History
-            </div>
-            <Sparkline
-              className="mt-5 h-20"
-              values={business.employeeHistory.map(
-                (item) => item.employeeCount
-              )}
-            />
-          </div>
+          <HistoryTrendPanel
+            deltaFormatter={(value) =>
+              formatCurrency(value, {
+                compact: true,
+              })
+            }
+            description="Latest reported market cap trend across the available filing history."
+            emptyDescription="Market cap history will appear here when historical market cap records are available."
+            emptyTitle="No market cap history"
+            latestFormatter={(value) =>
+              formatCurrency(value, {
+                compact: true,
+              })
+            }
+            latestLabel="Latest market cap"
+            points={business.marketCapHistory.map((item: MarketCapPoint) => ({
+              date: item.date,
+              value: item.marketCap,
+            }))}
+            title="Market Cap History"
+          />
+          <HistoryTrendPanel
+            deltaFormatter={(value) => formatCompactNumber(value)}
+            description="Reported employee count trend based on the company filing record."
+            emptyDescription="Employee history will appear here when workforce records are available."
+            emptyTitle="No employee history"
+            latestFormatter={(value) => formatCompactNumber(value)}
+            latestLabel="Latest employee count"
+            points={business.employeeHistory.map((item: EmployeeCountPoint) => ({
+              date: item.periodOfReport ?? item.acceptanceTime,
+              value: item.employeeCount,
+            }))}
+            title="Employee History"
+          />
           <div className="market-panel-list">
             <div className="market-panel-tile px-3 py-2.5 sm:px-4">
               <div className="text-xs text-muted-foreground">Registrant</div>

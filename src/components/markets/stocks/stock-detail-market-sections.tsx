@@ -43,137 +43,173 @@ export async function StockTradingSection({
 
 export async function StockStreetViewSection({ symbol }: { symbol: string }) {
   const street = await getStreetViewSection(symbol)
+  const summaryRows = [
+    {
+      label: "Consensus",
+      value:
+        street.analyst?.ratingSummary ?? street.gradesConsensus?.consensus ?? "N/A",
+    },
+    {
+      label: "Consensus target",
+      value: formatCurrency(street.analyst?.targetConsensus),
+    },
+    {
+      label: "Target range",
+      value: `${formatCurrency(street.analyst?.targetLow)} to ${formatCurrency(
+        street.analyst?.targetHigh
+      )}`,
+    },
+  ]
+  const gradeMix = [
+    ["Strong Buy", street.gradesConsensus?.strongBuy],
+    ["Buy", street.gradesConsensus?.buy],
+    ["Hold", street.gradesConsensus?.hold],
+    ["Sell", street.gradesConsensus?.sell],
+  ] as const
 
   return (
     <div id="street-view">
-      <SectionFrame title="Street View">
-        <div className="market-split-18 grid gap-3">
-          <div className="market-panel-list">
-            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
-              <div className="text-xs text-muted-foreground">Consensus</div>
-              <div className="mt-2 text-lg tracking-tight">
-                {street.analyst?.ratingSummary ??
-                  street.gradesConsensus?.consensus ??
-                  "N/A"}
+      <SectionFrame
+        title="Street View"
+        description="Analyst consensus, forward estimates, and recent rating history."
+      >
+        <div className="market-soft-surface overflow-hidden">
+          <div className="grid gap-0 xl:grid-cols-[18rem_minmax(0,1fr)]">
+            <div className="px-4 py-4 sm:px-5">
+              <div className="font-departureMono text-[11px] tracking-[0.24em] text-muted-foreground uppercase">
+                Analyst snapshot
               </div>
-            </div>
-            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
-              <div className="text-xs text-muted-foreground">Target Range</div>
-              <div className="mt-2 text-sm">
-                {formatCurrency(street.analyst?.targetLow)} to{" "}
-                {formatCurrency(street.analyst?.targetHigh)}
+
+              <div className="mt-4 grid gap-y-3">
+                {summaryRows.map((item) => (
+                  <div
+                    key={item.label}
+                    className="grid gap-1 border-b border-border/35 pb-3 last:border-b-0 last:pb-0"
+                  >
+                    <div className="text-xs text-muted-foreground">
+                      {item.label}
+                    </div>
+                    <div className="text-base tracking-tight">{item.value}</div>
+                  </div>
+                ))}
               </div>
-            </div>
-            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
-              <div className="text-xs text-muted-foreground">
-                Consensus Target
-              </div>
-              <div className="mt-2 text-lg tracking-tight">
-                {formatCurrency(street.analyst?.targetConsensus)}
-              </div>
-            </div>
-            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
-              <div className="text-xs text-muted-foreground">Grade Mix</div>
-              <div className="mt-2 space-y-1 text-sm">
-                <div>
-                  Strong Buy: {street.gradesConsensus?.strongBuy ?? "N/A"}
+
+              <div className="mt-4 border-t border-border/45 pt-4">
+                <div className="text-xs text-muted-foreground">Grade mix</div>
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                  {gradeMix.map(([label, value]) => (
+                    <span key={label}>
+                      {label}: {value ?? "N/A"}
+                    </span>
+                  ))}
                 </div>
-                <div>Buy: {street.gradesConsensus?.buy ?? "N/A"}</div>
-                <div>Hold: {street.gradesConsensus?.hold ?? "N/A"}</div>
-                <div>Sell: {street.gradesConsensus?.sell ?? "N/A"}</div>
               </div>
             </div>
-          </div>
 
-          <div className="space-y-4">
-            {street.analystEstimates.length > 0 ? (
-              <div className="market-table-frame">
-                <table className="min-w-full border-collapse text-sm">
-                  <thead>
-                    <tr className="border-b border-border/50 bg-background/80 text-left">
-                      <th className="px-3 py-2 font-departureMono text-xs tracking-tight">
-                        Estimate
-                      </th>
-                      <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
-                        Revenue Avg
-                      </th>
-                      <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
-                        EBITDA Avg
-                      </th>
-                      <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
-                        EPS Avg
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {street.analystEstimates.map(
-                      (estimate: AnalystEstimateSnapshot, index: number) => (
-                        <tr
-                          key={`${estimate.date ?? "estimate"}:${String(index)}`}
-                          className="border-b border-border/35 last:border-b-0"
-                        >
-                          <td className="px-3 py-2">
-                            {formatDate(estimate.date)}
-                          </td>
-                          <td className="px-3 py-2 text-right">
-                            {formatCompactNumber(estimate.revenueAvg)}
-                          </td>
-                          <td className="px-3 py-2 text-right">
-                            {formatCompactNumber(estimate.ebitdaAvg)}
-                          </td>
-                          <td className="px-3 py-2 text-right">
-                            {formatMetricValue(estimate.epsAvg)}
-                          </td>
-                        </tr>
-                      )
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <EmptyState
-                title="No analyst estimates"
-                description="Forward estimate ranges were not returned for this symbol."
-              />
-            )}
+            <div className="border-t border-border/45 px-4 py-4 sm:px-5 xl:border-t-0 xl:border-l">
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_16rem]">
+                <div className="min-w-0">
+                  <div className="mb-3 font-departureMono text-[11px] tracking-[0.24em] text-muted-foreground uppercase">
+                    Forward estimates
+                  </div>
+                  {street.analystEstimates.length > 0 ? (
+                    <div className="market-table-frame">
+                      <table className="min-w-full border-collapse text-sm">
+                        <thead>
+                          <tr className="border-b border-border/50 bg-background/80 text-left">
+                            <th className="px-3 py-2 font-departureMono text-xs tracking-tight">
+                              Estimate
+                            </th>
+                            <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                              Revenue Avg
+                            </th>
+                            <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                              EBITDA Avg
+                            </th>
+                            <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                              EPS Avg
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {street.analystEstimates.map(
+                            (estimate: AnalystEstimateSnapshot, index: number) => (
+                              <tr
+                                key={`${estimate.date ?? "estimate"}:${String(index)}`}
+                                className="border-b border-border/35 last:border-b-0"
+                              >
+                                <td className="px-3 py-2">
+                                  {formatDate(estimate.date)}
+                                </td>
+                                <td className="px-3 py-2 text-right">
+                                  {formatCompactNumber(estimate.revenueAvg)}
+                                </td>
+                                <td className="px-3 py-2 text-right">
+                                  {formatCompactNumber(estimate.ebitdaAvg)}
+                                </td>
+                                <td className="px-3 py-2 text-right">
+                                  {formatMetricValue(estimate.epsAvg)}
+                                </td>
+                              </tr>
+                            )
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <EmptyState
+                      title="No analyst estimates"
+                      description="Forward estimate ranges were not returned for this symbol."
+                    />
+                  )}
+                </div>
 
-            {street.ratingsHistory.length > 0 ? (
-              <div className="market-table-frame">
-                <table className="min-w-full border-collapse text-sm">
-                  <thead>
-                    <tr className="border-b border-border/50 bg-background/80 text-left">
-                      <th className="px-3 py-2 font-departureMono text-xs tracking-tight">
-                        Date
-                      </th>
-                      <th className="px-3 py-2 font-departureMono text-xs tracking-tight text-muted-foreground">
-                        Rating
-                      </th>
-                      <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
-                        Overall
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {street.ratingsHistory.map(
-                      (entry: RatingsHistoricalEntry) => (
-                        <tr
-                          key={`${entry.date ?? "date"}:${entry.rating ?? "rating"}`}
-                          className="border-b border-border/35 last:border-b-0"
-                        >
-                          <td className="px-3 py-2">
-                            {formatDate(entry.date)}
-                          </td>
-                          <td className="px-3 py-2">{entry.rating ?? "N/A"}</td>
-                          <td className="px-3 py-2 text-right">
-                            {entry.overallScore ?? "N/A"}
-                          </td>
-                        </tr>
-                      )
-                    )}
-                  </tbody>
-                </table>
+                {street.ratingsHistory.length > 0 ? (
+                  <div className="min-w-0">
+                    <div className="mb-3 font-departureMono text-[11px] tracking-[0.24em] text-muted-foreground uppercase">
+                      Recent ratings
+                    </div>
+                    <div className="market-table-frame">
+                      <table className="min-w-full border-collapse text-sm">
+                        <thead>
+                          <tr className="border-b border-border/50 bg-background/80 text-left">
+                            <th className="px-3 py-2 font-departureMono text-xs tracking-tight">
+                              Date
+                            </th>
+                            <th className="px-3 py-2 font-departureMono text-xs tracking-tight text-muted-foreground">
+                              Rating
+                            </th>
+                            <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                              Overall
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {street.ratingsHistory.map(
+                            (entry: RatingsHistoricalEntry) => (
+                              <tr
+                                key={`${entry.date ?? "date"}:${entry.rating ?? "rating"}`}
+                                className="border-b border-border/35 last:border-b-0"
+                              >
+                                <td className="px-3 py-2">
+                                  {formatDate(entry.date)}
+                                </td>
+                                <td className="px-3 py-2">
+                                  {entry.rating ?? "N/A"}
+                                </td>
+                                <td className="px-3 py-2 text-right">
+                                  {entry.overallScore ?? "N/A"}
+                                </td>
+                              </tr>
+                            )
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : null}
               </div>
-            ) : null}
+            </div>
           </div>
         </div>
       </SectionFrame>
