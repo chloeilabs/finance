@@ -70,7 +70,11 @@ export function QuoteStrip({
               </div>
             </div>
             {hasSparkline ? (
-              <Sparkline className="mt-4 h-14" values={sparklineValues} />
+              <Sparkline
+                className="mt-4 h-14"
+                positive={positive}
+                values={sparklineValues}
+              />
             ) : null}
             <div className="mt-3 flex items-end justify-between gap-3">
               <div className="text-lg tracking-tight">
@@ -194,8 +198,11 @@ export function MetricGrid({ metrics }: { metrics: MetricStat[] }) {
 
   return (
     <div className="market-grid-5 market-panel-grid grid">
-      {metrics.map((metric) => (
-        <div key={metric.label} className="market-panel-tile px-3 py-2.5 sm:px-4">
+      {metrics.map((metric, index) => (
+        <div
+          key={[metric.label, String(metric.value), String(index)].join(":")}
+          className="market-panel-tile px-3 py-2.5 sm:px-4"
+        >
           <div className="text-xs text-muted-foreground">{metric.label}</div>
           <div className="mt-3 text-lg tracking-tight">
             {formatLabeledMetricValue(metric.label, metric.value)}

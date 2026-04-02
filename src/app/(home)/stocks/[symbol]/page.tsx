@@ -27,7 +27,10 @@ import {
   formatCurrency,
   formatDate,
 } from "@/lib/markets-format"
-import { getStockDossierOverview } from "@/lib/server/markets/service"
+import {
+  getStockDossierOverview,
+  getStockPriceHistoryIntradayChart,
+} from "@/lib/server/markets/service"
 
 export default async function StockPage({
   params,
@@ -35,7 +38,10 @@ export default async function StockPage({
   params: Promise<{ symbol: string }>
 }) {
   const { symbol } = await params
-  const dossier = await getStockDossierOverview(symbol)
+  const [dossier, intradayChart] = await Promise.all([
+    getStockDossierOverview(symbol),
+    getStockPriceHistoryIntradayChart(symbol),
+  ])
 
   if (!dossier.profile && !dossier.quote) {
     notFound()
@@ -84,9 +90,13 @@ export default async function StockPage({
         aside={dossier.plan.historicalRangeLabel}
       >
         <PriceHistoryChart
+          currentPrice={quote?.price ?? null}
           currency={quote?.currency}
           historicalRangeLabel={dossier.plan.historicalRangeLabel}
+          intradayPoints={intradayChart}
           points={dossier.chart}
+          sessionChange={quote?.change ?? null}
+          sessionChangePercent={quote?.changesPercentage ?? null}
           symbol={dossier.symbol}
         />
       </SectionFrame>

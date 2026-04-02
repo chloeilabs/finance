@@ -22,6 +22,7 @@ export function AssetTeaserGrid({ groups }: { groups: AssetMarketGroup[] }) {
       {groups.map((group) => {
         const leadItem = group.items[0]
         const lead = leadItem?.quote ?? null
+        const positive = (lead?.change ?? 0) >= 0
         const chart = leadItem?.intradayChart.length
           ? leadItem.intradayChart
           : leadItem?.eodChart
@@ -43,6 +44,7 @@ export function AssetTeaserGrid({ groups }: { groups: AssetMarketGroup[] }) {
             </div>
             <Sparkline
               className="mt-4 h-14"
+              positive={positive}
               values={(chart ?? []).map((point) => point.close)}
             />
             <div className="mt-3 text-xs text-muted-foreground">
@@ -79,6 +81,7 @@ export function AssetGroupPanel({ group }: { group: AssetMarketGroup }) {
       <div className="market-grid-4 market-panel-grid mt-4 grid">
         {group.items.map((item) => {
           const quote = item.quote
+          const positive = (quote?.change ?? 0) >= 0
           const chart =
             item.intradayChart.length > 0 ? item.intradayChart : item.eodChart
           const latestEod = item.eodChart[item.eodChart.length - 1]
@@ -109,6 +112,7 @@ export function AssetGroupPanel({ group }: { group: AssetMarketGroup }) {
 
               <Sparkline
                 className="mt-5 h-20"
+                positive={positive}
                 values={chart.map((point) => point.close)}
               />
 
