@@ -520,69 +520,62 @@ export function PriceHistoryChart({
       value: historicalRangeLabel,
     },
   ]
+  const summaryItems = [
+    {
+      label: isIntradayView ? "Last trade" : "Last close",
+      value: formatCurrency(displayedLastValue, {
+        currency: currency ?? "USD",
+      }),
+    },
+    {
+      label: isIntradayView ? "Session move" : "Window move",
+      value: `${formatSignedNumber(absoluteChange)} / ${formatPercent(percentChange)}`,
+      tone: positive
+        ? "text-[color:var(--vesper-teal)]"
+        : "text-[color:var(--vesper-orange)]",
+    },
+    {
+      label: isIntradayView ? "Session start" : "Window start",
+      value: formatChartDate(firstPoint.date, {
+        intraday: isIntradayView,
+        includeDate: isIntradayView,
+      }),
+    },
+    {
+      label: isIntradayView ? "Visible bars" : "Visible closes",
+      value: String(visibleSeries.length),
+    },
+  ]
 
   return (
-    <div className="market-split-17 grid gap-3">
-      <div className="market-soft-surface relative overflow-hidden">
-        <div className="market-panel-list relative">
-          <div className="market-panel-tile px-4 py-4">
-            <div className="font-departureMono text-[11px] tracking-[0.24em] text-muted-foreground uppercase">
-              Price action
-            </div>
-            <div className="mt-2 text-xs leading-5 text-muted-foreground">
-              {isIntradayView
-                ? `${activeTimeframe.longLabel} view using cached FMP intraday bars for ${symbol}.`
-                : `${activeTimeframe.longLabel} view inside ${historicalRangeLabel.toLowerCase()} of cached FMP closes for ${symbol}.`}
-            </div>
-          </div>
+    <div className="market-split-17 grid gap-4">
+      <div className="market-soft-surface relative overflow-hidden px-4 py-4 sm:px-5">
+        <div className="font-departureMono text-[11px] tracking-[0.24em] text-muted-foreground uppercase">
+          Price action
+        </div>
+        <div className="mt-2 text-xs leading-5 text-muted-foreground">
+          {isIntradayView
+            ? `${activeTimeframe.longLabel} view using cached FMP intraday bars for ${symbol}.`
+            : `${activeTimeframe.longLabel} view inside ${historicalRangeLabel.toLowerCase()} of cached FMP closes for ${symbol}.`}
+        </div>
 
-          <div className="market-panel-tile px-3 py-2.5 sm:px-4">
-            <div className="text-xs text-muted-foreground">
-              {isIntradayView ? "Last trade" : "Last close"}
-            </div>
-            <div className="mt-2 text-lg tracking-tight">
-              {formatCurrency(displayedLastValue, {
-                currency: currency ?? "USD",
-              })}
-            </div>
-          </div>
-
-          <div className="market-panel-tile px-3 py-2.5 sm:px-4">
-            <div className="text-xs text-muted-foreground">
-              {isIntradayView ? "Session move" : "Window move"}
-            </div>
+        <div className="mt-5 grid gap-y-3 border-t border-border/45 pt-4">
+          {summaryItems.map((item) => (
             <div
-              className={cn(
-                "mt-2 font-departureMono text-sm",
-                positive
-                  ? "text-[color:var(--vesper-teal)]"
-                  : "text-[color:var(--vesper-orange)]"
-              )}
+              key={item.label}
+              className="grid gap-1 border-b border-border/35 pb-3 last:border-b-0 last:pb-0"
             >
-              {formatSignedNumber(absoluteChange)} /{" "}
-              {formatPercent(percentChange)}
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
-              <div className="text-xs text-muted-foreground">
-                {isIntradayView ? "Session start" : "Window start"}
-              </div>
-              <div className="mt-2 text-sm">
-                {formatChartDate(firstPoint.date, {
-                  intraday: isIntradayView,
-                  includeDate: isIntradayView,
-                })}
+              <div className="text-xs text-muted-foreground">{item.label}</div>
+              <div
+                className={cn(
+                  "text-sm tracking-tight",
+                  item.tone ? `font-departureMono ${item.tone}` : undefined
+                )}
+              >
+                {item.value}
               </div>
             </div>
-            <div className="market-panel-tile px-3 py-2.5 sm:px-4">
-              <div className="text-xs text-muted-foreground">
-                {isIntradayView ? "Visible bars" : "Visible closes"}
-              </div>
-              <div className="mt-2 text-sm">{visibleSeries.length}</div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
@@ -804,16 +797,16 @@ export function PriceHistoryChart({
           ) : null}
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 grid gap-x-4 gap-y-3 border-t border-border/45 pt-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
           {footerItems.map((item) => (
             <div
               key={item.label}
-              className="market-chip min-w-28 px-3 py-2 text-xs text-muted-foreground"
+              className="min-w-0"
             >
-              <span className="font-departureMono text-[10px] tracking-[0.18em] uppercase">
+              <span className="font-departureMono text-[10px] tracking-[0.18em] text-muted-foreground uppercase">
                 {item.label}
               </span>
-              <div className="mt-1 text-foreground">{item.value}</div>
+              <div className="mt-1 text-sm text-foreground">{item.value}</div>
             </div>
           ))}
         </div>
