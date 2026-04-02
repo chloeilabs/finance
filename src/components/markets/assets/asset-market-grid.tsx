@@ -1,5 +1,3 @@
-import Link from "next/link"
-
 import {
   EmptyState,
   QuoteStrip,
@@ -24,15 +22,12 @@ export function AssetTeaserGrid({ groups }: { groups: AssetMarketGroup[] }) {
       {groups.map((group) => {
         const leadItem = group.items[0]
         const lead = leadItem?.quote ?? null
-        const chart =
-          leadItem?.intradayChart.length ? leadItem.intradayChart : leadItem?.eodChart
+        const chart = leadItem?.intradayChart.length
+          ? leadItem.intradayChart
+          : leadItem?.eodChart
 
         return (
-          <Link
-            key={group.id}
-            className="market-panel-tile block px-4 py-4 transition-colors hover:bg-muted/35"
-            href={`/assets#${group.id}`}
-          >
+          <div key={group.id} className="market-panel-tile px-4 py-4">
             <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
               {group.title}
             </div>
@@ -53,7 +48,7 @@ export function AssetTeaserGrid({ groups }: { groups: AssetMarketGroup[] }) {
             <div className="mt-3 text-xs text-muted-foreground">
               {group.items.length} tracked symbols
             </div>
-          </Link>
+          </div>
         )
       })}
     </div>

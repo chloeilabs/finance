@@ -11,16 +11,13 @@ import type {
   ResearchQuoteRow,
   StockDossier,
 } from "@/lib/shared/markets/intelligence"
-import type {
-  ComparePageData,
-  WatchlistResearchData,
-} from "@/lib/shared/markets/workspace"
+import type { WatchlistResearchData } from "@/lib/shared/markets/workspace"
 
 import { withMarketCache } from "./cache"
 import { getMarketPlanSummary, isCapabilityEnabled } from "./config"
 import { createMarketDateClock } from "./market-clock"
 import {
-  getPeerComparisonRows,
+  getStockDividendSnapshot,
   getStockFinancialScores,
   getStockShareFloat,
   getStockTechnicals,
@@ -30,7 +27,6 @@ import {
   ANALYST_TTL_SECONDS,
   CALENDAR_TTL_SECONDS,
   client,
-  COMPARE_SYMBOL_LIMIT,
   getCachedQuoteSnapshot,
   getMetricNumberByLabel,
   mapWithConcurrency,
@@ -58,6 +54,7 @@ async function buildResearchRows(
         analyst,
         scores,
         keyMetrics,
+        dividendSnapshot,
         valuation,
         shareFloat,
       ]: [
@@ -67,6 +64,7 @@ async function buildResearchRows(
         AnalystSummary | null,
         StockDossier["financialScores"],
         MetricStat[],
+        StockDossier["dividendSnapshot"],
         StockDossier["valuation"],
         StockDossier["shareFloat"],
       ] = await Promise.all([
@@ -98,6 +96,7 @@ async function buildResearchRows(
           staleOnError: true,
           fetcher: () => client.fundamentals.getKeyMetricsTtm(symbol),
         }),
+        getStockDividendSnapshot(symbol),
         getStockValuationSnapshot(symbol),
         getStockShareFloat(symbol),
       ])
@@ -124,6 +123,10 @@ async function buildResearchRows(
         piotroskiScore: scores?.piotroskiScore ?? null,
         altmanZScore: scores?.altmanZScore ?? null,
         fcfYield: getMetricNumberByLabel(keyMetrics, "FCF Yield"),
+        dividendYieldTtm: dividendSnapshot?.dividendYieldTtm ?? null,
+        dividendPerShareTtm: dividendSnapshot?.dividendPerShareTtm ?? null,
+        dividendPayoutRatioTtm:
+          dividendSnapshot?.dividendPayoutRatioTtm ?? null,
         roic: getMetricNumberByLabel(keyMetrics, "ROIC"),
         dcf: valuation?.dcf ?? null,
         freeFloatPercentage: shareFloat?.freeFloatPercentage ?? null,
@@ -147,17 +150,5 @@ export async function getWatchlistPageData(params: {
     watchlist,
     rows: await buildResearchRows(watchlist?.symbols ?? []),
     plan: getMarketPlanSummary(),
-  }
-}
-
-export async function getComparePageData(
-  symbols: string[]
-): Promise<ComparePageData> {
-  const normalized = normalizeSymbols(symbols).slice(0, COMPARE_SYMBOL_LIMIT)
-
-  return {
-    symbols: normalized,
-    entries: await getPeerComparisonRows(normalized),
-    generatedAt: new Date().toISOString(),
   }
 }

@@ -6,17 +6,17 @@ import {
   SectionFrame,
 } from "@/components/markets/ui/market-primitives"
 import {
+  getLatestGeneralMarketNews,
   getLatestInsiderFeed,
   getLatestMarketNews,
   getLatestSecActivity,
-  getMarketsSnapshot,
 } from "@/lib/server/markets/service"
 
 export default async function NewsPage() {
-  const [stories, snapshot, latestFilings, latestInsiderTrades] =
+  const [stories, generalStories, latestFilings, latestInsiderTrades] =
     await Promise.all([
       getLatestMarketNews(24),
-      getMarketsSnapshot(),
+      getLatestGeneralMarketNews(),
       getLatestSecActivity(),
       getLatestInsiderFeed(),
     ])
@@ -30,7 +30,7 @@ export default async function NewsPage() {
       </SectionFrame>
 
       <SectionFrame title="General feed">
-        <NewsList stories={snapshot.generalNews} />
+        <NewsList stories={generalStories} />
       </SectionFrame>
 
       <SectionFrame title="Latest SEC activity">

@@ -55,6 +55,11 @@ function mapCalendarEvent(
       pickString(record, ["epsEstimated", "eps", "estimate"]) ??
       pickNumber(record, ["epsEstimated", "eps", "estimate"])?.toString() ??
       null,
+    yield: pickNumber(record, ["yield"]),
+    recordDate: pickString(record, ["recordDate"]),
+    paymentDate: pickString(record, ["paymentDate"]),
+    declarationDate: pickString(record, ["declarationDate"]),
+    frequency: pickString(record, ["frequency"]),
   }
 }
 

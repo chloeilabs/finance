@@ -22,14 +22,14 @@ vi.mock("@/lib/server/auth-session", () => ({
 }))
 
 vi.mock("@/lib/server/markets/service", () => ({
+  getLatestGeneralMarketNews: vi.fn(),
   getLatestInsiderFeed: vi.fn(),
   getLatestMarketNews: vi.fn(),
   getLatestSecActivity: vi.fn(),
-  getMarketCalendarFeed: vi.fn(),
   getMarketOverviewData: vi.fn(),
-  getMarketsSnapshot: vi.fn(),
   getMultiAssetSnapshot: vi.fn(),
   getStockDossierOverview: vi.fn(),
+  getWatchlistPageData: vi.fn(),
 }))
 
 vi.mock("@/components/markets/stocks/stock-detail-sections", () => ({
@@ -45,24 +45,30 @@ vi.mock("@/components/markets/stocks/stock-detail-sections", () => ({
   StockTradingSection: () => <div>Trading</div>,
 }))
 
+vi.mock("@/components/markets/watchlists/watchlist-editor", () => ({
+  WatchlistEditor: () => <div>Watchlist editor</div>,
+}))
+
+vi.mock("@/components/markets/watchlists/watchlist-research-table", () => ({
+  WatchlistResearchTable: () => <div>Watchlist research table</div>,
+}))
+
 import { getCurrentViewer } from "@/lib/server/auth-session"
 import {
+  getLatestGeneralMarketNews,
   getLatestInsiderFeed,
   getLatestMarketNews,
   getLatestSecActivity,
-  getMarketCalendarFeed,
   getMarketOverviewData,
-  getMarketsSnapshot,
   getMultiAssetSnapshot,
   getStockDossierOverview,
+  getWatchlistPageData,
 } from "@/lib/server/markets/service"
 
-import AssetsPage from "../assets/page"
-import CalendarPage from "../calendar/page"
-import MarketsPage from "../markets/page"
 import NewsPage from "../news/page"
 import HomePage from "../page"
 import StockPage from "../stocks/[symbol]/page"
+import WatchlistPage from "../watchlists/[id]/page"
 
 describe("market route smoke tests", () => {
   beforeEach(() => {
@@ -104,27 +110,7 @@ describe("market route smoke tests", () => {
       },
     })
 
-    vi.mocked(getMarketsSnapshot).mockResolvedValue({
-      economicCalendar: [],
-      generalNews: [],
-      indexes: [],
-      indexSparklines: {},
-      macro: [],
-      marketHours: [],
-      marketHolidays: [],
-      movers: [
-        {
-          items: [],
-          label: "Leaders",
-        },
-      ],
-      plan: {} as never,
-      riskPremium: null,
-      sectorHistory: [],
-      sectorValuations: [],
-      sectors: [],
-    } as Awaited<ReturnType<typeof getMarketsSnapshot>>)
-
+    vi.mocked(getLatestGeneralMarketNews).mockResolvedValue([])
     vi.mocked(getLatestMarketNews).mockResolvedValue([])
     vi.mocked(getLatestSecActivity).mockResolvedValue([])
     vi.mocked(getLatestInsiderFeed).mockResolvedValue([])
@@ -132,9 +118,23 @@ describe("market route smoke tests", () => {
       groups: [],
       plan: {} as never,
     })
-    vi.mocked(getMarketCalendarFeed).mockResolvedValue([])
+    vi.mocked(getWatchlistPageData).mockResolvedValue({
+      plan: {
+        watchlistLimit: 25,
+      } as never,
+      rows: [],
+      status: "ok",
+      watchlist: {
+        createdAt: "2026-03-28T00:00:00.000Z",
+        id: "wl_1",
+        name: "Core",
+        symbols: ["AAPL", "MSFT"],
+        updatedAt: "2026-03-28T00:00:00.000Z",
+      },
+    })
     vi.mocked(getStockDossierOverview).mockResolvedValue({
       chart: [],
+      dividendSnapshot: null,
       generatedAt: "2026-03-28T00:00:00.000Z",
       headlineStats: [],
       lockedSections: [],
@@ -171,17 +171,13 @@ describe("market route smoke tests", () => {
     const html = renderToStaticMarkup(await HomePage())
 
     expect(html).toContain("Market overview")
+    expect(html).toContain("My Market")
+    expect(html).toContain("Market Snapshot")
+    expect(html).toContain("Cross-Asset + Macro")
+    expect(html).toContain("Catalysts + News")
     expect(html).toContain("No quotes available")
+    expect(html).toContain("No multi-asset coverage yet")
     expect(html).toContain("No sector snapshot")
-    expect(html).toContain("No market news")
-  })
-
-  it("renders the markets page with fallback sections", async () => {
-    const html = renderToStaticMarkup(await MarketsPage())
-
-    expect(html).toContain("Broad market snapshot")
-    expect(html).toContain("No quotes available")
-    expect(html).toContain("No movers available")
     expect(html).toContain("No market news")
   })
 
@@ -192,18 +188,17 @@ describe("market route smoke tests", () => {
     expect(html).toContain("No market news")
   })
 
-  it("renders the calendar page with an empty state", async () => {
-    const html = renderToStaticMarkup(await CalendarPage())
+  it("renders the watchlist page without a compare CTA", async () => {
+    const html = renderToStaticMarkup(
+      await WatchlistPage({
+        params: Promise.resolve({
+          id: "wl_1",
+        }),
+      })
+    )
 
-    expect(html).toContain("Upcoming catalysts")
-    expect(html).toContain("No scheduled events")
-  })
-
-  it("renders the assets page with an empty asset grid", async () => {
-    const html = renderToStaticMarkup(await AssetsPage())
-
-    expect(html).toContain("Cross-asset starter coverage")
-    expect(html).toContain("No multi-asset coverage yet")
+    expect(html).toContain("Core")
+    expect(html).not.toContain("/compare?symbols=")
   })
 
   it("renders the stock page without throwing when optional sections are empty", async () => {
@@ -218,5 +213,6 @@ describe("market route smoke tests", () => {
     expect(html).toContain("Apple Inc.")
     expect(html).toContain("No metrics available")
     expect(html).toContain("No valuation snapshot")
+    expect(html).not.toContain("/compare?symbols=")
   })
 })

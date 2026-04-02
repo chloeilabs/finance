@@ -96,6 +96,9 @@ export function createFundamentalsClient() {
       const payload = await fetchFmpJson("/stable/ratios-ttm", { symbol })
 
       return mapMetricStats(asArray(payload)[0], [
+        { key: "dividendYieldTTM", label: "Dividend Yield" },
+        { key: "dividendPerShareTTM", label: "Dividend / Share" },
+        { key: "dividendPayoutRatioTTM", label: "Payout Ratio" },
         { key: "grossProfitMarginTTM", label: "Gross Margin" },
         { key: "operatingProfitMarginTTM", label: "Operating Margin" },
         { key: "netProfitMarginTTM", label: "Net Margin" },

@@ -6,7 +6,9 @@ vi.mock("../config", async () => {
   return {
     ...actual,
     getFmpPlanValidationSummary: vi.fn(() => ({
+      accessibleDatasets: ["quote"],
       accessibleProbes: ["quote"],
+      restrictedDatasets: [],
       restrictedProbes: [],
       source: "test",
       tier: "STARTER",

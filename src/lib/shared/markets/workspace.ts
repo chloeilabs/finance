@@ -1,4 +1,4 @@
-import type { PeerComparisonRow, ResearchQuoteRow } from "./intelligence"
+import type { ResearchQuoteRow } from "./intelligence"
 import type { MarketPlanSummary } from "./plan"
 
 export const MARKET_SCREENER_SORT_KEYS = [
@@ -8,6 +8,7 @@ export const MARKET_SCREENER_SORT_KEYS = [
   "volume",
   "beta",
   "dividend",
+  "dividendYield",
   "dcf",
   "piotroskiScore",
   "freeFloatPercentage",
@@ -40,6 +41,8 @@ export interface ScreenerFilterState {
   volumeMax?: number
   dividendMin?: number
   dividendMax?: number
+  dividendYieldMin?: number
+  dividendYieldMax?: number
   priceMin?: number
   priceMax?: number
   isEtf?: boolean
@@ -57,12 +60,6 @@ export interface SavedScreenerRecord {
   filters: ScreenerFilterState
   createdAt: string
   updatedAt: string
-}
-
-export interface ComparePageData {
-  symbols: string[]
-  entries: PeerComparisonRow[]
-  generatedAt: string
 }
 
 export interface WatchlistResearchData {

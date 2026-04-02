@@ -43,6 +43,19 @@ const securityHeaders = [
     : []),
 ]
 
+const marketWorkspaceRedirects = [
+  "/assets",
+  "/calendar",
+  "/compare",
+  "/data",
+  "/markets",
+  "/screeners",
+].map((source) => ({
+  destination: "/",
+  permanent: true,
+  source,
+}))
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   allowedDevOrigins: ["localhost", "127.0.0.1"],
@@ -89,6 +102,9 @@ const nextConfig = {
         headers: securityHeaders,
       },
     ]
+  },
+  async redirects() {
+    return marketWorkspaceRedirects
   },
 }
 
