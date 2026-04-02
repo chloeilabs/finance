@@ -28,7 +28,7 @@ export function CompanyProfileCopy({ text }: { text: string }) {
         type="button"
         variant="outline"
       >
-        {expanded ? "Show less" : "Read full company profile"}
+        {expanded ? "Show less" : "Show more"}
       </Button>
     </div>
   )
