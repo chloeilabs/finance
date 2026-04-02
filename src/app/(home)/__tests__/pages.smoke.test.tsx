@@ -174,7 +174,6 @@ describe("market route smoke tests", () => {
     const html = renderToStaticMarkup(await HomePage())
 
     expect(html).toContain("Market overview")
-    expect(html).toContain("My Market")
     expect(html).toContain("Market Snapshot")
     expect(html).toContain("Cross-Asset + Macro")
     expect(html).toContain("Catalysts + News")

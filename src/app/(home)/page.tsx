@@ -37,25 +37,9 @@ export default async function Home() {
 
   return (
     <div className="pb-10">
-      <PageHeader
-        title="Market overview"
-        description="A watchlist-first dashboard that keeps the broad tape, cross-asset context, catalysts, and news in one workspace."
-      />
+      <PageHeader title="Market overview" />
 
-      <SectionFrame
-        title="My Market"
-        description={`Primary focus from ${overview.watchlist.name}, with the watchlist front and center before the rest of the tape.`}
-      >
-        <QuoteStrip
-          quotes={overview.watchlist.quotes}
-          sparklines={overview.watchlist.sparklines}
-        />
-      </SectionFrame>
-
-      <SectionFrame
-        title="Market Snapshot"
-        description="Benchmarks, leaders, and sector breadth grouped together so the broad market read is one scan."
-      >
+      <SectionFrame title="Market Snapshot">
         <div className="space-y-6">
           <div className="space-y-3">
             <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
@@ -93,10 +77,7 @@ export default async function Home() {
         </div>
       </SectionFrame>
 
-      <SectionFrame
-        title="Cross-Asset + Macro"
-        description="Multi-asset tape and macro structure pulled into one band so the non-equity context stays attached to the core market view."
-      >
+      <SectionFrame title="Cross-Asset + Macro">
         <div className="space-y-6">
           <div className="space-y-3">
             <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
@@ -258,10 +239,7 @@ export default async function Home() {
         </div>
       </SectionFrame>
 
-      <SectionFrame
-        title="Catalysts + News"
-        description="Catalysts, economic releases, and the main information feeds grouped together so the forward calendar and latest tape stay adjacent."
-      >
+      <SectionFrame title="Catalysts + News">
         <div className="space-y-6">
           <div className="grid gap-6 xl:grid-cols-2">
             <div className="space-y-3">

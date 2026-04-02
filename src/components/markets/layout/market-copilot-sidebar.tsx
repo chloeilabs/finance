@@ -5,10 +5,8 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { HomePageContent } from "@/components/agent/home/home-content"
-import {
-  ThreadsProvider,
-  useThreads,
-} from "@/components/agent/home/threads-context"
+import { ThreadSearchDialog } from "@/components/agent/home/thread-search-dialog"
+import { useThreads } from "@/components/agent/home/threads-context"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -37,7 +35,8 @@ function MarketCopilotPanel({
   viewer: AuthViewer
 }) {
   const router = useRouter()
-  const { currentThreadId } = useThreads()
+  const { currentThreadId, setCurrentThreadId, threads } = useThreads()
+  const [historyOpen, setHistoryOpen] = useState(false)
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-background">
@@ -62,11 +61,25 @@ function MarketCopilotPanel({
 
           <Button
             className="h-7 px-2 font-departureMono text-[10px] tracking-tight text-muted-foreground hover:text-foreground"
-            onClick={onNewChat}
+            onClick={() => {
+              setHistoryOpen(false)
+              onNewChat()
+            }}
             size="sm"
             variant="ghost"
           >
             New Chat
+          </Button>
+
+          <Button
+            className="h-7 px-2 font-departureMono text-[10px] tracking-tight text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              setHistoryOpen(true)
+            }}
+            size="sm"
+            variant="ghost"
+          >
+            History
           </Button>
 
           <Button
@@ -94,6 +107,17 @@ function MarketCopilotPanel({
           viewer={viewer}
         />
       </div>
+
+      <ThreadSearchDialog
+        key={String(historyOpen)}
+        currentThreadId={currentThreadId}
+        onOpenChange={setHistoryOpen}
+        onSelectThread={(threadId) => {
+          setCurrentThreadId(threadId)
+        }}
+        open={historyOpen}
+        threads={threads}
+      />
     </div>
   )
 }
@@ -135,41 +159,42 @@ export function MarketCopilotSidebar({
 }) {
   const isMobile = useIsMobile()
   const [localResetToken, setLocalResetToken] = useState(0)
+  const { setCurrentThreadId } = useThreads()
 
-  return (
-    <ThreadsProvider key={resetToken + localResetToken}>
-      {isMobile ? (
-        <Sheet onOpenChange={onOpenChange} open={open}>
-          <SheetContent
-            className="!w-full border-0 p-0 shadow-none data-[side=right]:border-l-0 sm:!max-w-[22rem]"
-            side="right"
-          >
-            <MarketCopilotPanel
-              initialSelectedModel={initialSelectedModel}
-              onNewChat={() => {
-                setLocalResetToken((currentToken) => currentToken + 1)
-              }}
-              onClose={() => {
-                onOpenChange(false)
-              }}
-              viewer={viewer}
-            />
-          </SheetContent>
-        </Sheet>
-      ) : open ? (
-        <aside className="hidden h-full min-h-0 w-[22rem] shrink-0 overflow-hidden border-l border-border/50 md:flex md:flex-col">
-          <MarketCopilotPanel
-            initialSelectedModel={initialSelectedModel}
-            onNewChat={() => {
-              setLocalResetToken((currentToken) => currentToken + 1)
-            }}
-            onClose={() => {
-              onOpenChange(false)
-            }}
-            viewer={viewer}
-          />
-        </aside>
-      ) : null}
-    </ThreadsProvider>
-  )
+  return isMobile ? (
+    <Sheet onOpenChange={onOpenChange} open={open}>
+      <SheetContent
+        className="!w-full border-0 p-0 shadow-none data-[side=right]:border-l-0 sm:!max-w-[22rem]"
+        side="right"
+      >
+        <MarketCopilotPanel
+          key={resetToken + localResetToken}
+          initialSelectedModel={initialSelectedModel}
+          onNewChat={() => {
+            setCurrentThreadId(null)
+            setLocalResetToken((currentToken) => currentToken + 1)
+          }}
+          onClose={() => {
+            onOpenChange(false)
+          }}
+          viewer={viewer}
+        />
+      </SheetContent>
+    </Sheet>
+  ) : open ? (
+    <aside className="hidden h-full min-h-0 w-[22rem] shrink-0 overflow-hidden border-t border-l border-border/50 md:flex md:flex-col">
+      <MarketCopilotPanel
+        key={resetToken + localResetToken}
+        initialSelectedModel={initialSelectedModel}
+        onNewChat={() => {
+          setCurrentThreadId(null)
+          setLocalResetToken((currentToken) => currentToken + 1)
+        }}
+        onClose={() => {
+          onOpenChange(false)
+        }}
+        viewer={viewer}
+      />
+    </aside>
+  ) : null
 }
