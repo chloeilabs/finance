@@ -4,30 +4,18 @@ import {
   BarChart3,
   ChevronDown,
   HatGlasses,
-  MessageSquare,
   MoreHorizontal,
   Newspaper,
   Pencil,
   Pin,
   Search,
   Trash2,
-  X,
 } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
-import {
-  type KeyboardEvent,
-  useDeferredValue,
-  useEffect,
-  useRef,
-  useState,
-} from "react"
-import { createPortal } from "react-dom"
+import { type KeyboardEvent, useEffect, useRef, useState } from "react"
 
-import {
-  getThreadSearchValue,
-  groupThreadsForSearch,
-  sortThreadsByRecency,
-} from "@/components/agent/home/app-sidebar-utils"
+import { sortThreadsByRecency } from "@/components/agent/home/app-sidebar-utils"
+import { ThreadSearchDialog } from "@/components/agent/home/thread-search-dialog"
 import { useOptionalThreads } from "@/components/agent/home/threads-context"
 import { LogoBurst } from "@/components/graphics/logo/logo-burst"
 import {
@@ -200,25 +188,12 @@ export function MarketSidebar({
   const [isWatchlistsExpanded, setIsWatchlistsExpanded] = useState(true)
   const [isChatsExpanded, setIsChatsExpanded] = useState(true)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
   const [editingThreadId, setEditingThreadId] = useState<string | null>(null)
   const [renameDraft, setRenameDraft] = useState("")
   const renameInputRef = useRef<HTMLInputElement | null>(null)
-  const searchInputRef = useRef<HTMLInputElement | null>(null)
-  const deferredSearchQuery = useDeferredValue(searchQuery)
   const visibleThreads = threadsContext
     ? sortThreadsByRecency(threadsContext.threads)
     : []
-  const normalizedSearchQuery = deferredSearchQuery.trim().toLowerCase()
-  const searchResults =
-    threadsContext && normalizedSearchQuery !== ""
-      ? sortThreadsByRecency(
-          threadsContext.threads.filter((thread) =>
-            getThreadSearchValue(thread).includes(normalizedSearchQuery)
-          )
-        )
-      : visibleThreads
-  const searchGroups = groupThreadsForSearch(searchResults)
 
   useEffect(() => {
     if (!editingThreadId || !renameInputRef.current) {
@@ -230,28 +205,6 @@ export function MarketSidebar({
   }, [editingThreadId])
 
   useEffect(() => {
-    if (!isSearchOpen || !searchInputRef.current) {
-      return
-    }
-
-    searchInputRef.current.focus()
-    searchInputRef.current.select()
-  }, [isSearchOpen])
-
-  useEffect(() => {
-    if (!isSearchOpen) {
-      return
-    }
-
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = "hidden"
-
-    return () => {
-      document.body.style.overflow = previousOverflow
-    }
-  }, [isSearchOpen])
-
-  useEffect(() => {
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
       if (!threadsContext) {
         return
@@ -261,15 +214,8 @@ export function MarketSidebar({
         event.preventDefault()
         setEditingThreadId(null)
         setRenameDraft("")
-        setSearchQuery("")
         setOpenMobile(false)
         setIsSearchOpen(true)
-        return
-      }
-
-      if (event.key === "Escape") {
-        setIsSearchOpen(false)
-        setSearchQuery("")
       }
     }
 
@@ -286,13 +232,11 @@ export function MarketSidebar({
 
   const closeSearch = () => {
     setIsSearchOpen(false)
-    setSearchQuery("")
   }
 
   const openSearch = () => {
     stopRenaming()
     setOpenMobile(false)
-    setSearchQuery("")
     setIsSearchOpen(true)
   }
 
@@ -439,92 +383,10 @@ export function MarketSidebar({
     )
   }
 
-  const searchOverlay =
-    threadsContext && isSearchOpen && typeof document !== "undefined"
-      ? createPortal(
-          <div className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-16 pb-6 md:px-6 md:pt-20">
-            <button
-              type="button"
-              aria-label="Close search"
-              onClick={closeSearch}
-              className="absolute inset-0 bg-black/35 supports-backdrop-filter:backdrop-blur-xs"
-            />
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-label="Search chats"
-              className="relative flex max-h-[min(74vh,680px)] w-full max-w-3xl flex-col overflow-hidden rounded-none border border-border bg-background shadow-lg"
-            >
-              <div className="flex items-center gap-3 border-b border-border py-3 pr-[11px] pl-4">
-                <Search className="size-4 shrink-0 text-muted-foreground" />
-                <input
-                  ref={searchInputRef}
-                  value={searchQuery}
-                  onChange={(event) => {
-                    setSearchQuery(event.target.value)
-                  }}
-                  placeholder="Search chats..."
-                  className="h-8 w-full border-0 bg-transparent px-0 text-base text-foreground outline-none placeholder:text-muted-foreground/60 md:text-sm"
-                />
-                <button
-                  type="button"
-                  onClick={closeSearch}
-                  aria-label="Close search"
-                  className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-none border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-accent/40 hover:text-foreground"
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
-
-              <div className="min-h-0 overflow-y-auto pb-4">
-                {searchGroups.map((group) => (
-                  <div key={group.label}>
-                    <div className="flex h-10 items-center px-4 text-[10px] leading-none tracking-[0.18em] text-muted-foreground/70 uppercase">
-                      {group.label}
-                    </div>
-                    <div className="border-y border-border/60">
-                      {group.threads.map((thread) => (
-                        <button
-                          key={thread.id}
-                          type="button"
-                          onClick={() => {
-                            handleSelectThread(thread.id)
-                          }}
-                          className={cn(
-                            "flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-accent/40",
-                            thread.id === threadsContext.currentThreadId &&
-                              "bg-accent/45"
-                          )}
-                        >
-                          <MessageSquare className="size-4 shrink-0 text-muted-foreground" />
-                          <span className="min-w-0 flex-1 truncate text-sm">
-                            {thread.title}
-                          </span>
-                          {thread.isPinned ? (
-                            <Pin className="size-3.5 shrink-0 text-muted-foreground/75" />
-                          ) : null}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-
-                {searchResults.length === 0 ? (
-                  <div className="px-5 py-10 text-sm text-muted-foreground">
-                    No threads match your search.
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </div>,
-          document.body
-        )
-      : null
-
   return (
     <>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="border-b border-sidebar-border/70 p-3">
+        <SidebarHeader className="px-3 pt-3 pb-2 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:pb-1">
           <div
             role="button"
             tabIndex={0}
@@ -537,7 +399,7 @@ export function MarketSidebar({
                 router.push("/")
               }
             }}
-            className="flex h-7 w-full cursor-pointer items-center gap-3 overflow-hidden px-2 group-data-[collapsible=icon]:translate-x-px group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:self-center group-data-[collapsible=icon]:px-0"
+            className="flex h-8 w-full cursor-pointer items-center gap-3 overflow-hidden px-2 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:translate-x-px group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:self-center group-data-[collapsible=icon]:px-0"
           >
             <LogoBurst className="shrink-0" size="md" />
             <div className="min-w-0 group-data-[collapsible=icon]:hidden">
@@ -549,8 +411,8 @@ export function MarketSidebar({
         </SidebarHeader>
 
         <SidebarContent>
-          <SidebarGroup className="translate-x-px">
-            <SidebarGroupContent className="space-y-3">
+          <SidebarGroup className="translate-x-px pt-2 group-data-[collapsible=icon]:pt-3">
+            <SidebarGroupContent className="space-y-3 group-data-[collapsible=icon]:space-y-0.5">
               <SidebarMenu className={SIDEBAR_MENU_LIST_CLASS}>
                 {PRIMARY_NAV_ITEMS.map((item) => (
                   <SidebarLink
@@ -680,7 +542,16 @@ export function MarketSidebar({
 
         <SidebarRail />
       </Sidebar>
-      {searchOverlay}
+      {threadsContext ? (
+        <ThreadSearchDialog
+          key={String(isSearchOpen)}
+          currentThreadId={threadsContext.currentThreadId}
+          onOpenChange={setIsSearchOpen}
+          onSelectThread={handleSelectThread}
+          open={isSearchOpen}
+          threads={threadsContext.threads}
+        />
+      ) : null}
     </>
   )
 }
