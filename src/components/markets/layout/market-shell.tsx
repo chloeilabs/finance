@@ -32,6 +32,7 @@ export function MarketShell({
   initialCopilotOpen = false,
   initialSelectedModel,
   initialSidebarOpen = false,
+  showSymbolSearch = true,
   viewer,
   watchlists,
   warnings,
@@ -42,6 +43,7 @@ export function MarketShell({
   initialCopilotOpen?: boolean
   initialSelectedModel?: ModelType | null
   initialSidebarOpen?: boolean
+  showSymbolSearch?: boolean
   viewer: AuthViewer
   watchlists: WatchlistRecord[]
   warnings: string[]
@@ -67,14 +69,16 @@ export function MarketShell({
       <MarketSidebar watchlists={watchlists} />
       <SidebarInset className="h-svh min-h-0 overflow-hidden">
         <div className="flex h-full min-h-0 flex-col">
-          <div className="relative z-20 border-b border-border/50 bg-background/95 backdrop-blur">
+          <div className="relative z-20 bg-background">
             <div className="flex h-[52px] shrink-0 items-center gap-2.5 px-3">
               <SidebarTrigger />
 
-              <SymbolSearch
-                className="max-w-none min-w-0 flex-1 md:max-w-md"
-                inputClassName="h-9"
-              />
+              {showSymbolSearch ? (
+                <SymbolSearch
+                  className="max-w-none min-w-0 flex-1 md:max-w-md"
+                  inputClassName="h-9"
+                />
+              ) : null}
 
               <div className="ml-auto flex shrink-0 items-center gap-1.5">
                 {enableCopilotRail ? (

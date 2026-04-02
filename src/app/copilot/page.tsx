@@ -69,6 +69,7 @@ export default async function CopilotPage({
       <MarketShell
         enableCopilotRail={false}
         initialSidebarOpen={initialSidebarOpen}
+        showSymbolSearch={false}
         viewer={viewer}
         warnings={warnings}
         watchlists={watchlists}
