@@ -93,9 +93,11 @@ function buildAreaPath(coordinates: SparklineCoordinate[]): string {
 export function Sparkline({
   values,
   className,
+  positive,
 }: {
   values: (number | null | undefined)[]
   className?: string
+  positive?: boolean
 }) {
   const gradientId = useId().replace(/:/g, "")
   const points = values.filter(
@@ -119,11 +121,14 @@ export function Sparkline({
   const areaPath = buildAreaPath(coordinates)
   const firstPoint = points[0]
   const lastPoint = points[points.length - 1]
-  const positive =
-    lastPoint !== undefined && firstPoint !== undefined
+  const isPositive =
+    positive ??
+    (lastPoint !== undefined && firstPoint !== undefined
       ? lastPoint >= firstPoint
-      : true
-  const accentColor = positive ? "var(--vesper-teal)" : "var(--vesper-orange)"
+      : true)
+  const accentColor = isPositive
+    ? "var(--vesper-teal)"
+    : "var(--vesper-orange)"
 
   return (
     <svg

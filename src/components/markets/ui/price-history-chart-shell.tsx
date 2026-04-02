@@ -19,18 +19,30 @@ const DynamicPriceHistoryChart = dynamic(
 export function PriceHistoryChartShell({
   symbol,
   points,
+  intradayPoints,
+  currentPrice,
+  sessionChange,
+  sessionChangePercent,
   currency,
   historicalRangeLabel,
 }: {
   symbol: string
   points: PricePoint[]
+  intradayPoints?: PricePoint[]
+  currentPrice?: number | null
+  sessionChange?: number | null
+  sessionChangePercent?: number | null
   currency?: string | null
   historicalRangeLabel: string
 }) {
   return (
     <DynamicPriceHistoryChart
+      currentPrice={currentPrice}
       symbol={symbol}
       points={points}
+      intradayPoints={intradayPoints}
+      sessionChange={sessionChange}
+      sessionChangePercent={sessionChangePercent}
       currency={currency}
       historicalRangeLabel={historicalRangeLabel}
     />

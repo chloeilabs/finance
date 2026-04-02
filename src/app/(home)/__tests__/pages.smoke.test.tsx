@@ -29,6 +29,7 @@ vi.mock("@/lib/server/markets/service", () => ({
   getMarketOverviewData: vi.fn(),
   getMultiAssetSnapshot: vi.fn(),
   getStockDossierOverview: vi.fn(),
+  getStockPriceHistoryIntradayChart: vi.fn(),
   getWatchlistPageData: vi.fn(),
 }))
 
@@ -62,6 +63,7 @@ import {
   getMarketOverviewData,
   getMultiAssetSnapshot,
   getStockDossierOverview,
+  getStockPriceHistoryIntradayChart,
   getWatchlistPageData,
 } from "@/lib/server/markets/service"
 
@@ -118,6 +120,7 @@ describe("market route smoke tests", () => {
       groups: [],
       plan: {} as never,
     })
+    vi.mocked(getStockPriceHistoryIntradayChart).mockResolvedValue([])
     vi.mocked(getWatchlistPageData).mockResolvedValue({
       plan: {
         watchlistLimit: 25,

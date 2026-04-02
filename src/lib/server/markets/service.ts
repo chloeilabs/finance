@@ -18,6 +18,7 @@ export {
   getStockDossierOverview,
   getStockDossierStreetViewSection,
   getStockDossierTradingSection,
+  getStockPriceHistoryIntradayChart,
   getWatchlistPageData,
 } from "./service-dossier"
 export {

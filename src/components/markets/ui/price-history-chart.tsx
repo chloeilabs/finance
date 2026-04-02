@@ -10,7 +10,15 @@ import {
 import type { PricePoint } from "@/lib/shared/markets/core"
 import { cn } from "@/lib/utils"
 
-type ChartTimeframeId = "1M" | "3M" | "6M" | "YTD" | "1Y" | "3Y" | "MAX"
+type ChartTimeframeId =
+  | "1D"
+  | "1M"
+  | "3M"
+  | "6M"
+  | "YTD"
+  | "1Y"
+  | "3Y"
+  | "MAX"
 
 interface ChartSeriesPoint {
   date: string
@@ -34,6 +42,7 @@ const TIMEFRAME_OPTIONS: {
   label: string
   longLabel: string
 }[] = [
+  { id: "1D", label: "1D", longLabel: "1 day" },
   { id: "1M", label: "1M", longLabel: "1 month" },
   { id: "3M", label: "3M", longLabel: "3 months" },
   { id: "6M", label: "6M", longLabel: "6 months" },
@@ -48,6 +57,17 @@ const chartDateFormatter = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
   year: "numeric",
   timeZone: "UTC",
+})
+const chartTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  hour: "numeric",
+  minute: "2-digit",
+})
+const chartDateTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
 })
 const CHART_VIEWBOX_WIDTH = 100
 const CHART_VIEWBOX_HEIGHT = 56
@@ -109,6 +129,8 @@ function getTimeframeStart(
     case "3Y":
       return shiftUtcDate(lastDate, { years: -3 }).getTime()
   }
+
+  return null
 }
 
 function filterSeriesByTimeframe(
@@ -165,6 +187,16 @@ function sampleSeries(
   return sampled
 }
 
+function parseChartTimestamp(value: string) {
+  const normalized = value.includes("T")
+    ? value
+    : value.includes(" ")
+      ? value.replace(" ", "T")
+      : `${value}T00:00:00Z`
+
+  return Date.parse(normalized)
+}
+
 function buildSeries(points: PricePoint[]): ChartSeriesPoint[] {
   return points
     .flatMap((point) => {
@@ -176,7 +208,7 @@ function buildSeries(points: PricePoint[]): ChartSeriesPoint[] {
         return []
       }
 
-      const timestamp = Date.parse(point.date)
+      const timestamp = parseChartTimestamp(point.date)
 
       if (Number.isNaN(timestamp)) {
         return []
@@ -199,18 +231,27 @@ function buildDateMarkers(series: ChartSeriesPoint[]): ChartSeriesPoint[] {
     .filter((point): point is ChartSeriesPoint => point !== undefined)
 }
 
-function formatChartDate(value: string) {
-  const parsed = new Date(`${value}T00:00:00Z`)
+function formatChartDate(
+  value: string,
+  options: { intraday?: boolean; includeDate?: boolean } = {}
+) {
+  const parsed = new Date(parseChartTimestamp(value))
 
   if (Number.isNaN(parsed.getTime())) {
     return value
   }
 
-  return chartDateFormatter.format(parsed)
+  if (!options.intraday) {
+    return chartDateFormatter.format(parsed)
+  }
+
+  return options.includeDate
+    ? chartDateTimeFormatter.format(parsed)
+    : chartTimeFormatter.format(parsed)
 }
 
 function getDefaultTimeframe(availableTimeframes: ChartTimeframeId[]) {
-  const preferredOrder: ChartTimeframeId[] = ["1Y", "6M", "3M", "MAX"]
+  const preferredOrder: ChartTimeframeId[] = ["1Y", "6M", "3M", "1D", "MAX"]
 
   for (const timeframe of preferredOrder) {
     if (availableTimeframes.includes(timeframe)) {
@@ -298,15 +339,24 @@ function buildAreaPath(coordinates: ChartCoordinate[]): string {
 export function PriceHistoryChart({
   symbol,
   points,
+  intradayPoints = [],
+  currentPrice,
+  sessionChange,
+  sessionChangePercent,
   currency,
   historicalRangeLabel,
 }: {
   symbol: string
   points: PricePoint[]
+  intradayPoints?: PricePoint[]
+  currentPrice?: number | null
+  sessionChange?: number | null
+  sessionChangePercent?: number | null
   currency?: string | null
   historicalRangeLabel: string
 }) {
-  const series = buildSeries(points)
+  const eodSeries = buildSeries(points)
+  const intradaySeries = buildSeries(intradayPoints)
   const timeframeOptions = TIMEFRAME_OPTIONS.map((option) =>
     option.id === "MAX"
       ? {
@@ -319,11 +369,15 @@ export function PriceHistoryChart({
 
   const availableTimeframes = timeframeOptions
     .filter((option) => {
-      if (option.id === "MAX") {
-        return true
+      if (option.id === "1D") {
+        return intradaySeries.length >= 2
       }
 
-      return filterSeriesByTimeframe(series, option.id).length >= 2
+      if (option.id === "MAX") {
+        return eodSeries.length >= 2
+      }
+
+      return filterSeriesByTimeframe(eodSeries, option.id).length >= 2
     })
     .map((option) => option.id)
 
@@ -335,7 +389,7 @@ export function PriceHistoryChart({
     ? selectedTimeframe
     : getDefaultTimeframe(availableTimeframes)
 
-  if (series.length < 2) {
+  if (eodSeries.length < 2 && intradaySeries.length < 2) {
     return (
       <div className="market-soft-surface px-4 py-8 text-sm text-muted-foreground">
         <div className="font-medium text-foreground">No price history</div>
@@ -354,8 +408,12 @@ export function PriceHistoryChart({
     label: getFullRangeLabel(historicalRangeLabel),
     longLabel: historicalRangeLabel.toLowerCase(),
   }
-  const filteredSeries = filterSeriesByTimeframe(series, activeTimeframe.id)
-  const visibleSeries = filteredSeries.length >= 2 ? filteredSeries : series
+  const isIntradayView = activeTimeframe.id === "1D"
+  const baseSeries = isIntradayView ? intradaySeries : eodSeries
+  const filteredSeries = isIntradayView
+    ? intradaySeries
+    : filterSeriesByTimeframe(eodSeries, activeTimeframe.id)
+  const visibleSeries = filteredSeries.length >= 2 ? filteredSeries : baseSeries
   const renderSeries = sampleSeries(visibleSeries, 240)
   const closes = visibleSeries.map((point) => point.close)
   const low = Math.min(...closes)
@@ -376,18 +434,43 @@ export function PriceHistoryChart({
     )
   }
 
-  const absoluteChange = lastPoint.close - firstPoint.close
-  const percentChange =
+  const derivedAbsoluteChange = lastPoint.close - firstPoint.close
+  const derivedPercentChange =
     firstPoint.close !== 0
       ? ((lastPoint.close - firstPoint.close) / firstPoint.close) * 100
       : null
-  const positive = absoluteChange >= 0
+  const absoluteChange =
+    isIntradayView && sessionChange !== null && sessionChange !== undefined
+      ? sessionChange
+      : derivedAbsoluteChange
+  const percentChange =
+    isIntradayView &&
+    sessionChangePercent !== null &&
+    sessionChangePercent !== undefined
+      ? sessionChangePercent
+      : derivedPercentChange
+  const positive =
+    isIntradayView && sessionChange !== null && sessionChange !== undefined
+      ? sessionChange >= 0
+      : absoluteChange >= 0
   const accentColor = positive ? "var(--vesper-teal)" : "var(--vesper-orange)"
   const chartCoordinates = buildChartCoordinates(renderSeries, { low, range })
   const linePath = buildSmoothPath(chartCoordinates)
   const areaPath = buildAreaPath(chartCoordinates)
   const dateMarkers = buildDateMarkers(visibleSeries)
   const lastCoordinate = chartCoordinates[chartCoordinates.length - 1]
+  const displayedLastValue =
+    isIntradayView && currentPrice !== null && currentPrice !== undefined
+      ? currentPrice
+      : lastPoint.close
+  const previousClose =
+    isIntradayView &&
+    currentPrice !== null &&
+    currentPrice !== undefined &&
+    sessionChange !== null &&
+    sessionChange !== undefined
+      ? currentPrice - sessionChange
+      : null
   const rangeLabel = `${formatCurrency(low, {
     currency: currency ?? "USD",
   })} to ${formatCurrency(high, {
@@ -396,20 +479,38 @@ export function PriceHistoryChart({
   const footerItems = [
     {
       label: "Start",
-      value: formatChartDate(firstPoint.date),
+      value: formatChartDate(firstPoint.date, {
+        intraday: isIntradayView,
+        includeDate: isIntradayView,
+      }),
     },
     ...(dateMarkers[1]
       ? [
           {
             label: "Midpoint",
-            value: formatChartDate(dateMarkers[1].date),
+            value: formatChartDate(dateMarkers[1].date, {
+              intraday: isIntradayView,
+            }),
           },
         ]
       : []),
     {
       label: "Last",
-      value: formatChartDate(lastPoint.date),
+      value: formatChartDate(lastPoint.date, {
+        intraday: isIntradayView,
+        includeDate: isIntradayView,
+      }),
     },
+    ...(previousClose !== null
+      ? [
+          {
+            label: "Previous close",
+            value: formatCurrency(previousClose, {
+              currency: currency ?? "USD",
+            }),
+          },
+        ]
+      : []),
     {
       label: "Close range",
       value: rangeLabel,
@@ -429,21 +530,27 @@ export function PriceHistoryChart({
               Price action
             </div>
             <div className="mt-2 text-xs leading-5 text-muted-foreground">
-              {activeTimeframe.longLabel} view inside{" "}
-              {historicalRangeLabel.toLowerCase()} of cached FMP closes for{" "}
-              {symbol}.
+              {isIntradayView
+                ? `${activeTimeframe.longLabel} view using cached FMP intraday bars for ${symbol}.`
+                : `${activeTimeframe.longLabel} view inside ${historicalRangeLabel.toLowerCase()} of cached FMP closes for ${symbol}.`}
             </div>
           </div>
 
           <div className="market-panel-tile px-3 py-2.5 sm:px-4">
-            <div className="text-xs text-muted-foreground">Last close</div>
+            <div className="text-xs text-muted-foreground">
+              {isIntradayView ? "Last trade" : "Last close"}
+            </div>
             <div className="mt-2 text-lg tracking-tight">
-              {formatCurrency(lastPoint.close, { currency: currency ?? "USD" })}
+              {formatCurrency(displayedLastValue, {
+                currency: currency ?? "USD",
+              })}
             </div>
           </div>
 
           <div className="market-panel-tile px-3 py-2.5 sm:px-4">
-            <div className="text-xs text-muted-foreground">Window move</div>
+            <div className="text-xs text-muted-foreground">
+              {isIntradayView ? "Session move" : "Window move"}
+            </div>
             <div
               className={cn(
                 "mt-2 font-departureMono text-sm",
@@ -459,14 +566,19 @@ export function PriceHistoryChart({
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
             <div className="market-panel-tile px-3 py-2.5 sm:px-4">
-              <div className="text-xs text-muted-foreground">Window start</div>
+              <div className="text-xs text-muted-foreground">
+                {isIntradayView ? "Session start" : "Window start"}
+              </div>
               <div className="mt-2 text-sm">
-                {formatChartDate(firstPoint.date)}
+                {formatChartDate(firstPoint.date, {
+                  intraday: isIntradayView,
+                  includeDate: isIntradayView,
+                })}
               </div>
             </div>
             <div className="market-panel-tile px-3 py-2.5 sm:px-4">
               <div className="text-xs text-muted-foreground">
-                Visible closes
+                {isIntradayView ? "Visible bars" : "Visible closes"}
               </div>
               <div className="mt-2 text-sm">{visibleSeries.length}</div>
             </div>
@@ -481,12 +593,19 @@ export function PriceHistoryChart({
               Market window
             </div>
             <div className="text-sm leading-6 text-muted-foreground">
-              {formatChartDate(firstPoint.date)} to{" "}
-              {formatChartDate(lastPoint.date)}
+              {formatChartDate(firstPoint.date, {
+                intraday: isIntradayView,
+                includeDate: isIntradayView,
+              })}{" "}
+              to{" "}
+              {formatChartDate(lastPoint.date, {
+                intraday: isIntradayView,
+                includeDate: isIntradayView,
+              })}
             </div>
             <div className="flex flex-wrap gap-2 pt-1">
               <div className="market-chip px-2.5 py-1 text-[11px] text-muted-foreground">
-                {visibleSeries.length} closes
+                {visibleSeries.length} {isIntradayView ? "bars" : "closes"}
               </div>
               <div className="market-chip px-2.5 py-1 text-[11px] text-muted-foreground">
                 {rangeLabel}
@@ -678,7 +797,9 @@ export function PriceHistoryChart({
                 background: `color-mix(in oklab, ${accentColor} 10%, var(--background))`,
               }}
             >
-              {formatCurrency(lastPoint.close, { currency: currency ?? "USD" })}
+              {formatCurrency(displayedLastValue, {
+                currency: currency ?? "USD",
+              })}
             </div>
           ) : null}
         </div>
