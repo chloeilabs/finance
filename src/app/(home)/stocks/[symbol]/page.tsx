@@ -143,16 +143,18 @@ export default async function StockPage({
         <div className="market-soft-surface overflow-hidden">
           <div className="grid gap-0 lg:grid-cols-2 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_18rem]">
             <div className="px-4 py-4 sm:px-5">
-            <div className="font-departureMono text-[11px] tracking-[0.24em] text-muted-foreground uppercase">
-              Company profile
-            </div>
-            {profile?.description ? (
-              <CompanyProfileCopy text={profile.description} />
-            ) : (
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Listed on {profile?.exchangeShortName ?? quote?.exchange ?? "N/A"} in{" "}
-                {quote?.currency ?? "USD"}, with sector and management details organized below.
-              </p>
+              <div className="font-departureMono text-[11px] tracking-[0.24em] text-muted-foreground uppercase">
+                Company profile
+              </div>
+              {profile?.description ? (
+                <CompanyProfileCopy text={profile.description} />
+              ) : (
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                  Listed on{" "}
+                  {profile?.exchangeShortName ?? quote?.exchange ?? "N/A"} in{" "}
+                  {quote?.currency ?? "USD"}, with sector and management details
+                  organized below.
+                </p>
               )}
 
               <div className="mt-5 grid gap-x-6 gap-y-4 sm:grid-cols-2">
@@ -178,7 +180,11 @@ export default async function StockPage({
                 <div className="mt-4 grid gap-y-3">
                   {dossier.headlineStats.map((metric, index) => (
                     <div
-                      key={[metric.label, String(metric.value), String(index)].join(":")}
+                      key={[
+                        metric.label,
+                        String(metric.value),
+                        String(index),
+                      ].join(":")}
                       className="grid gap-1 border-b border-border/35 pb-3 last:border-b-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:gap-3"
                     >
                       <div className="text-xs text-muted-foreground">
