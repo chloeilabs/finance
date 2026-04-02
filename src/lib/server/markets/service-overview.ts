@@ -15,9 +15,14 @@ import type {
   SectorHistorySeries,
   SectorValuationSnapshot,
 } from "@/lib/shared/markets/intelligence"
+import type { FmpIntradayInterval } from "@/lib/shared/markets/plan"
 
 import { mayUseLiveFmp, withMarketCache } from "./cache"
-import { getQuoteCacheTtlSeconds, isCapabilityEnabled } from "./config"
+import {
+  getFmpIntradayIntervals,
+  getQuoteCacheTtlSeconds,
+  isCapabilityEnabled,
+} from "./config"
 import { createMarketDateClock } from "./market-clock"
 import {
   CALENDAR_TTL_SECONDS,
@@ -32,7 +37,7 @@ import {
   ECONOMIC_INDICATORS_TTL_SECONDS,
   EOD_TTL_SECONDS,
   getCachedQuoteSnapshot,
-  getEodChartCacheKey,
+  getIntradayChartCacheKey,
   mapWithConcurrency,
   MARKET_STRUCTURE_TTL_SECONDS,
   MOVERS_TTL_SECONDS,
@@ -47,6 +52,15 @@ import {
 } from "./service-support"
 import { setCachedMarketPayload } from "./store"
 import { getMarketSidebarData } from "./workspace"
+
+const SPARKLINE_INTRADAY_INTERVAL_PREFERENCE: readonly FmpIntradayInterval[] = [
+  "5min",
+  "1min",
+  "15min",
+  "30min",
+  "1hour",
+  "4hour",
+]
 
 async function getOverviewIndexQuotes(): Promise<QuoteSnapshot[]> {
   if (isCapabilityEnabled("batchIndexQuotes")) {
@@ -274,25 +288,54 @@ async function getQuotesForSymbols(
   })
 }
 
-function toSparklineValues(points: PricePoint[]): number[] {
+export function getSparklineIntradayInterval(
+  availableIntervals: readonly FmpIntradayInterval[]
+): FmpIntradayInterval | null {
+  for (const interval of SPARKLINE_INTRADAY_INTERVAL_PREFERENCE) {
+    if (availableIntervals.includes(interval)) {
+      return interval
+    }
+  }
+
+  return null
+}
+
+export function getIntradaySparklineValuesForDate(
+  points: PricePoint[],
+  marketDate: string
+): number[] {
   return points.flatMap((point) =>
-    typeof point.close === "number" && Number.isFinite(point.close)
+    point.date.startsWith(marketDate) &&
+    typeof point.close === "number" &&
+    Number.isFinite(point.close)
       ? [point.close]
       : []
   )
 }
 
 async function getSparklineForSymbol(symbol: string): Promise<number[]> {
+  if (!isCapabilityEnabled("intradayCharts")) {
+    return []
+  }
+
+  const interval = getSparklineIntradayInterval(getFmpIntradayIntervals())
+
+  if (!interval) {
+    return []
+  }
+
+  const clock = createMarketDateClock()
   const points = await withMarketCache({
-    cacheKey: getEodChartCacheKey(symbol, "compact"),
+    cacheKey: getIntradayChartCacheKey(symbol, interval),
     category: "chart",
     ttlSeconds: EOD_TTL_SECONDS,
     fallback: [] as PricePoint[],
+    allowLive: true,
     staleOnError: true,
-    fetcher: () => client.charts.getEodChart(symbol, { limit: 30 }),
+    fetcher: () => client.charts.getIntradayChart(symbol, interval),
   })
 
-  return toSparklineValues(points.slice(-30))
+  return getIntradaySparklineValuesForDate(points, clock.today)
 }
 
 async function getSparklinesForSymbols(

@@ -9,6 +9,11 @@ describe("PriceHistoryChart", () => {
       <PriceHistoryChart
         currency="USD"
         historicalRangeLabel="5 years"
+        intradayPoints={[
+          { close: 246.2, date: "2026-04-01 09:35:00", high: null, low: null, open: null, volume: null },
+          { close: 247.1, date: "2026-04-01 11:35:00", high: null, low: null, open: null, volume: null },
+          { close: 248.8, date: "2026-04-01 15:55:00", high: null, low: null, open: null, volume: null },
+        ]}
         points={[
           { close: 210, date: "2025-03-27", high: null, low: null, open: null, volume: null },
           { close: 214, date: "2025-05-27", high: null, low: null, open: null, volume: null },
@@ -25,7 +30,33 @@ describe("PriceHistoryChart", () => {
     expect(html).toContain("Market window")
     expect(html).toContain("Close range")
     expect(html).toContain("Available range")
+    expect(html).toContain(">1D<")
     expect(html).toContain("<path")
     expect(html).toContain("<filter")
+  })
+
+  it("uses session change stats for the 1D view like a quote-driven finance chart", () => {
+    const html = renderToStaticMarkup(
+      <PriceHistoryChart
+        currentPrice={579.23}
+        currency="USD"
+        historicalRangeLabel="5 years"
+        intradayPoints={[
+          { close: 560.27, date: "2026-04-01 09:35:00", high: null, low: null, open: null, volume: null },
+          { close: 584.1, date: "2026-04-01 12:35:00", high: null, low: null, open: null, volume: null },
+          { close: 579.29, date: "2026-04-01 15:55:00", high: null, low: null, open: null, volume: null },
+        ]}
+        points={[]}
+        sessionChange={7.1}
+        sessionChangePercent={1.24}
+        symbol="META"
+      />
+    )
+
+    expect(html).toContain("Session move")
+    expect(html).toContain("+7.1")
+    expect(html).toContain("1.24%")
+    expect(html).toContain("Previous close")
+    expect(html).toContain("$572.13")
   })
 })

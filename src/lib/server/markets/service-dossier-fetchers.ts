@@ -66,6 +66,20 @@ export async function getIntradayCharts(
   ) as Partial<Record<FmpIntradayInterval, StockDossier["chart"]>>
 }
 
+export async function getStockPriceHistoryIntradayChart(
+  symbol: string
+): Promise<StockDossier["chart"]> {
+  return withMarketCache({
+    cacheKey: getIntradayChartCacheKey(symbol, "5min"),
+    category: "chart",
+    ttlSeconds: EOD_TTL_SECONDS,
+    fallback: [] as StockDossier["chart"],
+    allowLive: isCapabilityEnabled("intradayCharts"),
+    staleOnError: true,
+    fetcher: () => client.charts.getIntradayChart(symbol, "5min"),
+  })
+}
+
 export async function getStockAftermarketSnapshot(
   symbol: string
 ): Promise<AftermarketSnapshot | null> {
