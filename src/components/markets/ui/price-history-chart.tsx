@@ -10,15 +10,7 @@ import {
 import type { PricePoint } from "@/lib/shared/markets/core"
 import { cn } from "@/lib/utils"
 
-type ChartTimeframeId =
-  | "1D"
-  | "1M"
-  | "3M"
-  | "6M"
-  | "YTD"
-  | "1Y"
-  | "3Y"
-  | "MAX"
+type ChartTimeframeId = "1D" | "1M" | "3M" | "6M" | "YTD" | "1Y" | "3Y" | "MAX"
 
 interface ChartSeriesPoint {
   date: string
@@ -28,6 +20,19 @@ interface ChartSeriesPoint {
 
 interface ChartCoordinate extends ChartSeriesPoint {
   x: number
+  y: number
+}
+
+interface ChartAxisTick {
+  label: string
+}
+
+interface ChartTimeAxisTick extends ChartAxisTick {
+  detail: string
+  x: number
+}
+
+interface ChartPriceAxisTick extends ChartAxisTick {
   y: number
 }
 
@@ -58,9 +63,23 @@ const chartDateFormatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
   timeZone: "UTC",
 })
+const chartAxisDateLabelFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+})
+const chartAxisDateDetailFormatter = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  timeZone: "UTC",
+})
 const chartTimeFormatter = new Intl.DateTimeFormat("en-US", {
   hour: "numeric",
   minute: "2-digit",
+})
+const chartAxisTimeDetailFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
 })
 const chartDateTimeFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -219,16 +238,62 @@ function buildSeries(points: PricePoint[]): ChartSeriesPoint[] {
     .sort((left, right) => left.timestamp - right.timestamp)
 }
 
-function buildDateMarkers(series: ChartSeriesPoint[]): ChartSeriesPoint[] {
-  const indexes = [
-    0,
-    Math.floor((series.length - 1) / 2),
-    series.length - 1,
-  ].filter((index, position, values) => values.indexOf(index) === position)
+function buildTickIndexes(length: number, count: number) {
+  return Array.from({ length: Math.min(count, length) }, (_, position) =>
+    Math.round((position / (Math.min(count, length) - 1 || 1)) * (length - 1))
+  ).filter((index, position, values) => values.indexOf(index) === position)
+}
+
+function buildTimeAxisTicks(
+  series: ChartSeriesPoint[],
+  options: { intraday: boolean }
+): ChartTimeAxisTick[] {
+  const indexes = buildTickIndexes(series.length, 8)
 
   return indexes
-    .map((index) => series[index])
-    .filter((point): point is ChartSeriesPoint => point !== undefined)
+    .map((index) => {
+      const point = series[index]
+
+      if (!point) {
+        return null
+      }
+
+      const parsed = new Date(point.timestamp)
+
+      return {
+        detail: options.intraday
+          ? chartAxisTimeDetailFormatter.format(parsed)
+          : chartAxisDateDetailFormatter.format(parsed),
+        label: options.intraday
+          ? chartTimeFormatter.format(parsed)
+          : chartAxisDateLabelFormatter.format(parsed),
+        x:
+          CHART_PADDING_X +
+          (index / (series.length - 1)) *
+            (CHART_VIEWBOX_WIDTH - CHART_PADDING_X * 2),
+      }
+    })
+    .filter((tick): tick is ChartTimeAxisTick => tick !== null)
+}
+
+function buildPriceAxisTicks(
+  low: number,
+  high: number,
+  options: { currency: string }
+): ChartPriceAxisTick[] {
+  const values =
+    high === low
+      ? [high]
+      : Array.from({ length: 8 }, (_, position) => {
+          const ratio = position / 7
+          return Number((high - (high - low) * ratio).toFixed(2))
+        })
+  const range = high - low || 1
+
+  return values.map((value) => ({
+    label: formatCurrency(value, { currency: options.currency }),
+    y: getChartY(value, low, range),
+  }))
 }
 
 function formatChartDate(
@@ -250,6 +315,95 @@ function formatChartDate(
     : chartTimeFormatter.format(parsed)
 }
 
+function formatSignedCurrency(
+  value: number | null | undefined,
+  options: { currency?: string } = {}
+) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "N/A"
+  }
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: options.currency ?? "USD",
+    signDisplay: "exceptZero",
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
+function formatElapsedSpan(
+  startTimestamp: number,
+  endTimestamp: number,
+  options: { intraday: boolean }
+) {
+  function formatUnit(
+    value: number,
+    labels: { singular: string; plural: string }
+  ) {
+    const rounded = Math.round(value * 10) / 10
+    const display = Number.isInteger(rounded)
+      ? String(rounded)
+      : rounded.toFixed(1)
+
+    return `${display} ${rounded === 1 ? labels.singular : labels.plural}`
+  }
+
+  const diffMs = Math.max(0, endTimestamp - startTimestamp)
+
+  if (options.intraday) {
+    const totalMinutes = Math.max(1, Math.round(diffMs / 60_000))
+    const hours = Math.floor(totalMinutes / 60)
+    const minutes = totalMinutes % 60
+
+    if (hours > 0 && minutes > 0) {
+      return `${String(hours)}h ${String(minutes)}m`
+    }
+
+    if (hours > 0) {
+      return `${String(hours)}h`
+    }
+
+    return `${String(totalMinutes)}m`
+  }
+
+  const totalDays = Math.max(1, Math.round(diffMs / 86_400_000))
+
+  if (totalDays >= 365) {
+    return formatUnit(totalDays / 365, {
+      singular: "year",
+      plural: "years",
+    })
+  }
+
+  if (totalDays >= 30) {
+    return formatUnit(totalDays / 30, {
+      singular: "month",
+      plural: "months",
+    })
+  }
+
+  return `${String(totalDays)} days`
+}
+
+function calculateAnnualizedReturn(
+  startValue: number,
+  endValue: number,
+  startTimestamp: number,
+  endTimestamp: number
+) {
+  if (startValue <= 0 || endValue <= 0 || endTimestamp <= startTimestamp) {
+    return null
+  }
+
+  const elapsedYears = (endTimestamp - startTimestamp) / (86_400_000 * 365)
+
+  if (elapsedYears <= 1) {
+    return null
+  }
+
+  return (Math.pow(endValue / startValue, 1 / elapsedYears) - 1) * 100
+}
+
 function getDefaultTimeframe(availableTimeframes: ChartTimeframeId[]) {
   const preferredOrder: ChartTimeframeId[] = ["1Y", "6M", "3M", "1D", "MAX"]
 
@@ -263,7 +417,9 @@ function getDefaultTimeframe(availableTimeframes: ChartTimeframeId[]) {
 }
 
 function getChartY(value: number, low: number, range: number) {
-  return CHART_BOTTOM_Y - ((value - low) / range) * (CHART_BOTTOM_Y - CHART_TOP_Y)
+  return (
+    CHART_BOTTOM_Y - ((value - low) / range) * (CHART_BOTTOM_Y - CHART_TOP_Y)
+  )
 }
 
 function buildChartCoordinates(
@@ -457,67 +613,85 @@ export function PriceHistoryChart({
   const chartCoordinates = buildChartCoordinates(renderSeries, { low, range })
   const linePath = buildSmoothPath(chartCoordinates)
   const areaPath = buildAreaPath(chartCoordinates)
-  const dateMarkers = buildDateMarkers(visibleSeries)
   const lastCoordinate = chartCoordinates[chartCoordinates.length - 1]
   const displayedLastValue =
     isIntradayView && currentPrice !== null && currentPrice !== undefined
       ? currentPrice
       : lastPoint.close
-  const previousClose =
-    isIntradayView &&
-    currentPrice !== null &&
-    currentPrice !== undefined &&
-    sessionChange !== null &&
-    sessionChange !== undefined
-      ? currentPrice - sessionChange
-      : null
   const rangeLabel = `${formatCurrency(low, {
     currency: currency ?? "USD",
   })} to ${formatCurrency(high, {
     currency: currency ?? "USD",
   })}`
+  const plotFrameStyle = {
+    background:
+      "linear-gradient(180deg, color-mix(in oklab, var(--background) 95%, transparent) 0%, color-mix(in oklab, var(--background) 90%, var(--muted)) 100%)",
+    boxShadow:
+      "inset 0 1px 0 color-mix(in oklab, var(--foreground) 6%, transparent)",
+  }
+  const timeAxisTicks = buildTimeAxisTicks(visibleSeries, {
+    intraday: isIntradayView,
+  })
+  const priceAxisTicks = buildPriceAxisTicks(low, high, {
+    currency: currency ?? "USD",
+  })
+  const elapsedSpanLabel = formatElapsedSpan(
+    firstPoint.timestamp,
+    lastPoint.timestamp,
+    { intraday: isIntradayView }
+  )
+  const annualizedReturn = calculateAnnualizedReturn(
+    firstPoint.close,
+    lastPoint.close,
+    firstPoint.timestamp,
+    lastPoint.timestamp
+  )
   const footerItems = [
     {
-      label: "Start",
-      value: formatChartDate(firstPoint.date, {
-        intraday: isIntradayView,
-        includeDate: isIntradayView,
+      label: isIntradayView ? "Open" : "Entry close",
+      value: formatCurrency(firstPoint.close, {
+        currency: currency ?? "USD",
       }),
     },
-    ...(dateMarkers[1]
-      ? [
-          {
-            label: "Midpoint",
-            value: formatChartDate(dateMarkers[1].date, {
-              intraday: isIntradayView,
-            }),
-          },
-        ]
-      : []),
     {
-      label: "Last",
-      value: formatChartDate(lastPoint.date, {
-        intraday: isIntradayView,
-        includeDate: isIntradayView,
+      label: isIntradayView ? "Last trade" : "Latest close",
+      value: formatCurrency(displayedLastValue, {
+        currency: currency ?? "USD",
       }),
     },
-    ...(previousClose !== null
-      ? [
-          {
-            label: "Previous close",
-            value: formatCurrency(previousClose, {
-              currency: currency ?? "USD",
-            }),
-          },
-        ]
-      : []),
     {
-      label: "Close range",
-      value: rangeLabel,
+      label: isIntradayView ? "Net move" : "Gain / share",
+      value: formatSignedCurrency(absoluteChange, {
+        currency: currency ?? "USD",
+      }),
+      tone: positive
+        ? "text-[color:var(--vesper-teal)]"
+        : "text-[color:var(--vesper-orange)]",
     },
     {
-      label: "Available range",
-      value: historicalRangeLabel,
+      label: isIntradayView ? "Session return" : "Total return",
+      value: formatPercent(percentChange),
+      tone: positive
+        ? "text-[color:var(--vesper-teal)]"
+        : "text-[color:var(--vesper-orange)]",
+    },
+    {
+      label:
+        annualizedReturn !== null
+          ? "Annualized"
+          : isIntradayView
+            ? "Session span"
+            : "Holding period",
+      value:
+        annualizedReturn !== null
+          ? formatPercent(annualizedReturn)
+          : elapsedSpanLabel,
+      tone:
+        annualizedReturn !== null
+          ? positive
+            ? "text-[color:var(--vesper-teal)]"
+            : "text-[color:var(--vesper-orange)]"
+          : undefined,
     },
   ]
   const summaryItems = [
@@ -549,7 +723,7 @@ export function PriceHistoryChart({
 
   return (
     <div className="market-split-17 grid gap-4">
-      <div className="market-soft-surface relative overflow-hidden px-4 py-4 sm:px-5">
+      <div className="market-soft-surface px-4 py-4 sm:px-5">
         <div className="font-departureMono text-[11px] tracking-[0.24em] text-muted-foreground uppercase">
           Price action
         </div>
@@ -636,15 +810,11 @@ export function PriceHistoryChart({
           </div>
         </div>
 
-        <div className="market-soft-surface relative mt-4 px-3 py-3 sm:px-4">
-          <div className="relative overflow-hidden rounded-[0.4rem] bg-background/80 pr-16">
-            <div
-              aria-hidden
-              className="absolute inset-0 opacity-70"
-              style={{
-                background: `radial-gradient(circle at 85% 18%, color-mix(in oklab, ${accentColor} 22%, transparent) 0%, transparent 34%)`,
-              }}
-            />
+        <div
+          className="market-panel-tile relative mt-4 px-3 py-3 sm:px-4"
+          style={plotFrameStyle}
+        >
+          <div className="relative overflow-hidden pr-4 pl-14">
             <svg
               aria-hidden
               className="relative h-60 w-full"
@@ -658,13 +828,17 @@ export function PriceHistoryChart({
                 <linearGradient
                   id={`${gradientId}-area`}
                   x1="0"
-                  y1="0"
+                  y1={String(CHART_TOP_Y)}
                   x2="0"
-                  y2={String(CHART_VIEWBOX_HEIGHT)}
+                  y2={String(CHART_BOTTOM_Y)}
                   gradientUnits="userSpaceOnUse"
                 >
-                  <stop offset="0%" stopColor={accentColor} stopOpacity="0.3" />
-                  <stop offset="55%" stopColor={accentColor} stopOpacity="0.12" />
+                  <stop offset="0%" stopColor={accentColor} stopOpacity="0.2" />
+                  <stop
+                    offset="55%"
+                    stopColor={accentColor}
+                    stopOpacity="0.08"
+                  />
                   <stop offset="100%" stopColor={accentColor} stopOpacity="0" />
                 </linearGradient>
                 <linearGradient
@@ -676,7 +850,11 @@ export function PriceHistoryChart({
                   gradientUnits="userSpaceOnUse"
                 >
                   <stop offset="0%" stopColor={accentColor} stopOpacity="0.5" />
-                  <stop offset="45%" stopColor={accentColor} stopOpacity="0.92" />
+                  <stop
+                    offset="45%"
+                    stopColor={accentColor}
+                    stopOpacity="0.92"
+                  />
                   <stop offset="100%" stopColor={accentColor} stopOpacity="1" />
                 </linearGradient>
                 <filter
@@ -694,13 +872,13 @@ export function PriceHistoryChart({
                 </filter>
               </defs>
 
-              {[12, 24, 36, 48].map((y) => (
+              {priceAxisTicks.map((tick) => (
                 <line
-                  key={y}
+                  key={`${tick.label}:${tick.y.toFixed(2)}`}
                   x1={String(CHART_PADDING_X)}
                   x2={String(CHART_VIEWBOX_WIDTH - CHART_PADDING_X)}
-                  y1={String(y)}
-                  y2={String(y)}
+                  y1={tick.y.toFixed(2)}
+                  y2={tick.y.toFixed(2)}
                   stroke="color-mix(in oklab, var(--border) 68%, transparent)"
                   strokeDasharray="1.5 3.5"
                   strokeWidth="0.5"
@@ -708,11 +886,11 @@ export function PriceHistoryChart({
                 />
               ))}
 
-              {[20, 40, 60, 80].map((x) => (
+              {timeAxisTicks.map((tick) => (
                 <line
-                  key={x}
-                  x1={String(x)}
-                  x2={String(x)}
+                  key={`${tick.label}:${tick.x.toFixed(2)}`}
+                  x1={tick.x.toFixed(2)}
+                  x2={tick.x.toFixed(2)}
                   y1={String(CHART_TOP_Y)}
                   y2={String(CHART_BOTTOM_Y)}
                   stroke="color-mix(in oklab, var(--border) 48%, transparent)"
@@ -768,24 +946,60 @@ export function PriceHistoryChart({
                 strokeWidth="1.9"
                 vectorEffect="non-scaling-stroke"
               />
-
             </svg>
+
+            {lastCoordinate ? (
+              <div
+                className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+                style={{
+                  left: `${((lastCoordinate.x / CHART_VIEWBOX_WIDTH) * 100).toFixed(2)}%`,
+                  top: `${((lastCoordinate.y / CHART_VIEWBOX_HEIGHT) * 100).toFixed(2)}%`,
+                }}
+              >
+                <div
+                  className="flex h-4 w-4 items-center justify-center rounded-full"
+                  style={{
+                    background: `color-mix(in oklab, ${accentColor} 18%, transparent)`,
+                  }}
+                >
+                  <div
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{
+                      background: accentColor,
+                      boxShadow:
+                        "0 0 0 1px color-mix(in oklab, var(--background) 82%, transparent)",
+                    }}
+                  />
+                </div>
+              </div>
+            ) : null}
           </div>
 
-          <div className="pointer-events-none absolute inset-y-3 right-3 flex flex-col justify-between text-[11px] text-muted-foreground">
-            <div>{formatCurrency(high, { currency: currency ?? "USD" })}</div>
-            <div>{formatCurrency(low, { currency: currency ?? "USD" })}</div>
+          <div className="pointer-events-none absolute inset-y-3 left-3 w-14">
+            {priceAxisTicks.map((tick) => (
+              <div
+                key={`${tick.label}:${tick.y.toFixed(2)}`}
+                className="absolute left-0 -translate-y-1/2 font-departureMono text-[10px] text-muted-foreground"
+                style={{
+                  top: `${((tick.y / CHART_VIEWBOX_HEIGHT) * 100).toFixed(2)}%`,
+                }}
+              >
+                {tick.label}
+              </div>
+            ))}
           </div>
 
           {lastCoordinate ? (
             <div
-              className="pointer-events-none absolute right-3 rounded-full border px-2.5 py-1 font-departureMono text-[11px] shadow-[0_0_0_1px_color-mix(in_oklab,var(--background)_70%,transparent)]"
+              className="pointer-events-none absolute rounded-none border px-2.5 py-1 font-departureMono text-[11px] shadow-[0_0_0_1px_color-mix(in_oklab,var(--background)_70%,transparent)]"
               style={{
                 borderColor: `color-mix(in oklab, ${accentColor} 28%, transparent)`,
                 color: accentColor,
-                top: `calc(${((lastCoordinate.y / CHART_VIEWBOX_HEIGHT) * 100).toFixed(
-                  2
-                )}% + 0.75rem)`,
+                right: "0.75rem",
+                top: `calc(${(
+                  (lastCoordinate.y / CHART_VIEWBOX_HEIGHT) *
+                  100
+                ).toFixed(2)}% + 0.75rem)`,
                 transform: "translateY(-50%)",
                 background: `color-mix(in oklab, ${accentColor} 10%, var(--background))`,
               }}
@@ -795,18 +1009,55 @@ export function PriceHistoryChart({
               })}
             </div>
           ) : null}
+
+          <div className="mt-3 border-t border-border/35 pt-2">
+            <div
+              className="mr-4 ml-14 grid gap-1"
+              style={{
+                gridTemplateColumns: `repeat(${String(timeAxisTicks.length)}, minmax(0, 1fr))`,
+              }}
+            >
+              {timeAxisTicks.map((tick, index) => (
+                <div
+                  key={`${tick.label}:${tick.x.toFixed(2)}`}
+                  className={cn(
+                    "min-w-0",
+                    index === 0
+                      ? "text-left"
+                      : index === timeAxisTicks.length - 1
+                        ? "text-right"
+                        : "text-center"
+                  )}
+                >
+                  <div className="text-[10px] text-muted-foreground">
+                    {tick.label}
+                  </div>
+                  <div className="font-departureMono text-[9px] leading-tight text-muted-foreground/80">
+                    {tick.detail}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="mt-4 grid gap-x-4 gap-y-3 border-t border-border/45 pt-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
           {footerItems.map((item) => (
             <div
               key={item.label}
-              className="min-w-0"
+              className="market-panel-tile min-w-0 px-3 py-2.5 sm:px-4"
             >
               <span className="font-departureMono text-[10px] tracking-[0.18em] text-muted-foreground uppercase">
                 {item.label}
               </span>
-              <div className="mt-1 text-sm text-foreground">{item.value}</div>
+              <div
+                className={cn(
+                  "mt-1 font-departureMono text-sm tracking-tight text-foreground",
+                  item.tone
+                )}
+              >
+                {item.value}
+              </div>
             </div>
           ))}
         </div>
