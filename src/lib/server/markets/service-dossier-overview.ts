@@ -185,6 +185,9 @@ export async function getStockOverviewCore(symbol: string) {
         : null),
     quote,
     chart,
+    keyMetrics,
+    ratioMetrics,
+    ratingsMetrics: ratings,
     headlineStats: compactMetricStats([
       [
         {

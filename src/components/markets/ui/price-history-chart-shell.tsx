@@ -17,6 +17,8 @@ const DynamicPriceHistoryChart = dynamic(
 )
 
 export function PriceHistoryChartShell({
+  className,
+  compact = false,
   symbol,
   points,
   intradayPoints,
@@ -26,6 +28,8 @@ export function PriceHistoryChartShell({
   currency,
   historicalRangeLabel,
 }: {
+  className?: string
+  compact?: boolean
   symbol: string
   points: PricePoint[]
   intradayPoints?: PricePoint[]
@@ -37,6 +41,8 @@ export function PriceHistoryChartShell({
 }) {
   return (
     <DynamicPriceHistoryChart
+      className={className}
+      compact={compact}
       currentPrice={currentPrice}
       symbol={symbol}
       points={points}

@@ -35,7 +35,7 @@ import {
   QUOTE_FETCH_CONCURRENCY,
   rethrowMarketStoreUnavailable,
 } from "./service-support"
-import { getWatchlistForUser } from "./store"
+import { getSymbolDirectoryEntry, getWatchlistForUser } from "./store"
 
 async function buildResearchRows(
   symbols: string[]
@@ -48,6 +48,7 @@ async function buildResearchRows(
     QUOTE_FETCH_CONCURRENCY,
     async (symbol) => {
       const [
+        directoryEntry,
         quote,
         technicals,
         earnings,
@@ -58,6 +59,7 @@ async function buildResearchRows(
         valuation,
         shareFloat,
       ]: [
+        Awaited<ReturnType<typeof getSymbolDirectoryEntry>>,
         QuoteSnapshot | null,
         TechnicalIndicatorSeries[],
         CalendarEvent[],
@@ -68,6 +70,7 @@ async function buildResearchRows(
         StockDossier["valuation"],
         StockDossier["shareFloat"],
       ] = await Promise.all([
+        getSymbolDirectoryEntry(symbol).catch(() => null),
         getCachedQuoteSnapshot(symbol),
         getStockTechnicals(symbol),
         withMarketCache({
@@ -112,6 +115,7 @@ async function buildResearchRows(
 
       return {
         symbol,
+        instrumentKind: directoryEntry?.isEtf ? "etf" : "stock",
         name: quote?.name ?? null,
         currency: quote?.currency ?? null,
         price: quote?.price ?? null,

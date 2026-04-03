@@ -10,6 +10,7 @@ import {
   formatPercent,
 } from "@/lib/markets-format"
 import type { ResearchQuoteRow } from "@/lib/shared/markets/intelligence"
+import { getTickerHref } from "@/lib/shared/markets/ticker-routes"
 
 const SORT_OPTIONS = [
   { value: "symbol", label: "Symbol" },
@@ -167,7 +168,10 @@ export function WatchlistResearchTable({ rows }: { rows: ResearchQuoteRow[] }) {
                     <div>
                       <Link
                         className="font-departureMono text-sm tracking-tight hover:underline"
-                        href={`/stocks/${encodeURIComponent(row.symbol)}`}
+                        href={getTickerHref(
+                          row.symbol,
+                          row.instrumentKind ?? "stock"
+                        )}
                       >
                         {row.symbol}
                       </Link>

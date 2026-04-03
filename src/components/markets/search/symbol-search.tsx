@@ -6,6 +6,7 @@ import { useDeferredValue, useEffect, useRef, useState } from "react"
 
 import { Input } from "@/components/ui/input"
 import type { MarketSearchResult } from "@/lib/shared/markets/core"
+import { getTickerHref } from "@/lib/shared/markets/ticker-routes"
 import { cn } from "@/lib/utils"
 
 export function SymbolSearch({
@@ -106,7 +107,11 @@ export function SymbolSearch({
             <Link
               key={`${result.symbol}:${result.exchangeShortName ?? ""}`}
               className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border/40 px-3 py-2 text-sm transition-colors last:border-b-0 hover:bg-muted/35"
-              href={`/stocks/${encodeURIComponent(result.symbol)}`}
+              href={getTickerHref(
+                result.symbol,
+                result.instrumentKind ??
+                  (/etf|fund/i.test(result.type ?? "") ? "etf" : "stock")
+              )}
               onClick={() => {
                 setIsOpen(false)
                 setQuery("")

@@ -23,6 +23,7 @@ import type {
   LockedMarketSection,
   MarketCapPoint,
 } from "@/lib/shared/markets/intelligence"
+import { getTickerHref } from "@/lib/shared/markets/ticker-routes"
 import { cn } from "@/lib/utils"
 
 import { SegmentationBlock } from "./stock-detail-common"
@@ -387,7 +388,7 @@ export async function StockPeersSection({ symbol }: { symbol: string }) {
                       <div>
                         <Link
                           className="font-departureMono text-sm tracking-tight hover:underline"
-                          href={`/stocks/${encodeURIComponent(peer.symbol)}`}
+                          href={getTickerHref(peer.symbol, "stock")}
                         >
                           {peer.symbol}
                         </Link>

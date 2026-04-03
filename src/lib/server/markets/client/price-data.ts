@@ -26,6 +26,11 @@ function mapPricePoint(item: unknown): PricePoint | null {
     high: pickNumber(record, ["high"]),
     low: pickNumber(record, ["low"]),
     close: pickNumber(record, ["close", "price"]),
+    adjustedClose: pickNumber(record, [
+      "adjClose",
+      "adjustedClose",
+      "adjusted_close",
+    ]),
     volume: pickNumber(record, ["volume"]),
   }
 }
