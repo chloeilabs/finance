@@ -85,10 +85,13 @@ function toSearchResult(entry: {
   currency: string | null
   sector: string | null
   industry: string | null
+  isEtf?: boolean
 }): MarketSearchResult {
   return {
     symbol: entry.symbol,
     name: entry.name,
+    instrumentKind:
+      entry.isEtf ?? /etf|fund/i.test(entry.type ?? "") ? "etf" : "stock",
     exchange: entry.exchange,
     exchangeShortName: entry.exchangeShortName,
     type: entry.type,

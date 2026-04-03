@@ -82,6 +82,8 @@ export function StockHeadline({
 }
 
 export function PriceHistoryChart({
+  className,
+  compact = false,
   symbol,
   points,
   intradayPoints,
@@ -91,6 +93,8 @@ export function PriceHistoryChart({
   currency,
   historicalRangeLabel,
 }: {
+  className?: string
+  compact?: boolean
   symbol: string
   points: PricePoint[]
   intradayPoints?: PricePoint[]
@@ -102,6 +106,8 @@ export function PriceHistoryChart({
 }) {
   return (
     <PriceHistoryChartShell
+      className={className}
+      compact={compact}
       currentPrice={currentPrice}
       symbol={symbol}
       points={points}
