@@ -1,5 +1,8 @@
 import type {
+  EtfAllocationEntry,
   EtfExposureEntry,
+  EtfHoldingEntry,
+  EtfInfoSnapshot,
   InsiderTradeEntry,
   LatestInsiderTradeEntry,
   OwnershipEntry,
@@ -58,6 +61,121 @@ function mapEtfExposure(item: unknown): EtfExposureEntry | null {
     etfName: pickString(record, ["name", "etfName"]),
     sharesNumber: pickNumber(record, ["sharesNumber"]),
     weightPercentage: pickNumber(record, ["weightPercentage", "weight"]),
+  }
+}
+
+function mapEtfHolding(item: unknown): EtfHoldingEntry | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  return {
+    symbol: pickString(record, ["asset", "symbol", "holdingSymbol"]),
+    name: pickString(record, ["name", "assetName", "holdingName"]),
+    marketValue: pickNumber(record, ["marketValue", "value"]),
+    sharesNumber: pickNumber(record, ["sharesNumber", "shares"]),
+    weightPercentage: pickNumber(record, ["weightPercentage", "weight"]),
+  }
+}
+
+function mapEtfAllocation(
+  item: unknown,
+  labelKeys: string[]
+): EtfAllocationEntry | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  const label = pickString(record, labelKeys)
+
+  if (!label) {
+    return null
+  }
+
+  return {
+    label,
+    weightPercentage: pickNumber(record, [
+      "weightPercentage",
+      "weight",
+      "allocation",
+      "percentage",
+    ]),
+  }
+}
+
+function mapEtfInfo(item: unknown): EtfInfoSnapshot | null {
+  const record = asRecord(item)
+
+  if (!record) {
+    return null
+  }
+
+  const symbol = pickString(record, ["symbol", "ticker"])
+
+  if (!symbol) {
+    return null
+  }
+
+  return {
+    symbol,
+    name: pickString(record, ["name", "fundName", "etfName"]),
+    exchange: pickString(record, ["exchange", "exchangeShortName"]),
+    currency: pickString(record, ["currency"]),
+    website: pickString(record, [
+      "website",
+      "fundWebsite",
+      "fundHomePage",
+      "homePage",
+    ]),
+    description: pickString(record, [
+      "description",
+      "summary",
+      "fundDescription",
+    ]),
+    provider: pickString(record, ["provider", "issuer", "fundFamily"]),
+    assetClass: pickString(record, ["assetClass"]),
+    category: pickString(record, ["category", "fundCategory"]),
+    region: pickString(record, ["region", "geography"]),
+    domicile: pickString(record, ["domicile", "country"]),
+    indexTracked: pickString(record, [
+      "indexTracked",
+      "index",
+      "benchmark",
+      "benchmarkIndex",
+    ]),
+    expenseRatio: pickNumber(record, ["expenseRatio", "expense"]),
+    assets: pickNumber(record, ["totalAssets", "assets", "aum"]),
+    nav: pickNumber(record, ["nav", "netAssetValue"]),
+    peRatio: pickNumber(record, ["peRatio", "pe"]),
+    beta: pickNumber(record, ["beta"]),
+    totalHoldings: pickNumber(record, [
+      "holdings",
+      "holdingsCount",
+      "numberOfHoldings",
+      "totalHoldings",
+    ]),
+    sharesOutstanding: pickNumber(record, [
+      "sharesOutstanding",
+      "sharesOut",
+      "shares",
+    ]),
+    inceptionDate: pickString(record, ["inceptionDate", "inception"]),
+    dividendYield: pickNumber(record, ["dividendYield", "yield"]),
+    dividendPerShare: pickNumber(record, [
+      "dividendPerShare",
+      "dividend",
+      "annualDividend",
+    ]),
+    exDividendDate: pickString(record, ["exDividendDate"]),
+    frequency: pickString(record, [
+      "frequency",
+      "distributionFrequency",
+      "payoutFrequency",
+    ]),
   }
 }
 
@@ -169,6 +287,42 @@ export function createReferenceDataClient() {
       },
     },
     etf: {
+      async getInfo(symbol: string): Promise<EtfInfoSnapshot | null> {
+        const payload = await fetchFmpJson("/stable/etf/info", {
+          symbol,
+        }).catch(() => [])
+
+        return mapEtfInfo(asArray(payload)[0])
+      },
+      async getHoldings(symbol: string): Promise<EtfHoldingEntry[]> {
+        const payload = await fetchFmpJson("/stable/etf/holdings", {
+          symbol,
+        }).catch(() => [])
+
+        return asArray(payload)
+          .map(mapEtfHolding)
+          .filter((item): item is EtfHoldingEntry => item !== null)
+      },
+      async getSectorWeightings(symbol: string): Promise<EtfAllocationEntry[]> {
+        const payload = await fetchFmpJson("/stable/etf/sector-weightings", {
+          symbol,
+        }).catch(() => [])
+
+        return asArray(payload)
+          .map((item) => mapEtfAllocation(item, ["sector", "name"]))
+          .filter((item): item is EtfAllocationEntry => item !== null)
+      },
+      async getCountryWeightings(
+        symbol: string
+      ): Promise<EtfAllocationEntry[]> {
+        const payload = await fetchFmpJson("/stable/etf/country-weightings", {
+          symbol,
+        }).catch(() => [])
+
+        return asArray(payload)
+          .map((item) => mapEtfAllocation(item, ["country", "name"]))
+          .filter((item): item is EtfAllocationEntry => item !== null)
+      },
       async getAssetExposure(symbol: string): Promise<EtfExposureEntry[]> {
         const payload = await fetchFmpJson("/stable/etf/asset-exposure", {
           symbol,

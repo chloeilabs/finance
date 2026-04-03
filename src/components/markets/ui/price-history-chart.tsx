@@ -2,15 +2,20 @@
 
 import { useId, useState } from "react"
 
-import {
-  formatCurrency,
-  formatPercent,
-  formatSignedNumber,
-} from "@/lib/markets-format"
+import { formatNumber, formatPercent } from "@/lib/markets-format"
 import type { PricePoint } from "@/lib/shared/markets/core"
 import { cn } from "@/lib/utils"
 
-type ChartTimeframeId = "1D" | "1M" | "3M" | "6M" | "YTD" | "1Y" | "3Y" | "MAX"
+type ChartTimeframeId =
+  | "1D"
+  | "5D"
+  | "1M"
+  | "3M"
+  | "6M"
+  | "YTD"
+  | "1Y"
+  | "5Y"
+  | "MAX"
 
 interface ChartSeriesPoint {
   date: string
@@ -28,7 +33,6 @@ interface ChartAxisTick {
 }
 
 interface ChartTimeAxisTick extends ChartAxisTick {
-  detail: string
   x: number
 }
 
@@ -48,43 +52,22 @@ const TIMEFRAME_OPTIONS: {
   longLabel: string
 }[] = [
   { id: "1D", label: "1D", longLabel: "1 day" },
+  { id: "5D", label: "5D", longLabel: "5 days" },
   { id: "1M", label: "1M", longLabel: "1 month" },
+  { id: "YTD", label: "YTD", longLabel: "year to date" },
   { id: "3M", label: "3M", longLabel: "3 months" },
   { id: "6M", label: "6M", longLabel: "6 months" },
-  { id: "YTD", label: "YTD", longLabel: "year to date" },
   { id: "1Y", label: "1Y", longLabel: "1 year" },
-  { id: "3Y", label: "3Y", longLabel: "3 years" },
-  MAX_TIMEFRAME,
+  { id: "5Y", label: "5Y", longLabel: "5 years" },
+  { ...MAX_TIMEFRAME, label: "Max", longLabel: "max range" },
 ] as const
 
-const chartDateFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-  timeZone: "UTC",
-})
 const chartAxisDateLabelFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
   timeZone: "UTC",
 })
-const chartAxisDateDetailFormatter = new Intl.DateTimeFormat("en-US", {
-  year: "numeric",
-  timeZone: "UTC",
-})
 const chartTimeFormatter = new Intl.DateTimeFormat("en-US", {
-  hour: "numeric",
-  minute: "2-digit",
-})
-const chartAxisTimeDetailFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  timeZone: "UTC",
-})
-const chartDateTimeFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
   hour: "numeric",
   minute: "2-digit",
 })
@@ -93,6 +76,7 @@ const CHART_VIEWBOX_HEIGHT = 56
 const CHART_PADDING_X = 2.5
 const CHART_TOP_Y = 4
 const CHART_BOTTOM_Y = 52
+const STOCK_ANALYSIS_POSITIVE_GREEN = "#059669"
 
 function getFullRangeLabel(historicalRangeLabel: string) {
   const normalized = historicalRangeLabel.trim()
@@ -109,6 +93,16 @@ function getFullRangeLabel(historicalRangeLabel: string) {
   }
 
   return "MAX"
+}
+
+function getMaxTimeframeLabel(historicalRangeLabel: string) {
+  const fullRangeLabel = getFullRangeLabel(historicalRangeLabel)
+
+  return TIMEFRAME_OPTIONS.some(
+    (option) => option.id !== "MAX" && option.label === fullRangeLabel
+  )
+    ? "Max"
+    : fullRangeLabel
 }
 
 function shiftUtcDate(
@@ -135,6 +129,8 @@ function getTimeframeStart(
   const lastDate = new Date(lastTimestamp)
 
   switch (timeframe) {
+    case "5D":
+      return lastTimestamp - 4 * 86_400_000
     case "1M":
       return shiftUtcDate(lastDate, { months: -1 }).getTime()
     case "3M":
@@ -145,8 +141,8 @@ function getTimeframeStart(
       return Date.UTC(lastDate.getUTCFullYear(), 0, 1)
     case "1Y":
       return shiftUtcDate(lastDate, { years: -1 }).getTime()
-    case "3Y":
-      return shiftUtcDate(lastDate, { years: -3 }).getTime()
+    case "5Y":
+      return shiftUtcDate(lastDate, { years: -5 }).getTime()
   }
 
   return null
@@ -248,7 +244,7 @@ function buildTimeAxisTicks(
   series: ChartSeriesPoint[],
   options: { intraday: boolean }
 ): ChartTimeAxisTick[] {
-  const indexes = buildTickIndexes(series.length, 8)
+  const indexes = buildTickIndexes(series.length, options.intraday ? 5 : 4)
 
   return indexes
     .map((index) => {
@@ -261,11 +257,8 @@ function buildTimeAxisTicks(
       const parsed = new Date(point.timestamp)
 
       return {
-        detail: options.intraday
-          ? chartAxisTimeDetailFormatter.format(parsed)
-          : chartAxisDateDetailFormatter.format(parsed),
         label: options.intraday
-          ? chartTimeFormatter.format(parsed)
+          ? formatIntradayTickLabel(parsed)
           : chartAxisDateLabelFormatter.format(parsed),
         x:
           CHART_PADDING_X +
@@ -276,136 +269,48 @@ function buildTimeAxisTicks(
     .filter((tick): tick is ChartTimeAxisTick => tick !== null)
 }
 
-function buildPriceAxisTicks(
-  low: number,
-  high: number,
-  options: { currency: string }
-): ChartPriceAxisTick[] {
+function formatIntradayTickLabel(value: Date) {
+  return chartTimeFormatter
+    .format(value)
+    .replace(":00", "")
+    .replace(" AM", " am")
+    .replace(" PM", " pm")
+}
+
+function buildPriceAxisTicks(low: number, high: number): ChartPriceAxisTick[] {
   const values =
     high === low
       ? [high]
-      : Array.from({ length: 8 }, (_, position) => {
-          const ratio = position / 7
+      : Array.from({ length: 6 }, (_, position) => {
+          const ratio = position / 5
           return Number((high - (high - low) * ratio).toFixed(2))
         })
   const range = high - low || 1
 
   return values.map((value) => ({
-    label: formatCurrency(value, { currency: options.currency }),
+    label: formatChartPrice(value),
     y: getChartY(value, low, range),
   }))
 }
 
-function formatChartDate(
-  value: string,
-  options: { intraday?: boolean; includeDate?: boolean } = {}
-) {
-  const parsed = new Date(parseChartTimestamp(value))
-
-  if (Number.isNaN(parsed.getTime())) {
-    return value
-  }
-
-  if (!options.intraday) {
-    return chartDateFormatter.format(parsed)
-  }
-
-  return options.includeDate
-    ? chartDateTimeFormatter.format(parsed)
-    : chartTimeFormatter.format(parsed)
-}
-
-function formatSignedCurrency(
-  value: number | null | undefined,
-  options: { currency?: string } = {}
-) {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return "N/A"
-  }
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: options.currency ?? "USD",
-    signDisplay: "exceptZero",
-    maximumFractionDigits: 2,
-  }).format(value)
-}
-
-function formatElapsedSpan(
-  startTimestamp: number,
-  endTimestamp: number,
-  options: { intraday: boolean }
-) {
-  function formatUnit(
-    value: number,
-    labels: { singular: string; plural: string }
-  ) {
-    const rounded = Math.round(value * 10) / 10
-    const display = Number.isInteger(rounded)
-      ? String(rounded)
-      : rounded.toFixed(1)
-
-    return `${display} ${rounded === 1 ? labels.singular : labels.plural}`
-  }
-
-  const diffMs = Math.max(0, endTimestamp - startTimestamp)
-
-  if (options.intraday) {
-    const totalMinutes = Math.max(1, Math.round(diffMs / 60_000))
-    const hours = Math.floor(totalMinutes / 60)
-    const minutes = totalMinutes % 60
-
-    if (hours > 0 && minutes > 0) {
-      return `${String(hours)}h ${String(minutes)}m`
-    }
-
-    if (hours > 0) {
-      return `${String(hours)}h`
-    }
-
-    return `${String(totalMinutes)}m`
-  }
-
-  const totalDays = Math.max(1, Math.round(diffMs / 86_400_000))
-
-  if (totalDays >= 365) {
-    return formatUnit(totalDays / 365, {
-      singular: "year",
-      plural: "years",
-    })
-  }
-
-  if (totalDays >= 30) {
-    return formatUnit(totalDays / 30, {
-      singular: "month",
-      plural: "months",
-    })
-  }
-
-  return `${String(totalDays)} days`
-}
-
-function calculateAnnualizedReturn(
-  startValue: number,
-  endValue: number,
-  startTimestamp: number,
-  endTimestamp: number
-) {
-  if (startValue <= 0 || endValue <= 0 || endTimestamp <= startTimestamp) {
-    return null
-  }
-
-  const elapsedYears = (endTimestamp - startTimestamp) / (86_400_000 * 365)
-
-  if (elapsedYears <= 1) {
-    return null
-  }
-
-  return (Math.pow(endValue / startValue, 1 / elapsedYears) - 1) * 100
+function formatChartPrice(value: number) {
+  return formatNumber(value, {
+    digits: Math.abs(value) >= 1 ? 2 : 4,
+  })
 }
 
 function getDefaultTimeframe(availableTimeframes: ChartTimeframeId[]) {
-  const preferredOrder: ChartTimeframeId[] = ["1Y", "6M", "3M", "1D", "MAX"]
+  const preferredOrder: ChartTimeframeId[] = [
+    "1D",
+    "5D",
+    "1M",
+    "YTD",
+    "3M",
+    "6M",
+    "1Y",
+    "5Y",
+    "MAX",
+  ]
 
   for (const timeframe of preferredOrder) {
     if (availableTimeframes.includes(timeframe)) {
@@ -493,15 +398,17 @@ function buildAreaPath(coordinates: ChartCoordinate[]): string {
 }
 
 export function PriceHistoryChart({
-  symbol,
+  className,
+  compact = false,
   points,
   intradayPoints = [],
   currentPrice,
   sessionChange,
   sessionChangePercent,
-  currency,
   historicalRangeLabel,
 }: {
+  className?: string
+  compact?: boolean
   symbol: string
   points: PricePoint[]
   intradayPoints?: PricePoint[]
@@ -517,7 +424,7 @@ export function PriceHistoryChart({
     option.id === "MAX"
       ? {
           ...option,
-          label: getFullRangeLabel(historicalRangeLabel),
+          label: getMaxTimeframeLabel(historicalRangeLabel),
           longLabel: historicalRangeLabel.toLowerCase(),
         }
       : option
@@ -561,7 +468,7 @@ export function PriceHistoryChart({
     (option) => option.id === resolvedTimeframe
   ) ?? {
     ...MAX_TIMEFRAME,
-    label: getFullRangeLabel(historicalRangeLabel),
+    label: getMaxTimeframeLabel(historicalRangeLabel),
     longLabel: historicalRangeLabel.toLowerCase(),
   }
   const isIntradayView = activeTimeframe.id === "1D"
@@ -609,7 +516,9 @@ export function PriceHistoryChart({
     isIntradayView && sessionChange !== null && sessionChange !== undefined
       ? sessionChange >= 0
       : absoluteChange >= 0
-  const accentColor = positive ? "var(--vesper-teal)" : "var(--vesper-orange)"
+  const accentColor = positive
+    ? STOCK_ANALYSIS_POSITIVE_GREEN
+    : "var(--vesper-orange)"
   const chartCoordinates = buildChartCoordinates(renderSeries, { low, range })
   const linePath = buildSmoothPath(chartCoordinates)
   const areaPath = buildAreaPath(chartCoordinates)
@@ -618,206 +527,71 @@ export function PriceHistoryChart({
     isIntradayView && currentPrice !== null && currentPrice !== undefined
       ? currentPrice
       : lastPoint.close
-  const rangeLabel = `${formatCurrency(low, {
-    currency: currency ?? "USD",
-  })} to ${formatCurrency(high, {
-    currency: currency ?? "USD",
-  })}`
   const plotFrameStyle = {
     background:
-      "linear-gradient(180deg, color-mix(in oklab, var(--background) 95%, transparent) 0%, color-mix(in oklab, var(--background) 90%, var(--muted)) 100%)",
-    boxShadow:
-      "inset 0 1px 0 color-mix(in oklab, var(--foreground) 6%, transparent)",
+      "linear-gradient(180deg, color-mix(in oklab, var(--background) 96%, transparent) 0%, color-mix(in oklab, var(--background) 90%, var(--muted)) 100%)",
   }
   const timeAxisTicks = buildTimeAxisTicks(visibleSeries, {
     intraday: isIntradayView,
   })
-  const priceAxisTicks = buildPriceAxisTicks(low, high, {
-    currency: currency ?? "USD",
-  })
-  const elapsedSpanLabel = formatElapsedSpan(
-    firstPoint.timestamp,
-    lastPoint.timestamp,
-    { intraday: isIntradayView }
-  )
-  const annualizedReturn = calculateAnnualizedReturn(
-    firstPoint.close,
-    lastPoint.close,
-    firstPoint.timestamp,
-    lastPoint.timestamp
-  )
-  const footerItems = [
-    {
-      label: isIntradayView ? "Open" : "Entry close",
-      value: formatCurrency(firstPoint.close, {
-        currency: currency ?? "USD",
-      }),
-    },
-    {
-      label: isIntradayView ? "Last trade" : "Latest close",
-      value: formatCurrency(displayedLastValue, {
-        currency: currency ?? "USD",
-      }),
-    },
-    {
-      label: isIntradayView ? "Net move" : "Gain / share",
-      value: formatSignedCurrency(absoluteChange, {
-        currency: currency ?? "USD",
-      }),
-      tone: positive
-        ? "text-[color:var(--vesper-teal)]"
-        : "text-[color:var(--vesper-orange)]",
-    },
-    {
-      label: isIntradayView ? "Session return" : "Total return",
-      value: formatPercent(percentChange),
-      tone: positive
-        ? "text-[color:var(--vesper-teal)]"
-        : "text-[color:var(--vesper-orange)]",
-    },
-    {
-      label:
-        annualizedReturn !== null
-          ? "Annualized"
-          : isIntradayView
-            ? "Session span"
-            : "Holding period",
-      value:
-        annualizedReturn !== null
-          ? formatPercent(annualizedReturn)
-          : elapsedSpanLabel,
-      tone:
-        annualizedReturn !== null
-          ? positive
-            ? "text-[color:var(--vesper-teal)]"
-            : "text-[color:var(--vesper-orange)]"
-          : undefined,
-    },
-  ]
-  const summaryItems = [
-    {
-      label: isIntradayView ? "Last trade" : "Last close",
-      value: formatCurrency(displayedLastValue, {
-        currency: currency ?? "USD",
-      }),
-    },
-    {
-      label: isIntradayView ? "Session move" : "Window move",
-      value: `${formatSignedNumber(absoluteChange)} / ${formatPercent(percentChange)}`,
-      tone: positive
-        ? "text-[color:var(--vesper-teal)]"
-        : "text-[color:var(--vesper-orange)]",
-    },
-    {
-      label: isIntradayView ? "Session start" : "Window start",
-      value: formatChartDate(firstPoint.date, {
-        intraday: isIntradayView,
-        includeDate: isIntradayView,
-      }),
-    },
-    {
-      label: isIntradayView ? "Visible bars" : "Visible closes",
-      value: String(visibleSeries.length),
-    },
-  ]
+  const priceAxisTicks = buildPriceAxisTicks(low, high)
+  const periodChangeLabel =
+    percentChange === null || Number.isNaN(percentChange)
+      ? "N/A"
+      : `${percentChange > 0 ? "+" : ""}${formatPercent(percentChange)} (${activeTimeframe.label})`
 
   return (
-    <div className="market-split-17 grid gap-4">
-      <div className="market-soft-surface px-4 py-4 sm:px-5">
-        <div className="font-departureMono text-[11px] tracking-[0.24em] text-muted-foreground uppercase">
-          Price action
-        </div>
-        <div className="mt-2 text-xs leading-5 text-muted-foreground">
-          {isIntradayView
-            ? `${activeTimeframe.longLabel} view using cached FMP intraday bars for ${symbol}.`
-            : `${activeTimeframe.longLabel} view inside ${historicalRangeLabel.toLowerCase()} of cached FMP closes for ${symbol}.`}
+    <div
+      className={cn(
+        "market-table-frame flex h-full flex-col overflow-hidden border border-border/40",
+        className
+      )}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 px-4 py-3">
+        <div
+          className="inline-flex flex-wrap gap-1"
+          role="toolbar"
+          aria-label="Price history timeframe"
+        >
+          {timeframeOptions
+            .filter((option) => availableTimeframes.includes(option.id))
+            .map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                aria-pressed={resolvedTimeframe === option.id}
+                className={cn(
+                  "rounded-none px-2.5 py-1.5 text-xs transition-colors",
+                  resolvedTimeframe === option.id
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                )}
+                onClick={() => {
+                  setSelectedTimeframe(option.id)
+                }}
+              >
+                {option.label}
+              </button>
+            ))}
         </div>
 
-        <div className="mt-5 grid gap-y-3 border-t border-border/45 pt-4">
-          {summaryItems.map((item) => (
-            <div
-              key={item.label}
-              className="grid gap-1 border-b border-border/35 pb-3 last:border-b-0 last:pb-0"
-            >
-              <div className="text-xs text-muted-foreground">{item.label}</div>
-              <div
-                className={cn(
-                  "text-sm tracking-tight",
-                  item.tone ? `font-departureMono ${item.tone}` : undefined
-                )}
-              >
-                {item.value}
-              </div>
-            </div>
-          ))}
+        <div className="text-sm font-medium" style={{ color: accentColor }}>
+          {periodChangeLabel}
         </div>
       </div>
 
-      <div className="market-soft-surface px-4 py-4 sm:px-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-1">
-            <div className="font-departureMono text-[11px] tracking-[0.24em] text-muted-foreground uppercase">
-              Market window
-            </div>
-            <div className="text-sm leading-6 text-muted-foreground">
-              {formatChartDate(firstPoint.date, {
-                intraday: isIntradayView,
-                includeDate: isIntradayView,
-              })}{" "}
-              to{" "}
-              {formatChartDate(lastPoint.date, {
-                intraday: isIntradayView,
-                includeDate: isIntradayView,
-              })}
-            </div>
-            <div className="flex flex-wrap gap-2 pt-1">
-              <div className="market-chip px-2.5 py-1 text-[11px] text-muted-foreground">
-                {visibleSeries.length} {isIntradayView ? "bars" : "closes"}
-              </div>
-              <div className="market-chip px-2.5 py-1 text-[11px] text-muted-foreground">
-                {rangeLabel}
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="inline-flex flex-wrap gap-1 self-start"
-            role="toolbar"
-            aria-label="Price history timeframe"
-          >
-            {timeframeOptions
-              .filter((option) => availableTimeframes.includes(option.id))
-              .map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  aria-pressed={resolvedTimeframe === option.id}
-                  className={cn(
-                    "market-chip min-w-11 px-3 py-2 font-departureMono text-[11px] tracking-[0.18em] uppercase transition-colors",
-                    resolvedTimeframe === option.id
-                      ? positive
-                        ? "bg-[color:var(--vesper-teal)]/12 text-[color:var(--vesper-teal)]"
-                        : "bg-[color:var(--vesper-orange)]/12 text-[color:var(--vesper-orange)]"
-                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                  )}
-                  onClick={() => {
-                    setSelectedTimeframe(option.id)
-                  }}
-                >
-                  {option.label}
-                </button>
-              ))}
-          </div>
-        </div>
-
-        <div
-          className="market-panel-tile relative mt-4 px-3 py-3 sm:px-4"
-          style={plotFrameStyle}
-        >
-          <div className="relative overflow-hidden pr-4 pl-14">
+      <div
+        className="relative flex flex-1 flex-col px-4 pb-3 pt-4"
+        style={plotFrameStyle}
+      >
+        <div className="relative flex-1 overflow-hidden pr-12">
+          <div className="relative h-full">
             <svg
               aria-hidden
-              className="relative h-60 w-full"
+              className={cn(
+                "relative h-full w-full",
+                compact ? "min-h-[14rem] lg:min-h-0" : "min-h-[18rem]"
+              )}
               viewBox={`${String(CHART_VIEWBOX_WIDTH)} ${String(CHART_VIEWBOX_HEIGHT)}`.replace(
                 /^/,
                 "0 0 "
@@ -886,20 +660,6 @@ export function PriceHistoryChart({
                 />
               ))}
 
-              {timeAxisTicks.map((tick) => (
-                <line
-                  key={`${tick.label}:${tick.x.toFixed(2)}`}
-                  x1={tick.x.toFixed(2)}
-                  x2={tick.x.toFixed(2)}
-                  y1={String(CHART_TOP_Y)}
-                  y2={String(CHART_BOTTOM_Y)}
-                  stroke="color-mix(in oklab, var(--border) 48%, transparent)"
-                  strokeDasharray="1.5 4"
-                  strokeWidth="0.4"
-                  vectorEffect="non-scaling-stroke"
-                />
-              ))}
-
               <line
                 x1={String(CHART_PADDING_X)}
                 x2={String(CHART_VIEWBOX_WIDTH - CHART_PADDING_X)}
@@ -957,13 +717,13 @@ export function PriceHistoryChart({
                 }}
               >
                 <div
-                  className="flex h-4 w-4 items-center justify-center rounded-full"
+                  className="flex h-4 w-4 items-center justify-center"
                   style={{
                     background: `color-mix(in oklab, ${accentColor} 18%, transparent)`,
                   }}
                 >
                   <div
-                    className="h-1.5 w-1.5 rounded-full"
+                    className="h-1.5 w-1.5"
                     style={{
                       background: accentColor,
                       boxShadow:
@@ -975,11 +735,11 @@ export function PriceHistoryChart({
             ) : null}
           </div>
 
-          <div className="pointer-events-none absolute inset-y-3 left-3 w-14">
+          <div className="pointer-events-none absolute inset-y-5 right-0 w-12">
             {priceAxisTicks.map((tick) => (
               <div
                 key={`${tick.label}:${tick.y.toFixed(2)}`}
-                className="absolute left-0 -translate-y-1/2 font-departureMono text-[10px] text-muted-foreground"
+                className="absolute right-0 -translate-y-1/2 text-right font-departureMono text-[10px] text-muted-foreground"
                 style={{
                   top: `${((tick.y / CHART_VIEWBOX_HEIGHT) * 100).toFixed(2)}%`,
                 }}
@@ -991,73 +751,39 @@ export function PriceHistoryChart({
 
           {lastCoordinate ? (
             <div
-              className="pointer-events-none absolute rounded-none border px-2.5 py-1 font-departureMono text-[11px] shadow-[0_0_0_1px_color-mix(in_oklab,var(--background)_70%,transparent)]"
+              className="pointer-events-none absolute border px-2.5 py-1 text-[11px] font-semibold text-white"
               style={{
-                borderColor: `color-mix(in oklab, ${accentColor} 28%, transparent)`,
-                color: accentColor,
-                right: "0.75rem",
-                top: `calc(${(
-                  (lastCoordinate.y / CHART_VIEWBOX_HEIGHT) *
-                  100
-                ).toFixed(2)}% + 0.75rem)`,
+                borderColor: accentColor,
+                right: "2.75rem",
+                top: `${((lastCoordinate.y / CHART_VIEWBOX_HEIGHT) * 100).toFixed(2)}%`,
                 transform: "translateY(-50%)",
-                background: `color-mix(in oklab, ${accentColor} 10%, var(--background))`,
+                background: accentColor,
               }}
             >
-              {formatCurrency(displayedLastValue, {
-                currency: currency ?? "USD",
-              })}
+              {formatChartPrice(displayedLastValue)}
             </div>
           ) : null}
-
-          <div className="mt-3 border-t border-border/35 pt-2">
-            <div
-              className="mr-4 ml-14 grid gap-1"
-              style={{
-                gridTemplateColumns: `repeat(${String(timeAxisTicks.length)}, minmax(0, 1fr))`,
-              }}
-            >
-              {timeAxisTicks.map((tick, index) => (
-                <div
-                  key={`${tick.label}:${tick.x.toFixed(2)}`}
-                  className={cn(
-                    "min-w-0",
-                    index === 0
-                      ? "text-left"
-                      : index === timeAxisTicks.length - 1
-                        ? "text-right"
-                        : "text-center"
-                  )}
-                >
-                  <div className="text-[10px] text-muted-foreground">
-                    {tick.label}
-                  </div>
-                  <div className="font-departureMono text-[9px] leading-tight text-muted-foreground/80">
-                    {tick.detail}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-          {footerItems.map((item) => (
+        <div
+          className="mt-3 grid gap-1 border-t border-border/35 pt-2 pr-12 text-[10px] text-muted-foreground"
+          style={{
+            gridTemplateColumns: `repeat(${String(timeAxisTicks.length)}, minmax(0, 1fr))`,
+          }}
+        >
+          {timeAxisTicks.map((tick, index) => (
             <div
-              key={item.label}
-              className="market-panel-tile min-w-0 px-3 py-2.5 sm:px-4"
+              key={`${tick.label}:${tick.x.toFixed(2)}`}
+              className={cn(
+                "min-w-0",
+                index === 0
+                  ? "text-left"
+                  : index === timeAxisTicks.length - 1
+                    ? "text-right"
+                    : "text-center"
+              )}
             >
-              <span className="font-departureMono text-[10px] tracking-[0.18em] text-muted-foreground uppercase">
-                {item.label}
-              </span>
-              <div
-                className={cn(
-                  "mt-1 font-departureMono text-sm tracking-tight text-foreground",
-                  item.tone
-                )}
-              >
-                {item.value}
-              </div>
+              {tick.label}
             </div>
           ))}
         </div>

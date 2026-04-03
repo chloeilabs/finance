@@ -90,6 +90,38 @@ describe("QuoteStrip", () => {
     expect(html).toContain("var(--vesper-teal)")
     expect(html).not.toContain("var(--vesper-orange)")
   })
+
+  it("uses instrument-aware ticker links when kinds are provided", () => {
+    const html = renderToStaticMarkup(
+      <QuoteStrip
+        instrumentKinds={{ SCHD: "etf" }}
+        quotes={[
+          {
+            avgVolume: null,
+            change: 0.05,
+            changesPercentage: 0.16,
+            currency: "USD",
+            dayHigh: null,
+            dayLow: null,
+            exchange: "NYSEARCA",
+            marketCap: null,
+            name: "Schwab US Dividend Equity ETF",
+            open: null,
+            price: 30.56,
+            priceAvg50: null,
+            priceAvg200: null,
+            symbol: "SCHD",
+            timestamp: null,
+            volume: null,
+            yearHigh: null,
+            yearLow: null,
+          },
+        ]}
+      />
+    )
+
+    expect(html).toContain('href="/etfs/SCHD"')
+  })
 })
 
 describe("MetricGrid", () => {

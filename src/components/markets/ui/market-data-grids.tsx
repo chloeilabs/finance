@@ -7,11 +7,9 @@ import {
   formatPercent,
   formatSignedNumber,
 } from "@/lib/markets-format"
-import type {
-  MetricStat,
-  QuoteSnapshot,
-} from "@/lib/shared/markets/core"
+import type { InstrumentKind, MetricStat, QuoteSnapshot } from "@/lib/shared/markets/core"
 import type { LockedMarketSection } from "@/lib/shared/markets/intelligence"
+import { getTickerHref } from "@/lib/shared/markets/ticker-routes"
 import { cn } from "@/lib/utils"
 
 import { EmptyState } from "./market-layout-primitives"
@@ -19,12 +17,14 @@ import { Sparkline } from "./sparkline"
 
 export function QuoteStrip({
   quotes,
-  hrefBase = "/stocks",
+  hrefBase,
+  instrumentKinds,
   linkItems = true,
   sparklines,
 }: {
   quotes: QuoteSnapshot[]
   hrefBase?: string
+  instrumentKinds?: Record<string, InstrumentKind>
   linkItems?: boolean
   sparklines?: Record<string, (number | null | undefined)[]>
 }) {
@@ -93,7 +93,14 @@ export function QuoteStrip({
           <Link
             key={quote.symbol}
             className="market-panel-tile block px-3 py-2.5 transition-colors hover:bg-muted/35 sm:px-4"
-            href={`${hrefBase}/${encodeURIComponent(quote.symbol)}`}
+            href={
+              hrefBase
+                ? `${hrefBase}/${encodeURIComponent(quote.symbol)}`
+                : getTickerHref(
+                    quote.symbol,
+                    instrumentKinds?.[quote.symbol] ?? "stock"
+                  )
+            }
           >
             {content}
           </Link>

@@ -1,3 +1,5 @@
+export type InstrumentKind = "stock" | "etf"
+
 export interface SymbolDirectoryEntry {
   symbol: string
   name: string
@@ -16,6 +18,7 @@ export interface SymbolDirectoryEntry {
 export interface MarketSearchResult {
   symbol: string
   name: string
+  instrumentKind?: InstrumentKind
   exchangeShortName: string | null
   exchange: string | null
   type: string | null
@@ -142,6 +145,7 @@ export interface PricePoint {
   high: number | null
   low: number | null
   close: number | null
+  adjustedClose?: number | null
   volume: number | null
 }
 

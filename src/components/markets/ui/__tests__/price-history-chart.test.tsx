@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest"
 import { PriceHistoryChart } from "../price-history-chart"
 
 describe("PriceHistoryChart", () => {
-  it("renders the enhanced chart shell and return footer", () => {
+  it("renders a stockanalysis-style chart block with timeframe controls and plain price labels", () => {
     const html = renderToStaticMarkup(
       <PriceHistoryChart
         currency="USD"
@@ -97,28 +97,27 @@ describe("PriceHistoryChart", () => {
       />
     )
 
-    expect(html).toContain("Market window")
-    expect(html).toContain("Entry close")
-    expect(html).toContain("Latest close")
-    expect(html).toContain("Gain / share")
-    expect(html).toContain("Total return")
-    expect(html).toContain("Holding period")
+    expect(html).toContain("Price history timeframe")
     expect(html).toContain(">1D<")
-    expect(html).not.toContain(">Time<")
-    expect(html).toContain("Jul 27")
-    expect(html).toContain("+$38.80")
-    expect(html).toContain("18.48%")
-    expect(html).toContain("1 year")
-    expect(html).not.toContain(">Midpoint<")
-    expect(html).not.toContain(">Close range<")
-    expect(html).not.toContain(">Available range<")
-    expect(html).not.toContain("Starter delayed data")
+    expect(html).toContain(">YTD<")
+    expect(html).toContain(">5Y<")
+    expect(html).toContain(">Max<")
+    expect(html).toContain("+1.06% (1D)")
+    expect(html).toContain("#059669")
+    expect(html).toContain("9:35 am")
+    expect(html).toContain("3:55 pm")
+    expect(html).toContain("248.80")
+    expect(html).not.toContain("Market window")
+    expect(html).not.toContain("Entry close")
+    expect(html).not.toContain("Latest close")
+    expect(html).not.toContain("Gain / share")
+    expect(html).not.toContain("Total return")
     expect(html).toContain("<path")
     expect(html).toContain("<filter")
     expect(html.match(/<linearGradient/g)?.length).toBe(2)
   })
 
-  it("uses session change stats for the 1D view like a quote-driven finance chart", () => {
+  it("uses quote session stats for the 1D badge and end price marker", () => {
     const html = renderToStaticMarkup(
       <PriceHistoryChart
         currentPrice={579.23}
@@ -157,15 +156,11 @@ describe("PriceHistoryChart", () => {
       />
     )
 
-    expect(html).toContain("Session move")
-    expect(html).toContain("Open")
-    expect(html).toContain("Last trade")
-    expect(html).toContain("Net move")
-    expect(html).toContain("Session return")
-    expect(html).toContain("Session span")
-    expect(html).toContain("+7.1")
-    expect(html).toContain("1.24%")
-    expect(html).toContain("+$7.10")
-    expect(html).toContain("6h 20m")
+    expect(html).toContain("+1.24% (1D)")
+    expect(html).toContain("579.23")
+    expect(html).toContain("560.27")
+    expect(html).toContain("12:35 pm")
+    expect(html).not.toContain("Session move")
+    expect(html).not.toContain("Last trade")
   })
 })

@@ -28,6 +28,12 @@ export {
   primeQuoteCacheForSymbols,
 } from "./service-overview"
 export {
+  buildHistoricalPriceRows,
+  getEtfDossier,
+  getHistoricalPriceRowsForSymbol,
+  resolveTickerInstrumentKind,
+} from "./service-ticker"
+export {
   createNewWatchlistForUser,
   getMarketSidebarData,
   runMarketScreener,

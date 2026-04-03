@@ -4,6 +4,7 @@ import type {
   CompanyProfile,
   DividendSnapshot,
   FinancialScoreSnapshot,
+  InstrumentKind,
   MacroRate,
   MarketMoverBucket,
   MetricStat,
@@ -184,6 +185,7 @@ export interface PeerComparisonRow {
 
 export interface ResearchQuoteRow {
   symbol: string
+  instrumentKind?: InstrumentKind
   name: string | null
   currency: string | null
   price: number | null
@@ -202,6 +204,57 @@ export interface ResearchQuoteRow {
   dcf: number | null
   freeFloatPercentage: number | null
   floatShares: number | null
+}
+
+export interface HistoricalPriceRow {
+  date: string
+  open: number | null
+  high: number | null
+  low: number | null
+  close: number | null
+  adjustedClose: number | null
+  changePercent: number | null
+  volume: number | null
+}
+
+export interface EtfInfoSnapshot {
+  symbol: string
+  name: string | null
+  exchange: string | null
+  currency: string | null
+  website: string | null
+  description: string | null
+  provider: string | null
+  assetClass: string | null
+  category: string | null
+  region: string | null
+  domicile: string | null
+  indexTracked: string | null
+  expenseRatio: number | null
+  assets: number | null
+  nav: number | null
+  peRatio: number | null
+  beta: number | null
+  totalHoldings: number | null
+  sharesOutstanding: number | null
+  inceptionDate: string | null
+  dividendYield: number | null
+  dividendPerShare: number | null
+  exDividendDate: string | null
+  frequency: string | null
+}
+
+export interface EtfHoldingEntry {
+  symbol: string | null
+  name: string | null
+  marketValue: number | null
+  sharesNumber: number | null
+  weightPercentage: number | null
+}
+
+export interface EtfAllocationEntry {
+  label: string
+  weightPercentage: number | null
 }
 
 export type AssetMarketGroupId = "crypto" | "forex" | "commodities"
@@ -283,6 +336,9 @@ export interface StockDossier {
   aftermarket: AftermarketSnapshot | null
   priceChange: PriceChangeSnapshot | null
   technicals: TechnicalIndicatorSeries[]
+  keyMetrics?: MetricStat[]
+  ratioMetrics?: MetricStat[]
+  ratingsMetrics?: MetricStat[]
   headlineStats: MetricStat[]
   financialScores: FinancialScoreSnapshot | null
   dividendSnapshot: DividendSnapshot | null
@@ -308,6 +364,24 @@ export interface StockDossier {
   secProfile: SecProfile | null
   peers: PeerComparisonRow[]
   lockedSections: LockedMarketSection[]
+}
+
+export interface EtfDossier {
+  symbol: string
+  generatedAt: string
+  plan: MarketPlanSummary
+  info: EtfInfoSnapshot | null
+  quote: QuoteSnapshot | null
+  chart: PricePoint[]
+  intradayCharts: Partial<Record<FmpIntradayInterval, PricePoint[]>>
+  aftermarket: AftermarketSnapshot | null
+  priceChange: PriceChangeSnapshot | null
+  dividendSnapshot: DividendSnapshot | null
+  dividendHistory: CalendarEvent[]
+  news: NewsStory[]
+  holdings: EtfHoldingEntry[]
+  sectorAllocations: EtfAllocationEntry[]
+  countryAllocations: EtfAllocationEntry[]
 }
 
 export interface MarketOverviewData {

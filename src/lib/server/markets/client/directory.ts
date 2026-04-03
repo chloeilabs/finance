@@ -35,6 +35,9 @@ function mapSearchResult(item: unknown): MarketSearchResult | null {
   return {
     symbol,
     name,
+    instrumentKind: /etf|fund/i.test(pickString(record, ["type"]) ?? "")
+      ? "etf"
+      : "stock",
     exchange: pickString(record, ["exchange"]),
     exchangeShortName: pickString(record, ["exchangeShortName"]),
     type: pickString(record, ["type"]),

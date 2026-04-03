@@ -134,6 +134,137 @@ describe("market client mappers", () => {
     ])
   })
 
+  it("maps ETF info, holdings, and allocation responses", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify([
+            {
+              assetClass: "Equity",
+              category: "Large Value",
+              description: "Fund summary",
+              dividendYield: 0.0346,
+              etfName: "Schwab US Dividend Equity ETF",
+              exchange: "NYSEARCA",
+              expenseRatio: 0.0006,
+              frequency: "Quarterly",
+              holdings: 104,
+              inceptionDate: "2011-10-20",
+              issuer: "Charles Schwab",
+              peRatio: 17.61,
+              region: "North America",
+              sharesOutstanding: 2780000000,
+              symbol: "SCHD",
+              totalAssets: 84450000000,
+            },
+          ]),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify([
+            {
+              asset: "HD",
+              marketValue: 1234567,
+              name: "Home Depot",
+              sharesNumber: 4567,
+              weightPercentage: 0.0432,
+            },
+          ]),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify([
+            {
+              sector: "Industrials",
+              weightPercentage: 0.182,
+            },
+          ]),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify([
+            {
+              country: "United States",
+              weightPercentage: 0.985,
+            },
+          ]),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        )
+      ) as typeof fetch
+
+    const client = createReferenceDataClient()
+
+    await expect(client.etf.getInfo("SCHD")).resolves.toEqual({
+      assetClass: "Equity",
+      assets: 84450000000,
+      beta: null,
+      category: "Large Value",
+      currency: null,
+      description: "Fund summary",
+      dividendPerShare: null,
+      dividendYield: 0.0346,
+      domicile: null,
+      exchange: "NYSEARCA",
+      exDividendDate: null,
+      expenseRatio: 0.0006,
+      frequency: "Quarterly",
+      inceptionDate: "2011-10-20",
+      indexTracked: null,
+      name: "Schwab US Dividend Equity ETF",
+      nav: null,
+      peRatio: 17.61,
+      provider: "Charles Schwab",
+      region: "North America",
+      sharesOutstanding: 2780000000,
+      symbol: "SCHD",
+      totalHoldings: 104,
+      website: null,
+    })
+
+    await expect(client.etf.getHoldings("SCHD")).resolves.toEqual([
+      {
+        marketValue: 1234567,
+        name: "Home Depot",
+        sharesNumber: 4567,
+        symbol: "HD",
+        weightPercentage: 0.0432,
+      },
+    ])
+
+    await expect(client.etf.getSectorWeightings("SCHD")).resolves.toEqual([
+      {
+        label: "Industrials",
+        weightPercentage: 0.182,
+      },
+    ])
+
+    await expect(client.etf.getCountryWeightings("SCHD")).resolves.toEqual([
+      {
+        label: "United States",
+        weightPercentage: 0.985,
+      },
+    ])
+  })
+
   it("maps multi-asset quote and compact chart responses", async () => {
     globalThis.fetch = vi
       .fn()
@@ -188,6 +319,7 @@ describe("market client mappers", () => {
       priceClient.charts.getEodChart("BTCUSD", { limit: 1 })
     ).resolves.toEqual([
       {
+        adjustedClose: null,
         close: 66581.82,
         date: "2026-03-29",
         high: 66710.3,
