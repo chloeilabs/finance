@@ -11,6 +11,16 @@ import { getCurrentViewer } from "@/lib/server/auth-session"
 import { isMarketStoreNotInitializedError } from "@/lib/server/markets/errors"
 import { getPortfolioPageData } from "@/lib/server/markets/service"
 
+function getPortfolioTitle(viewerName: string, fallbackTitle: string) {
+  const firstName = viewerName.trim().split(/\s+/)[0]
+
+  if (!firstName) {
+    return fallbackTitle
+  }
+
+  return `${firstName}'s Portfolio`
+}
+
 export default async function PortfolioPage() {
   const viewer = await getCurrentViewer()
 
@@ -29,7 +39,10 @@ export default async function PortfolioPage() {
 
     return (
       <div className="pb-10">
-        <PageHeader eyebrow="Portfolio" title="Portfolio unavailable" />
+        <PageHeader
+          title="Portfolio unavailable"
+          titleClassName="font-departureMono text-base tracking-tight sm:text-lg"
+        />
         <WarningStrip warnings={[error.message]} />
         <SectionFrame title="Storage">
           <EmptyState
@@ -43,7 +56,10 @@ export default async function PortfolioPage() {
 
   return (
     <div className="pb-10">
-      <PageHeader eyebrow="Portfolio" title={data.portfolio.name} />
+      <PageHeader
+        title={getPortfolioTitle(viewer.name, data.portfolio.name)}
+        titleClassName="font-departureMono text-base tracking-tight sm:text-lg"
+      />
 
       <SectionFrame title="Overview">
         <PortfolioOverview summary={data.summary} />

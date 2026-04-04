@@ -156,6 +156,11 @@ export function buildPortfolioSummary(params: {
     (total, holding) => total + holding.costBasis,
     0
   )
+  const weightedAverageDividendYieldValue = params.holdings.reduce(
+    (total, holding) =>
+      total + holding.marketValue * (holding.dividendYieldTtm ?? 0),
+    0
+  )
   const dayChangeValue = params.holdings.reduce(
     (total, holding) => total + (holding.dayChangeValue ?? 0),
     0
@@ -173,6 +178,8 @@ export function buildPortfolioSummary(params: {
     totalValue,
     investedValue,
     totalCostBasis,
+    weightedAverageDividendYield:
+      investedValue > 0 ? weightedAverageDividendYieldValue / investedValue : null,
     cashBalance: params.cashBalance,
     dayChangeValue,
     dayChangePercent:
