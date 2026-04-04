@@ -55,16 +55,18 @@ export function PortfolioOverview({
 }) {
   return (
     <div className="overflow-hidden border border-border/40">
-      <div className="grid gap-px bg-border/40 lg:grid-cols-6">
+      <div className="grid grid-cols-3 gap-px bg-border/40 sm:grid-cols-6">
         {SUMMARY_ITEMS.map((item) => (
           <div
             key={item.key}
-            className="market-soft-surface px-3 py-3 sm:px-4"
+            className="market-soft-surface min-w-0 px-2.5 py-3 sm:px-4"
           >
-            <div className="text-sm text-muted-foreground">{item.label}</div>
+            <div className="text-[11px] leading-tight text-muted-foreground sm:text-sm">
+              {item.label}
+            </div>
             <div
               className={cn(
-                "mt-3 text-xl tracking-tight sm:text-2xl",
+                "mt-2 text-base leading-tight tracking-tight whitespace-nowrap sm:mt-3 sm:text-xl lg:text-2xl",
                 item.key === "dayChangeValue"
                   ? getValueToneClass(summary.dayChangeValue)
                   : item.key === "unrealizedGainLoss"
@@ -76,7 +78,7 @@ export function PortfolioOverview({
             </div>
             <div
               className={cn(
-                "mt-1 text-sm",
+                "mt-1 text-xs leading-tight whitespace-nowrap sm:text-sm",
                 item.key === "dayChangeValue"
                   ? getValueToneClass(summary.dayChangeValue)
                   : item.key === "unrealizedGainLoss"
@@ -95,9 +97,11 @@ export function PortfolioOverview({
           </div>
         ))}
 
-        <div className="market-soft-surface px-3 py-3 sm:px-4">
-          <div className="text-sm text-muted-foreground">Holdings</div>
-          <div className="mt-3 text-xl tracking-tight sm:text-2xl">
+        <div className="market-soft-surface min-w-0 px-2.5 py-3 sm:px-4">
+          <div className="text-[11px] leading-tight text-muted-foreground sm:text-sm">
+            Holdings
+          </div>
+          <div className="mt-2 text-base leading-tight tracking-tight whitespace-nowrap sm:mt-3 sm:text-xl lg:text-2xl">
             {formatCompactNumber(summary.holdingCount)}
           </div>
         </div>
