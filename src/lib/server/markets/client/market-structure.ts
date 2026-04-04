@@ -205,14 +205,21 @@ export function createMarketStructureClient() {
           ["month3", "3M Treasury"],
           ["year2", "2Y Treasury"],
           ["year10", "10Y Treasury"],
+          ["year30", "30Y Treasury"],
+          ["year5", "5Y Treasury"],
+          ["year7", "7Y Treasury"],
+          ["year1", "1Y Treasury"],
+          ["month6", "6M Treasury"],
         ] as const
 
-        return labels.map(([key, label]) => ({
-          label,
-          value: pickNumber(latest, [key]),
-          previous: null,
-          date: pickString(latest, ["date"]),
-        }))
+        return labels
+          .map(([key, label]) => ({
+            label,
+            value: pickNumber(latest, [key]),
+            previous: null,
+            date: pickString(latest, ["date"]),
+          }))
+          .filter((item) => item.value !== null)
       },
       async getEconomicCalendar(
         from?: string,

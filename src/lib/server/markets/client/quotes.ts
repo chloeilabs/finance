@@ -15,6 +15,9 @@ import {
   pickString,
 } from "./support"
 
+const CORE_INDEX_SYMBOL_ORDER = ["^GSPC", "^IXIC", "^DJI"] as const
+const BENCHMARK_SYMBOL_ORDER = [...CORE_INDEX_SYMBOL_ORDER, "BTCUSD"] as const
+
 function mapQuote(item: unknown): QuoteSnapshot | null {
   const record = asRecord(item)
 
@@ -97,6 +100,22 @@ function mapPriceChange(item: unknown): PriceChangeSnapshot | null {
   }
 }
 
+function pickQuotesBySymbolOrder(
+  quotes: QuoteSnapshot[],
+  symbols: readonly string[]
+): QuoteSnapshot[] {
+  const quotesBySymbol = new Map<string, QuoteSnapshot>()
+
+  for (const quote of quotes) {
+    quotesBySymbol.set(quote.symbol, quote)
+  }
+
+  return symbols.flatMap((symbol) => {
+    const quote = quotesBySymbol.get(symbol)
+    return quote ? [quote] : []
+  })
+}
+
 export function createQuotesClient() {
   return {
     async getQuote(symbol: string): Promise<QuoteSnapshot | null> {
@@ -136,15 +155,19 @@ export function createQuotesClient() {
         .filter((item): item is QuoteSnapshot => item !== null)
     },
     async getIndexQuotes(): Promise<QuoteSnapshot[]> {
-      const payload = await fetchFmpJson("/stable/batch-index-quotes")
-      const wanted = new Set(["^GSPC", "^IXIC", "^DJI", "^RUT"])
-
-      return asArray(payload)
+      const [payload, bitcoinPayload] = await Promise.all([
+        fetchFmpJson("/stable/batch-index-quotes"),
+        fetchFmpJson("/stable/quote", { symbol: "BTCUSD" }).catch(() => []),
+      ])
+      const wanted = new Set<string>(BENCHMARK_SYMBOL_ORDER)
+      const quotes = [...asArray(payload), ...asArray(bitcoinPayload)]
         .map(mapQuote)
         .filter(
           (item): item is QuoteSnapshot =>
             item !== null && wanted.has(item.symbol)
         )
+
+      return pickQuotesBySymbolOrder(quotes, BENCHMARK_SYMBOL_ORDER)
     },
     async getMovers(): Promise<MarketMoverBucket[]> {
       const [gainers, losers, actives] = await Promise.all([

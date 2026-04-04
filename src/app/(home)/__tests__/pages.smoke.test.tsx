@@ -80,7 +80,6 @@ import {
   getLatestMarketNews,
   getLatestSecActivity,
   getMarketOverviewData,
-  getMultiAssetSnapshot,
   getPortfolioPageData,
   getStockDossier,
   getStockDossierOverview,
@@ -111,7 +110,6 @@ describe("market route smoke tests", () => {
       economicCalendar: [],
       generalNews: [],
       indexes: [],
-      indexSparklines: {},
       macro: [],
       marketHours: [],
       marketHolidays: [],
@@ -124,7 +122,6 @@ describe("market route smoke tests", () => {
       news: [],
       plan: {} as never,
       riskPremium: null,
-      sectorHistory: [],
       sectorValuations: [],
       sectors: [],
       warnings: [],
@@ -205,10 +202,6 @@ describe("market route smoke tests", () => {
       },
       sectorAllocations: [],
       symbol: "SCHD",
-    })
-    vi.mocked(getMultiAssetSnapshot).mockResolvedValue({
-      groups: [],
-      plan: {} as never,
     })
     vi.mocked(getStockPriceHistoryIntradayChart).mockResolvedValue([])
     vi.mocked(getStockDossier).mockResolvedValue({
@@ -417,11 +410,13 @@ describe("market route smoke tests", () => {
     const html = renderToStaticMarkup(await HomePage())
 
     expect(html).toContain("Market overview")
-    expect(html).toContain("Market Snapshot")
-    expect(html).toContain("Cross-Asset + Macro")
-    expect(html).toContain("Catalysts + News")
+    expect(html).not.toContain("Market Snapshot")
+    expect(html).toContain("Benchmarks")
+    expect(html).not.toContain("Cross-Asset + Macro")
+    expect(html).not.toContain("Cross-asset tape")
+    expect(html).not.toContain("Catalysts + News")
+    expect(html).toContain("Upcoming catalysts")
     expect(html).toContain("No quotes available")
-    expect(html).toContain("No multi-asset coverage yet")
     expect(html).toContain("No sector snapshot")
     expect(html).toContain("No market news")
   })

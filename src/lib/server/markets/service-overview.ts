@@ -12,7 +12,6 @@ import type {
   MarketHoursSnapshot,
   MarketOverviewData,
   RiskPremiumSnapshot,
-  SectorHistorySeries,
   SectorValuationSnapshot,
 } from "@/lib/shared/markets/intelligence"
 import type { FmpIntradayInterval } from "@/lib/shared/markets/plan"
@@ -28,9 +27,7 @@ import {
   CALENDAR_TTL_SECONDS,
   client,
   CORE_ECONOMIC_INDICATORS,
-  CORE_INDEX_SYMBOLS,
   CORE_MARKET_EXCHANGES,
-  CORE_SECTOR_HISTORY,
   CORE_WATCHLIST_SYMBOLS,
   dedupeCalendarEvents,
   dedupeNews,
@@ -61,6 +58,12 @@ const SPARKLINE_INTRADAY_INTERVAL_PREFERENCE: readonly FmpIntradayInterval[] = [
   "1hour",
   "4hour",
 ]
+export const OVERVIEW_BENCHMARK_SYMBOLS = [
+  "^GSPC",
+  "^IXIC",
+  "^DJI",
+  "BTCUSD",
+] as const
 
 async function getOverviewIndexQuotes(): Promise<QuoteSnapshot[]> {
   if (isCapabilityEnabled("batchIndexQuotes")) {
@@ -75,7 +78,7 @@ async function getOverviewIndexQuotes(): Promise<QuoteSnapshot[]> {
   }
 
   const quotes = await mapWithConcurrency(
-    [...CORE_INDEX_SYMBOLS],
+    [...OVERVIEW_BENCHMARK_SYMBOLS],
     QUOTE_FETCH_CONCURRENCY,
     (symbol) => getCachedQuoteSnapshot(symbol)
   )
@@ -87,13 +90,13 @@ async function getTreasurySnapshot(): Promise<MacroRate[]> {
   const clock = createMarketDateClock()
 
   return withMarketCache({
-    cacheKey: `macro:treasury:${clock.today}`,
+    cacheKey: `macro:treasury:v2:${clock.today}`,
     category: "macro",
     ttlSeconds: TREASURY_TTL_SECONDS,
     fallback: [] as MacroRate[],
     allowLive: isCapabilityEnabled("economics"),
     staleOnError: true,
-    fetcher: async () => (await client.macro.getTreasuryRates()).slice(0, 3),
+    fetcher: async () => (await client.macro.getTreasuryRates()).slice(0, 4),
   })
 }
 
@@ -181,41 +184,42 @@ async function getMarketHolidaySnapshot(): Promise<MarketHoliday[]> {
   return results.flat()
 }
 
+export async function getLatestAvailableSectorValuations(params: {
+  clock: Pick<ReturnType<typeof createMarketDateClock>, "today" | "minusDays">
+  fetchSnapshot: (date: string) => Promise<SectorValuationSnapshot[]>
+  maxLookbackDays?: number
+}): Promise<SectorValuationSnapshot[]> {
+  const maxLookbackDays = params.maxLookbackDays ?? 7
+
+  for (let daysAgo = 0; daysAgo < maxLookbackDays; daysAgo += 1) {
+    const date = daysAgo === 0 ? params.clock.today : params.clock.minusDays(daysAgo)
+    const snapshot = await params.fetchSnapshot(date)
+
+    if (snapshot.some((item) => item.pe !== null)) {
+      return snapshot
+    }
+  }
+
+  return []
+}
+
 async function getSectorValuationSnapshot(): Promise<
   SectorValuationSnapshot[]
 > {
   const clock = createMarketDateClock()
 
   return withMarketCache({
-    cacheKey: `sector-pe:${clock.today}`,
+    cacheKey: `sector-pe:v2:${clock.today}`,
     category: "breadth",
     ttlSeconds: SECTOR_TTL_SECONDS,
     fallback: [] as SectorValuationSnapshot[],
     staleOnError: true,
-    fetcher: () => client.breadth.getSectorPeSnapshot(clock.today),
+    fetcher: () =>
+      getLatestAvailableSectorValuations({
+        clock,
+        fetchSnapshot: (date) => client.breadth.getSectorPeSnapshot(date),
+      }),
   })
-}
-
-async function getSectorHistorySnapshot(): Promise<SectorHistorySeries[]> {
-  const clock = createMarketDateClock()
-
-  const series = await Promise.all(
-    CORE_SECTOR_HISTORY.map((sector) =>
-      withMarketCache({
-        cacheKey: `sector-history:${sector}:${clock.today}`,
-        category: "breadth",
-        ttlSeconds: SECTOR_TTL_SECONDS,
-        fallback: [] as SectorHistorySeries["points"],
-        staleOnError: true,
-        fetcher: () => client.breadth.getHistoricalSectorPerformance(sector),
-      }).then((points) => ({
-        sector,
-        points: points.slice(-10),
-      }))
-    )
-  )
-
-  return series
 }
 
 async function getMarketRiskPremiumSnapshot(): Promise<RiskPremiumSnapshot | null> {
@@ -313,6 +317,32 @@ export function getIntradaySparklineValuesForDate(
   )
 }
 
+export function getIntradaySparklineMarketDate(
+  points: PricePoint[],
+  preferredMarketDate: string
+): string | null {
+  const preferredPoints = getIntradaySparklineValuesForDate(
+    points,
+    preferredMarketDate
+  )
+
+  if (preferredPoints.length >= 2) {
+    return preferredMarketDate
+  }
+
+  for (const point of points) {
+    if (
+      typeof point.close === "number" &&
+      Number.isFinite(point.close) &&
+      point.date.length >= 10
+    ) {
+      return point.date.slice(0, 10)
+    }
+  }
+
+  return null
+}
+
 async function getSparklineForSymbol(symbol: string): Promise<number[]> {
   if (!isCapabilityEnabled("intradayCharts")) {
     return []
@@ -335,7 +365,13 @@ async function getSparklineForSymbol(symbol: string): Promise<number[]> {
     fetcher: () => client.charts.getIntradayChart(symbol, interval),
   })
 
-  return getIntradaySparklineValuesForDate(points, clock.today)
+  const marketDate = getIntradaySparklineMarketDate(points, clock.today)
+
+  if (!marketDate) {
+    return []
+  }
+
+  return getIntradaySparklineValuesForDate(points, marketDate)
 }
 
 async function getSparklinesForSymbols(
@@ -400,7 +436,6 @@ export async function getMarketOverviewData(
     watchlistQuotes,
     watchlistSparklines,
     indexes,
-    indexSparklines,
     movers,
     sectors,
     earnings,
@@ -412,13 +447,11 @@ export async function getMarketOverviewData(
     marketHours,
     marketHolidays,
     sectorValuations,
-    sectorHistory,
     riskPremium,
   ] = await Promise.all([
     getQuotesForSymbols(watchlistSymbols),
     getSparklinesForSymbols(watchlistSymbols),
     getOverviewIndexQuotes(),
-    getSparklinesForSymbols([...CORE_INDEX_SYMBOLS]),
     withMarketCache({
       cacheKey: "overview:movers",
       category: "quotes",
@@ -460,7 +493,6 @@ export async function getMarketOverviewData(
     getMarketHoursSnapshot(),
     getMarketHolidaySnapshot(),
     getSectorValuationSnapshot(),
-    getSectorHistorySnapshot(),
     getMarketRiskPremiumSnapshot(),
   ])
 
@@ -473,11 +505,9 @@ export async function getMarketOverviewData(
       sparklines: watchlistSparklines,
     },
     indexes,
-    indexSparklines,
     movers,
-    sectors: sectors.slice(0, 8),
-    sectorValuations: sectorValuations.slice(0, 8),
-    sectorHistory,
+    sectors,
+    sectorValuations,
     calendar: dedupeCalendarEvents([...earnings, ...dividends])
       .sort((left, right) => left.eventDate.localeCompare(right.eventDate))
       .slice(0, 10),

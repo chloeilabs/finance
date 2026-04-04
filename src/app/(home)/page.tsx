@@ -1,4 +1,3 @@
-import { AssetTeaserGrid } from "@/components/markets/assets/asset-market-grid"
 import {
   CalendarList,
   FilingList,
@@ -10,14 +9,12 @@ import {
   SectionFrame,
   SectorGrid,
 } from "@/components/markets/ui/market-primitives"
-import { Sparkline } from "@/components/markets/ui/sparkline"
 import { formatSignedNumber } from "@/lib/markets-format"
 import { getCurrentViewer } from "@/lib/server/auth-session"
 import {
   getLatestInsiderFeed,
   getLatestSecActivity,
   getMarketOverviewData,
-  getMultiAssetSnapshot,
 } from "@/lib/server/markets/service"
 
 export default async function Home() {
@@ -27,19 +24,20 @@ export default async function Home() {
     return null
   }
 
-  const [overview, assets, latestFilings, latestInsiderTrades] =
-    await Promise.all([
-      getMarketOverviewData(viewer.id),
-      getMultiAssetSnapshot(),
-      getLatestSecActivity(),
-      getLatestInsiderFeed(),
-    ])
+  const [overview, latestFilings, latestInsiderTrades] = await Promise.all([
+    getMarketOverviewData(viewer.id),
+    getLatestSecActivity(),
+    getLatestInsiderFeed(),
+  ])
 
   return (
     <div className="pb-10">
-      <PageHeader title="Market overview" />
+      <PageHeader
+        title="Market overview"
+        titleClassName="font-departureMono text-base tracking-tight sm:text-lg"
+      />
 
-      <SectionFrame title="Market Snapshot">
+      <SectionFrame>
         <div className="space-y-6">
           <div className="space-y-3">
             <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
@@ -48,14 +46,10 @@ export default async function Home() {
             <QuoteStrip
               linkItems={false}
               quotes={overview.indexes}
-              sparklines={overview.indexSparklines}
             />
           </div>
 
           <div className="space-y-3">
-            <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
-              Tape leaders
-            </div>
             <div className="market-grid-3 grid gap-3">
               {overview.movers.map((bucket) => (
                 <div key={bucket.label} className="space-y-3">
@@ -77,15 +71,8 @@ export default async function Home() {
         </div>
       </SectionFrame>
 
-      <SectionFrame title="Cross-Asset + Macro">
+      <SectionFrame>
         <div className="space-y-6">
-          <div className="space-y-3">
-            <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
-              Cross-asset tape
-            </div>
-            <AssetTeaserGrid groups={assets.groups} />
-          </div>
-
           <div className="space-y-3">
             <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
               Macro rates
@@ -112,51 +99,27 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-2">
-            <div className="space-y-3">
-              <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
-                Sector valuation
-              </div>
-              <div className="market-grid-2 market-panel-grid grid sm:grid-cols-4 xl:grid-cols-2">
-                {overview.sectorValuations.map((item) => (
-                  <div
-                    key={`${item.sector}:${item.exchange ?? ""}`}
-                    className="market-panel-tile px-3 py-2.5 sm:px-4"
-                  >
-                    <div className="text-xs text-muted-foreground">
-                      {item.sector}
-                    </div>
-                    <div className="mt-2 text-lg tracking-tight">
-                      {item.pe?.toFixed(2) ?? "N/A"}
-                    </div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {item.exchange ?? "Market-wide"}
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <div className="space-y-3">
+            <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
+              Sector valuation
             </div>
-
-            <div className="space-y-3">
-              <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
-                Historical sector performance
-              </div>
-              <div className="market-grid-2 market-panel-grid grid sm:grid-cols-4 xl:grid-cols-2">
-                {overview.sectorHistory.map((series) => (
-                  <div
-                    key={series.sector}
-                    className="market-panel-tile px-3 py-2.5 sm:px-4"
-                  >
-                    <div className="text-xs text-muted-foreground">
-                      {series.sector}
-                    </div>
-                    <Sparkline
-                      className="mt-4 h-16"
-                      values={series.points.map((point) => point.averageChange)}
-                    />
+            <div className="market-grid-2 market-panel-grid grid sm:grid-cols-4 xl:grid-cols-2">
+              {overview.sectorValuations.map((item) => (
+                <div
+                  key={`${item.sector}:${item.exchange ?? ""}`}
+                  className="market-panel-tile px-3 py-2.5 sm:px-4"
+                >
+                  <div className="text-xs text-muted-foreground">
+                    {item.sector}
                   </div>
-                ))}
-              </div>
+                  <div className="mt-2 text-lg tracking-tight">
+                    {item.pe?.toFixed(2) ?? "N/A"}
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {item.exchange ?? "Market-wide"}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -239,7 +202,7 @@ export default async function Home() {
         </div>
       </SectionFrame>
 
-      <SectionFrame title="Catalysts + News">
+      <SectionFrame>
         <div className="space-y-6">
           <div className="grid gap-6 xl:grid-cols-2">
             <div className="space-y-3">
