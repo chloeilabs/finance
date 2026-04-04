@@ -253,7 +253,23 @@
     z-index: 1;
     background: color-mix(in oklab, var(--muted) 78%, var(--background));
     background-clip: padding-box;
-    box-shadow: 10px 0 14px -14px rgba(0, 0, 0, 0.95);
+  }
+
+  .market-table-sticky-column::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: -28px;
+    bottom: 0;
+    width: 28px;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      rgb(0 0 0 / 0.18) 0%,
+      rgb(0 0 0 / 0.1) 38%,
+      rgb(0 0 0 / 0.04) 70%,
+      transparent 100%
+    );
   }
 
   thead .market-table-sticky-column {
