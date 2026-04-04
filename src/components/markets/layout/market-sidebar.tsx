@@ -51,14 +51,14 @@ const PRIMARY_NAV_ITEMS = [
     icon: BarChart3,
   },
   {
-    href: "/news",
-    label: "News",
-    icon: Newspaper,
-  },
-  {
     href: "/portfolio",
     label: "Portfolio",
     icon: BriefcaseBusiness,
+  },
+  {
+    href: "/news",
+    label: "News",
+    icon: Newspaper,
   },
 ] as const
 
