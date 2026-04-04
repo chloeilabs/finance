@@ -2,6 +2,8 @@ import type { ReactNode } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
+import { MarketStoreNotInitializedError } from "@/lib/server/markets/errors"
+
 vi.mock("next/link", () => ({
   default: ({
     children,
@@ -29,6 +31,7 @@ vi.mock("@/lib/server/markets/service", () => ({
   getLatestSecActivity: vi.fn(),
   getMarketOverviewData: vi.fn(),
   getMultiAssetSnapshot: vi.fn(),
+  getPortfolioPageData: vi.fn(),
   resolveTickerInstrumentKind: vi.fn(),
   getStockDossier: vi.fn(),
   getStockDossierOverview: vi.fn(),
@@ -57,6 +60,18 @@ vi.mock("@/components/markets/watchlists/watchlist-research-table", () => ({
   WatchlistResearchTable: () => <div>Watchlist research table</div>,
 }))
 
+vi.mock("@/components/markets/portfolio/portfolio-allocation", () => ({
+  PortfolioAllocation: () => <div>Portfolio allocation</div>,
+}))
+
+vi.mock("@/components/markets/portfolio/portfolio-holdings-panel", () => ({
+  PortfolioHoldingsPanel: () => <div>Portfolio holdings panel</div>,
+}))
+
+vi.mock("@/components/markets/portfolio/portfolio-overview", () => ({
+  PortfolioOverview: () => <div>Portfolio overview</div>,
+}))
+
 import { getCurrentViewer } from "@/lib/server/auth-session"
 import {
   getEtfDossier,
@@ -66,6 +81,7 @@ import {
   getLatestSecActivity,
   getMarketOverviewData,
   getMultiAssetSnapshot,
+  getPortfolioPageData,
   getStockDossier,
   getStockDossierOverview,
   getStockPriceHistoryIntradayChart,
@@ -76,6 +92,7 @@ import {
 import EtfPage from "../etfs/[symbol]/page"
 import NewsPage from "../news/page"
 import HomePage from "../page"
+import PortfolioPage from "../portfolio/page"
 import StockPage from "../stocks/[symbol]/page"
 import WatchlistPage from "../watchlists/[id]/page"
 
@@ -342,6 +359,57 @@ describe("market route smoke tests", () => {
       symbol: "AAPL",
       valuation: null,
     })
+    vi.mocked(getPortfolioPageData).mockResolvedValue({
+      holdings: [
+        {
+          analystConsensus: "Buy",
+          averageCost: 120,
+          costBasis: 1200,
+          createdAt: "2026-04-03T00:00:00.000Z",
+          currency: "USD",
+          dayChangePercent: 1.5,
+          dayChangeValue: 18,
+          dividendYieldTtm: 0.01,
+          id: "holding_1",
+          instrumentKind: "stock",
+          marketValue: 1350,
+          name: "Apple Inc.",
+          nextEarningsDate: "2026-05-01",
+          notes: null,
+          price: 135,
+          sector: "Technology",
+          shares: 10,
+          symbol: "AAPL",
+          targetWeight: null,
+          unrealizedGainLoss: 150,
+          unrealizedGainLossPercent: 0.125,
+          updatedAt: "2026-04-03T00:00:00.000Z",
+          weight: 0.54,
+        },
+      ],
+      instrumentAllocations: [],
+      portfolio: {
+        baseCurrency: "USD",
+        cashBalance: 1150,
+        createdAt: "2026-04-03T00:00:00.000Z",
+        id: "default",
+        name: "Portfolio",
+        updatedAt: "2026-04-03T00:00:00.000Z",
+      },
+      sectorAllocations: [],
+      summary: {
+        cashBalance: 1150,
+        dayChangePercent: 0.007,
+        dayChangeValue: 18,
+        holdingCount: 1,
+        investedValue: 1350,
+        topPositionConcentration: 0.54,
+        totalCostBasis: 1200,
+        totalValue: 2500,
+        unrealizedGainLoss: 150,
+        unrealizedGainLossPercent: 0.125,
+      },
+    })
   })
 
   it("renders the home page with degraded empty states", async () => {
@@ -375,6 +443,59 @@ describe("market route smoke tests", () => {
 
     expect(html).toContain("Core")
     expect(html).not.toContain("/compare?symbols=")
+  })
+
+  it("renders the portfolio page with the expected sections", async () => {
+    const html = renderToStaticMarkup(await PortfolioPage())
+
+    expect(html).toContain("Portfolio")
+    expect(html).toContain("Overview")
+    expect(html).toContain("Holdings")
+    expect(html).toContain("Allocation")
+  })
+
+  it("renders the empty portfolio state", async () => {
+    vi.mocked(getPortfolioPageData).mockResolvedValueOnce({
+      holdings: [],
+      instrumentAllocations: [],
+      portfolio: {
+        baseCurrency: "USD",
+        cashBalance: 0,
+        createdAt: "2026-04-03T00:00:00.000Z",
+        id: "default",
+        name: "Portfolio",
+        updatedAt: "2026-04-03T00:00:00.000Z",
+      },
+      sectorAllocations: [],
+      summary: {
+        cashBalance: 0,
+        dayChangePercent: null,
+        dayChangeValue: 0,
+        holdingCount: 0,
+        investedValue: 0,
+        topPositionConcentration: null,
+        totalCostBasis: 0,
+        totalValue: 0,
+        unrealizedGainLoss: 0,
+        unrealizedGainLossPercent: null,
+      },
+    })
+
+    const html = renderToStaticMarkup(await PortfolioPage())
+
+    expect(html).toContain("Portfolio")
+    expect(html).toContain("Portfolio holdings panel")
+  })
+
+  it("renders the storage unavailable portfolio state", async () => {
+    vi.mocked(getPortfolioPageData).mockRejectedValueOnce(
+      new MarketStoreNotInitializedError()
+    )
+
+    const html = renderToStaticMarkup(await PortfolioPage())
+
+    expect(html).toContain("Portfolio unavailable")
+    expect(html).toContain("Portfolio storage is unavailable")
   })
 
   it("renders the stock page without throwing when optional sections are empty", async () => {

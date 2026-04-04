@@ -188,9 +188,11 @@ export interface ResearchQuoteRow {
   instrumentKind?: InstrumentKind
   name: string | null
   currency: string | null
+  change: number | null
   price: number | null
   changesPercentage: number | null
   marketCap: number | null
+  sector: string | null
   rsi14: number | null
   nextEarningsDate: string | null
   analystConsensus: string | null

@@ -28,6 +28,13 @@ export {
   primeQuoteCacheForSymbols,
 } from "./service-overview"
 export {
+  createPortfolioHoldingForUser,
+  deletePortfolioHoldingForUser,
+  getPortfolioPageData,
+  updatePortfolioCashBalanceForUser,
+  updatePortfolioHoldingForUser,
+} from "./service-portfolio"
+export {
   buildHistoricalPriceRows,
   getEtfDossier,
   getHistoricalPriceRowsForSymbol,
