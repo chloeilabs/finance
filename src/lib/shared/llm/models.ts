@@ -1,6 +1,6 @@
 export const AvailableModels = {
-  OPENROUTER_QWEN_3_6_PLUS_PREVIEW_FREE:
-    "qwen/qwen3.6-plus-preview:free",
+  OPENROUTER_GOOGLE_GEMINI_3_1_PRO_PREVIEW_CUSTOMTOOLS:
+    "google/gemini-3.1-pro-preview-customtools",
   OPENROUTER_MINIMAX_M2_7: "minimax/minimax-m2.7",
   OPENROUTER_Z_AI_GLM_5: "z-ai/glm-5",
 } as const
@@ -14,15 +14,19 @@ export function isModelType(value: unknown): value is ModelType {
   )
 }
 
-export interface ModelInfo {
-  id: ModelType
+export interface ModelListItem {
+  id: string
   name: string
+}
+
+export interface ModelInfo extends ModelListItem {
+  id: ModelType
 }
 
 export const OPENROUTER_MODELS = [
   AvailableModels.OPENROUTER_MINIMAX_M2_7,
-  AvailableModels.OPENROUTER_QWEN_3_6_PLUS_PREVIEW_FREE,
   AvailableModels.OPENROUTER_Z_AI_GLM_5,
+  AvailableModels.OPENROUTER_GOOGLE_GEMINI_3_1_PRO_PREVIEW_CUSTOMTOOLS,
 ] as const
 
 export const ALL_MODELS = [...OPENROUTER_MODELS] as const
@@ -33,10 +37,32 @@ export function resolveDefaultModel(
   return models[0]?.id ?? OPENROUTER_MODELS[0]
 }
 
+export function sanitizeModelInfos(
+  models: readonly ModelListItem[]
+): ModelInfo[] {
+  return models.filter((model): model is ModelInfo => isModelType(model.id))
+}
+
+export function resolveModelName(
+  modelId: string | null | undefined,
+  availableModels: readonly ModelListItem[] = []
+): string | null {
+  if (!modelId) {
+    return null
+  }
+
+  const availableModel = availableModels.find((model) => model.id === modelId)
+  if (availableModel) {
+    return availableModel.name
+  }
+
+  return isModelType(modelId) ? ModelInfos[modelId].name : modelId
+}
+
 export const ModelInfos: Record<ModelType, ModelInfo> = {
-  [AvailableModels.OPENROUTER_QWEN_3_6_PLUS_PREVIEW_FREE]: {
-    id: AvailableModels.OPENROUTER_QWEN_3_6_PLUS_PREVIEW_FREE,
-    name: "Qwen 3.6 Plus Preview",
+  [AvailableModels.OPENROUTER_GOOGLE_GEMINI_3_1_PRO_PREVIEW_CUSTOMTOOLS]: {
+    id: AvailableModels.OPENROUTER_GOOGLE_GEMINI_3_1_PRO_PREVIEW_CUSTOMTOOLS,
+    name: "Gemini 3.1 Pro",
   },
   [AvailableModels.OPENROUTER_MINIMAX_M2_7]: {
     id: AvailableModels.OPENROUTER_MINIMAX_M2_7,
