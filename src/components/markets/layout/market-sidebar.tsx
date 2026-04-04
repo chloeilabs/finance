@@ -246,11 +246,15 @@ export function MarketSidebar({
     setIsSearchOpen(true)
   }
 
-  const handleOpenCopilot = () => {
+  const navigateTo = (href: string) => {
     stopRenaming()
     closeSearch()
-    router.push("/copilot")
     setOpenMobile(false)
+    router.push(href)
+  }
+
+  const handleOpenCopilot = () => {
+    navigateTo("/copilot")
   }
 
   const handleSelectThread = (threadId: string) => {
@@ -397,12 +401,12 @@ export function MarketSidebar({
             role="button"
             tabIndex={0}
             onClick={() => {
-              router.push("/")
+              navigateTo("/")
             }}
             onKeyDown={(event) => {
               if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault()
-                router.push("/")
+                navigateTo("/")
               }
             }}
             className="flex h-8 w-full cursor-pointer items-center gap-3 overflow-hidden px-2 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:translate-x-px group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:self-center group-data-[collapsible=icon]:px-0"
@@ -432,9 +436,7 @@ export function MarketSidebar({
                         : pathname === item.href ||
                           pathname.startsWith(`${item.href}/`)
                     }
-                    onNavigate={(href) => {
-                      router.push(href)
-                    }}
+                    onNavigate={navigateTo}
                   />
                 ))}
               </SidebarMenu>
@@ -457,7 +459,7 @@ export function MarketSidebar({
                               pathname === `/watchlists/${watchlist.id}`
                             }
                             onClick={() => {
-                              router.push(`/watchlists/${watchlist.id}`)
+                              navigateTo(`/watchlists/${watchlist.id}`)
                             }}
                             className={SIDEBAR_MENU_BUTTON_CLASS}
                           >
