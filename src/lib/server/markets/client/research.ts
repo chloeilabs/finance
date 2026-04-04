@@ -91,32 +91,36 @@ function mapNewsStory(item: unknown): NewsStory | null {
 
 function mapAnalystSummary(
   item: unknown,
-  grades: unknown[]
+  grades: unknown[],
+  gradesConsensus: GradesConsensus | null
 ): AnalystSummary | null {
   const record = asRecord(item)
+  const normalizedGrades = grades
+    .map((grade) => asRecord(grade))
+    .filter((grade): grade is Record<string, unknown> => grade !== null)
+    .slice(0, 6)
+    .map((grade) => ({
+      date: pickString(grade, ["date", "gradingCompanyDate"]),
+      provider: pickString(grade, ["gradingCompany", "provider"]),
+      grade: pickString(grade, ["newGrade", "grade"]),
+    }))
 
-  if (!record) {
+  if (!record && !gradesConsensus?.consensus && normalizedGrades.length === 0) {
     return null
   }
 
   return {
-    targetLow: pickNumber(record, ["targetLow", "low"]),
-    targetHigh: pickNumber(record, ["targetHigh", "high"]),
-    targetConsensus: pickNumber(record, [
-      "targetConsensus",
-      "targetMean",
-      "consensus",
-    ]),
-    ratingSummary: pickString(record, ["consensusRating", "recommendation"]),
-    grades: grades
-      .map((grade) => asRecord(grade))
-      .filter((grade): grade is Record<string, unknown> => grade !== null)
-      .slice(0, 6)
-      .map((grade) => ({
-        date: pickString(grade, ["date", "gradingCompanyDate"]),
-        provider: pickString(grade, ["gradingCompany", "provider"]),
-        grade: pickString(grade, ["newGrade", "grade"]),
-      })),
+    targetLow: record ? pickNumber(record, ["targetLow", "low"]) : null,
+    targetHigh: record ? pickNumber(record, ["targetHigh", "high"]) : null,
+    targetConsensus: record
+      ? pickNumber(record, ["targetConsensus", "targetMean", "consensus"])
+      : null,
+    ratingSummary:
+      gradesConsensus?.consensus ??
+      (record
+        ? pickString(record, ["consensusRating", "recommendation"])
+        : null),
+    grades: normalizedGrades,
   }
 }
 
@@ -296,12 +300,34 @@ export function createResearchClient() {
     },
     analyst: {
       async getSummary(symbol: string): Promise<AnalystSummary | null> {
-        const [consensus, grades] = await Promise.all([
+        const [consensusResult, gradesResult, gradesConsensusResult] =
+          await Promise.allSettled([
           fetchFmpJson("/stable/price-target-consensus", { symbol }),
           fetchFmpJson("/stable/grades", { symbol }),
+          fetchFmpJson("/stable/grades-consensus", { symbol }),
         ])
 
-        return mapAnalystSummary(asArray(consensus)[0], asArray(grades))
+        if (
+          consensusResult.status === "rejected" &&
+          gradesResult.status === "rejected" &&
+          gradesConsensusResult.status === "rejected"
+        ) {
+          throw consensusResult.reason
+        }
+
+        const consensus =
+          consensusResult.status === "fulfilled" ? consensusResult.value : []
+        const grades = gradesResult.status === "fulfilled" ? gradesResult.value : []
+        const gradesConsensus =
+          gradesConsensusResult.status === "fulfilled"
+            ? mapGradesConsensus(asArray(gradesConsensusResult.value)[0])
+            : null
+
+        return mapAnalystSummary(
+          asArray(consensus)[0],
+          asArray(grades),
+          gradesConsensus
+        )
       },
       async getGradesConsensus(
         symbol: string

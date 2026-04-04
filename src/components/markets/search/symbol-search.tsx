@@ -12,9 +12,13 @@ import { cn } from "@/lib/utils"
 export function SymbolSearch({
   className,
   inputClassName,
+  onSelectResult,
+  placeholder = "Search symbols, companies, ETFs",
 }: {
   className?: string
   inputClassName?: string
+  onSelectResult?: (result: MarketSearchResult) => void
+  placeholder?: string
 }) {
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<MarketSearchResult[]>([])
@@ -87,7 +91,7 @@ export function SymbolSearch({
             "h-9 rounded-none border-border/70 bg-background pl-8",
             inputClassName
           )}
-          placeholder="Search symbols, companies, ETFs"
+          placeholder={placeholder}
           value={query}
           onChange={(event) => {
             setQuery(event.target.value)
@@ -104,29 +108,52 @@ export function SymbolSearch({
       {isOpen && deferredQuery.trim().length >= 2 && results.length > 0 ? (
         <div className="absolute inset-x-0 top-[calc(100%+0.375rem)] z-40 border border-border/70 bg-background shadow-lg">
           {results.map((result) => (
-            <Link
-              key={`${result.symbol}:${result.exchangeShortName ?? ""}`}
-              className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border/40 px-3 py-2 text-sm transition-colors last:border-b-0 hover:bg-muted/35"
-              href={getTickerHref(
-                result.symbol,
-                result.instrumentKind ??
-                  (/etf|fund/i.test(result.type ?? "") ? "etf" : "stock")
-              )}
-              onClick={() => {
-                setIsOpen(false)
-                setQuery("")
-              }}
-            >
-              <div className="font-departureMono text-xs tracking-tight">
-                {result.symbol}
-              </div>
-              <div className="min-w-0 truncate text-muted-foreground">
-                {result.name}
-              </div>
-              <div className="text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
-                {result.exchangeShortName ?? result.type ?? "asset"}
-              </div>
-            </Link>
+            onSelectResult ? (
+              <button
+                key={`${result.symbol}:${result.exchangeShortName ?? ""}`}
+                type="button"
+                className="grid w-full cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border/40 px-3 py-2 text-left text-sm transition-colors last:border-b-0 hover:bg-muted/35"
+                onClick={() => {
+                  onSelectResult(result)
+                  setIsOpen(false)
+                  setQuery("")
+                }}
+              >
+                <div className="font-departureMono text-xs tracking-tight">
+                  {result.symbol}
+                </div>
+                <div className="min-w-0 truncate text-muted-foreground">
+                  {result.name}
+                </div>
+                <div className="text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
+                  {result.exchangeShortName ?? result.type ?? "asset"}
+                </div>
+              </button>
+            ) : (
+              <Link
+                key={`${result.symbol}:${result.exchangeShortName ?? ""}`}
+                className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border/40 px-3 py-2 text-sm transition-colors last:border-b-0 hover:bg-muted/35"
+                href={getTickerHref(
+                  result.symbol,
+                  result.instrumentKind ??
+                    (/etf|fund/i.test(result.type ?? "") ? "etf" : "stock")
+                )}
+                onClick={() => {
+                  setIsOpen(false)
+                  setQuery("")
+                }}
+              >
+                <div className="font-departureMono text-xs tracking-tight">
+                  {result.symbol}
+                </div>
+                <div className="min-w-0 truncate text-muted-foreground">
+                  {result.name}
+                </div>
+                <div className="text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
+                  {result.exchangeShortName ?? result.type ?? "asset"}
+                </div>
+              </Link>
+            )
           ))}
         </div>
       ) : null}

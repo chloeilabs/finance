@@ -2,6 +2,7 @@
 
 import {
   BarChart3,
+  BriefcaseBusiness,
   ChevronDown,
   HatGlasses,
   MoreHorizontal,
@@ -53,6 +54,11 @@ const PRIMARY_NAV_ITEMS = [
     href: "/news",
     label: "News",
     icon: Newspaper,
+  },
+  {
+    href: "/portfolio",
+    label: "Portfolio",
+    icon: BriefcaseBusiness,
   },
 ] as const
 

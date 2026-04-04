@@ -6,7 +6,7 @@
 - provider access: FMP REST request and mapping logic plus FMP MCP access for `/copilot`
 - cache policy: TTLs, stale-on-error fallback, cache keys
 - market time: `createMarketDateClock()` for all day-based queries
-- storage: watchlists, saved screeners, symbol directory, cache entries, usage tracking
+- storage: portfolios, watchlists, saved screeners, symbol directory, cache entries, usage tracking
 - page orchestration: compose provider and storage data for routes/pages
 
 ## Working Rules
@@ -23,13 +23,14 @@
 - `service.ts`: stable facade plus higher-level page orchestration
 - `service-overview.ts`: home and news aggregation
 - `service-dossier.ts`: stable dossier facade for stock and watchlist flows
+- `service-portfolio.ts`: single-portfolio page assembly, holding enrichment, and derived allocation/summary math
 - `service-dossier-overview.ts`: stock summary and locked-section resolution
 - `service-dossier-sections.ts`: trading, financial, context, street-view, and business section builders
 - `service-dossier-research.ts`: watchlist research assembly
 - `service-dossier-fetchers.ts`: reusable cached stock fetch helpers
 - `service-data.ts`: Starter dataset catalog, access-state resolution, and generic dataset fetch helpers
 - `store.ts`: stable Postgres persistence facade
-- `store-*.ts`: focused persistence modules for watchlists, directory, cache/usage, and screeners
+- `store-*.ts`: focused persistence modules for portfolios, watchlists, directory, cache/usage, and screeners
 - `client.ts`: stable FMP client facade
 - `client/*`: domain-specific FMP fetchers and response mappers
 - `market-clock.ts`: market-day date helpers

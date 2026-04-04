@@ -2,13 +2,13 @@
 
 ## Product Areas
 
-- `src/app/(home)`: market workspace pages
+- `src/app/(home)`: market workspace pages, including overview, news, watchlists, and portfolio
 - `src/app/copilot`: copilot entrypoint and layout
 - `src/app/api`: route handlers for auth, markets, threads, and agent streaming
 
 ## UI
 
-- `src/components/markets`: market layout, search, watchlists, stocks, and primitives
+- `src/components/markets`: market layout, search, portfolio, watchlists, stocks, and primitives
 - `src/components/agent`: copilot home, messages, markdown, and prompt form
 - `src/components/auth`: auth screens and user menu
 - `src/components/ui`: shared UI primitives
@@ -17,7 +17,7 @@
 
 - `src/lib/server/auth*`: Better Auth session helpers
 - `src/lib/server/threads.ts`: thread storage and persistence
-- `src/lib/server/markets`: market provider, caching, storage, and page orchestration
+- `src/lib/server/markets`: market provider, caching, portfolio/watchlist storage, and page orchestration
 - `src/lib/server/llm`: model adapters and tool wiring for `/copilot`
 
 ## Shared Modules

@@ -3,13 +3,11 @@ import "server-only"
 import type {
   CalendarEvent,
   MetricStat,
-  QuoteSnapshot,
   TechnicalIndicatorSeries,
 } from "@/lib/shared/markets/core"
 import type {
-  AnalystSummary,
+  EtfInfoSnapshot,
   ResearchQuoteRow,
-  StockDossier,
 } from "@/lib/shared/markets/intelligence"
 import type { WatchlistResearchData } from "@/lib/shared/markets/workspace"
 
@@ -17,6 +15,8 @@ import { withMarketCache } from "./cache"
 import { getMarketPlanSummary, isCapabilityEnabled } from "./config"
 import { createMarketDateClock } from "./market-clock"
 import {
+  getResearchDividendYieldFraction,
+  getStockCompanyProfile,
   getStockDividendSnapshot,
   getStockFinancialScores,
   getStockShareFloat,
@@ -37,7 +37,7 @@ import {
 } from "./service-support"
 import { getSymbolDirectoryEntry, getWatchlistForUser } from "./store"
 
-async function buildResearchRows(
+export async function buildResearchRows(
   symbols: string[]
 ): Promise<ResearchQuoteRow[]> {
   const clock = createMarketDateClock()
@@ -50,6 +50,7 @@ async function buildResearchRows(
       const [
         directoryEntry,
         quote,
+        profile,
         technicals,
         earnings,
         analyst,
@@ -58,20 +59,10 @@ async function buildResearchRows(
         dividendSnapshot,
         valuation,
         shareFloat,
-      ]: [
-        Awaited<ReturnType<typeof getSymbolDirectoryEntry>>,
-        QuoteSnapshot | null,
-        TechnicalIndicatorSeries[],
-        CalendarEvent[],
-        AnalystSummary | null,
-        StockDossier["financialScores"],
-        MetricStat[],
-        StockDossier["dividendSnapshot"],
-        StockDossier["valuation"],
-        StockDossier["shareFloat"],
       ] = await Promise.all([
         getSymbolDirectoryEntry(symbol).catch(() => null),
         getCachedQuoteSnapshot(symbol),
+        getStockCompanyProfile(symbol),
         getStockTechnicals(symbol),
         withMarketCache({
           cacheKey: `stock:${symbol}:earnings`,
@@ -103,6 +94,17 @@ async function buildResearchRows(
         getStockValuationSnapshot(symbol),
         getStockShareFloat(symbol),
       ])
+      const etfInfo =
+        directoryEntry?.isEtf || profile === null
+          ? await withMarketCache({
+              cacheKey: `etf:${symbol}:info`,
+              category: "profile",
+              ttlSeconds: PROFILE_TTL_SECONDS,
+              fallback: null as EtfInfoSnapshot | null,
+              staleOnError: true,
+              fetcher: () => client.etf.getInfo(symbol),
+            })
+          : null
 
       const rsiSeries = technicals.find(
         (item: TechnicalIndicatorSeries) => item.id === "rsi14"
@@ -115,20 +117,26 @@ async function buildResearchRows(
 
       return {
         symbol,
-        instrumentKind: directoryEntry?.isEtf ? "etf" : "stock",
-        name: quote?.name ?? null,
-        currency: quote?.currency ?? null,
+        instrumentKind: directoryEntry?.isEtf || etfInfo ? "etf" : "stock",
+        name: quote?.name ?? profile?.companyName ?? etfInfo?.name ?? null,
+        currency: quote?.currency ?? etfInfo?.currency ?? null,
+        change: quote?.change ?? null,
         price: quote?.price ?? null,
         changesPercentage: quote?.changesPercentage ?? null,
         marketCap: quote?.marketCap ?? null,
+        sector: directoryEntry?.sector ?? profile?.sector ?? null,
         rsi14: rsiSeries?.points[rsiSeries.points.length - 1]?.value ?? null,
         nextEarningsDate: nextEarnings?.eventDate ?? null,
         analystConsensus: analyst?.ratingSummary ?? null,
         piotroskiScore: scores?.piotroskiScore ?? null,
         altmanZScore: scores?.altmanZScore ?? null,
         fcfYield: getMetricNumberByLabel(keyMetrics, "FCF Yield"),
-        dividendYieldTtm: dividendSnapshot?.dividendYieldTtm ?? null,
-        dividendPerShareTtm: dividendSnapshot?.dividendPerShareTtm ?? null,
+        dividendYieldTtm:
+          getResearchDividendYieldFraction(dividendSnapshot) ??
+          etfInfo?.dividendYield ??
+          null,
+        dividendPerShareTtm:
+          dividendSnapshot?.dividendPerShareTtm ?? etfInfo?.dividendPerShare ?? null,
         dividendPayoutRatioTtm:
           dividendSnapshot?.dividendPayoutRatioTtm ?? null,
         roic: getMetricNumberByLabel(keyMetrics, "ROIC"),
