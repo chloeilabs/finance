@@ -4,6 +4,7 @@ import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
 import { cva, type VariantProps } from "class-variance-authority"
 import { PanelLeftIcon } from "lucide-react"
+import { usePathname, useSearchParams } from "next/navigation"
 import * as React from "react"
 
 import { Button } from "@/components/ui/button"
@@ -65,6 +66,14 @@ function SidebarProvider({
 }) {
   const isMobile = useIsMobile()
   const [openMobile, setOpenMobile] = React.useState(false)
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const navigationKey = React.useMemo(() => {
+    const search = searchParams.toString()
+
+    return search ? `${pathname}?${search}` : pathname
+  }, [pathname, searchParams])
+  const previousNavigationKeyRef = React.useRef(navigationKey)
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
@@ -110,6 +119,21 @@ function SidebarProvider({
       window.removeEventListener("keydown", handleKeyDown)
     }
   }, [toggleSidebar])
+
+  React.useEffect(() => {
+    const previousNavigationKey = previousNavigationKeyRef.current
+    previousNavigationKeyRef.current = navigationKey
+
+    if (
+      !isMobile ||
+      !openMobile ||
+      previousNavigationKey === navigationKey
+    ) {
+      return
+    }
+
+    setOpenMobile(false)
+  }, [isMobile, navigationKey, openMobile])
 
   // We add a state so that we can do data-state="expanded" or "collapsed".
   // This makes it easier to style the sidebar with Tailwind classes.
@@ -189,7 +213,7 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="h-svh max-h-svh w-(--sidebar-width) overflow-hidden overscroll-none bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+          className="w-(--sidebar-width) overflow-hidden overscroll-none bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
