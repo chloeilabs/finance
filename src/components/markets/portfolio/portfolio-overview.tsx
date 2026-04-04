@@ -6,35 +6,74 @@ import {
 import type { PortfolioSummary } from "@/lib/shared/markets/portfolio"
 import { cn } from "@/lib/utils"
 
+type SummaryItemKey =
+  | "totalValue"
+  | "dayChangeValue"
+  | "unrealizedGainLoss"
+  | "cashBalance"
+  | "income"
+
 const SUMMARY_ITEMS: {
-  key: keyof PortfolioSummary
+  key: SummaryItemKey
   label: string
-  formatter: (value: number | null | undefined) => string
+  formatter: (summary: PortfolioSummary) => string
+  detailFormatter?: (summary: PortfolioSummary) => string | null
 }[] = [
   {
     key: "totalValue",
     label: "Total Value",
-    formatter: (value) => formatCurrency(value, { currency: "USD" }),
+    formatter: (summary) =>
+      formatCurrency(summary.totalValue, { currency: "USD" }),
   },
   {
     key: "dayChangeValue",
     label: "Day P/L",
-    formatter: (value) => formatCurrency(value, { currency: "USD", compact: true }),
+    formatter: (summary) =>
+      formatCurrency(summary.dayChangeValue, {
+        currency: "USD",
+        compact: true,
+      }),
+    detailFormatter: (summary) =>
+      formatPercent(summary.dayChangePercent, { scale: "fraction" }),
   },
   {
     key: "unrealizedGainLoss",
     label: "Total P/L",
-    formatter: (value) => formatCurrency(value, { currency: "USD", compact: true }),
+    formatter: (summary) =>
+      formatCurrency(summary.unrealizedGainLoss, {
+        currency: "USD",
+        compact: true,
+      }),
+    detailFormatter: (summary) =>
+      formatPercent(summary.unrealizedGainLossPercent, {
+        scale: "fraction",
+      }),
   },
   {
     key: "cashBalance",
     label: "Cash",
-    formatter: (value) => formatCurrency(value, { currency: "USD", compact: true }),
+    formatter: (summary) =>
+      formatCurrency(summary.cashBalance, {
+        currency: "USD",
+        compact: true,
+      }),
   },
   {
-    key: "weightedAverageDividendYield",
-    label: "Income Yield",
-    formatter: (value) => formatPercent(value, { scale: "fraction" }),
+    key: "income",
+    label: "Income",
+    formatter: (summary) =>
+      formatCurrency(
+        summary.weightedAverageDividendYield === null
+          ? null
+          : summary.investedValue * summary.weightedAverageDividendYield,
+        { currency: "USD" }
+      ),
+    detailFormatter: (summary) =>
+      summary.weightedAverageDividendYield === null
+        ? null
+        : `${formatPercent(summary.weightedAverageDividendYield, {
+            scale: "fraction",
+          })} yield`,
   },
 ]
 
@@ -74,7 +113,7 @@ export function PortfolioOverview({
                     : null
               )}
             >
-              {item.formatter(summary[item.key])}
+              {item.formatter(summary)}
             </div>
             <div
               className={cn(
@@ -86,13 +125,7 @@ export function PortfolioOverview({
                     : "text-muted-foreground"
               )}
             >
-              {item.key === "dayChangeValue"
-                ? formatPercent(summary.dayChangePercent, { scale: "fraction" })
-                : item.key === "unrealizedGainLoss"
-                  ? formatPercent(summary.unrealizedGainLossPercent, {
-                      scale: "fraction",
-                    })
-                  : null}
+              {item.detailFormatter?.(summary) ?? null}
             </div>
           </div>
         ))}
