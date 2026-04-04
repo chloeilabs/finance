@@ -247,6 +247,24 @@
     background: color-mix(in oklab, var(--muted) 28%, transparent);
   }
 
+  .market-table-sticky-column {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: color-mix(in oklab, var(--muted) 78%, var(--background));
+    background-clip: padding-box;
+    box-shadow: 10px 0 14px -14px rgba(0, 0, 0, 0.95);
+  }
+
+  thead .market-table-sticky-column {
+    z-index: 2;
+    background: color-mix(in oklab, var(--background) 88%, var(--muted));
+  }
+
+  tbody tr:hover .market-table-sticky-column {
+    background: color-mix(in oklab, var(--muted) 90%, var(--background));
+  }
+
   .market-chip {
     background: color-mix(in oklab, var(--muted) 42%, transparent);
   }

@@ -584,10 +584,10 @@ export function PortfolioHoldingsPanel({
           </div>
         ) : (
           <div className="market-table-frame">
-            <table className="min-w-full border-collapse text-sm">
+            <table className="min-w-full border-separate border-spacing-0 text-sm">
               <thead>
                 <tr className="border-b border-border/50 bg-background/80 text-left">
-                  <th className="px-3 py-2 font-departureMono text-xs tracking-tight whitespace-nowrap">
+                  <th className="market-table-sticky-column min-w-[190px] px-3 py-2 font-departureMono text-xs tracking-tight whitespace-nowrap">
                     Symbol
                   </th>
                   <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground whitespace-nowrap">
@@ -628,8 +628,8 @@ export function PortfolioHoldingsPanel({
                     key={holding.id}
                     className="border-b border-border/35 transition-colors hover:bg-muted/12 last:border-b-0"
                   >
-                    <td className="px-3 py-3">
-                      <div className="min-w-[190px]">
+                    <td className="market-table-sticky-column min-w-[190px] px-3 py-3">
+                      <div>
                         <Link
                           className="font-departureMono text-sm tracking-tight hover:underline"
                           href={getTickerHref(holding.symbol, holding.instrumentKind)}

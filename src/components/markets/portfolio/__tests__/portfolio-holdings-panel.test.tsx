@@ -90,6 +90,15 @@ describe("PortfolioHoldingsPanel", () => {
     expect(html).toMatch(/class="[^"]*whitespace-nowrap[^"]*">-\$28\.68<\/div>/)
     expect(html).toMatch(/class="[^"]*whitespace-nowrap[^"]*">-2\.36%<\/div>/)
     expect(html).toMatch(/class="[^"]*whitespace-nowrap[^"]*">Total P\/L<\/th>/)
+    expect(html).toMatch(
+      /class="[^"]*border-separate[^"]*border-spacing-0[^"]*text-sm"/
+    )
+    expect(html).toMatch(
+      /class="[^"]*market-table-sticky-column[^"]*min-w-\[190px\][^"]*">Symbol<\/th>/
+    )
+    expect(html).toMatch(
+      /class="[^"]*market-table-sticky-column[^"]*min-w-\[190px\][^"]*"><div>/
+    )
     expect(html).toContain("Holding actions")
     expect(html).toContain("Edit holding")
     expect(html).toContain("Delete holding")
