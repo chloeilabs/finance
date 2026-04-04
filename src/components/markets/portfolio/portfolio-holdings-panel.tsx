@@ -587,7 +587,7 @@ export function PortfolioHoldingsPanel({
             <table className="min-w-full border-separate border-spacing-0 text-sm">
               <thead>
                 <tr className="border-b border-border/50 bg-background/80 text-left">
-                  <th className="market-table-sticky-column min-w-[190px] px-3 py-2 font-departureMono text-xs tracking-tight whitespace-nowrap">
+                  <th className="market-table-sticky-column min-w-[170px] px-3 py-2 font-departureMono text-xs tracking-tight whitespace-nowrap">
                     Symbol
                   </th>
                   <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground whitespace-nowrap">
@@ -628,7 +628,7 @@ export function PortfolioHoldingsPanel({
                     key={holding.id}
                     className="border-b border-border/35 transition-colors hover:bg-muted/12 last:border-b-0"
                   >
-                    <td className="market-table-sticky-column min-w-[190px] px-3 py-3">
+                    <td className="market-table-sticky-column min-w-[170px] px-3 py-3">
                       <div>
                         <Link
                           className="font-departureMono text-sm tracking-tight hover:underline"
@@ -722,7 +722,15 @@ export function PortfolioHoldingsPanel({
                       {formatPercent(holding.weight, { scale: "fraction" })}
                     </td>
                     <td className="px-3 py-3 text-right">
-                      {formatPercent(holding.dividendYieldTtm, { scale: "fraction" })}
+                      {holding.dividendYieldTtm === null ||
+                      holding.dividendYieldTtm === undefined
+                        ? formatPercent(0, {
+                            decimals: 2,
+                            scale: "fraction",
+                          })
+                        : formatPercent(holding.dividendYieldTtm, {
+                            scale: "fraction",
+                          })}
                     </td>
                     <td className="px-3 py-3 text-right">
                       <DropdownMenu>
