@@ -26,10 +26,6 @@ describe("getModels", () => {
         id: "z-ai/glm-5",
         name: "Z.AI GLM-5",
       },
-      {
-        id: "google/gemini-3.1-pro-preview-customtools",
-        name: "Gemini 3.1 Pro",
-      },
     ])
   })
 })
