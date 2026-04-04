@@ -128,6 +128,7 @@ describe("portfolio service", () => {
         totalCostBasis: 2000,
         totalValue: 3000,
         unrealizedGainLoss: 500,
+        weightedAverageDividendYield: 0.014,
       })
     )
     expect(allocations.instrumentAllocations).toEqual([

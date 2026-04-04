@@ -87,6 +87,7 @@ describe("portfolio routes", () => {
         totalValue: 1000,
         unrealizedGainLoss: 0,
         unrealizedGainLossPercent: null,
+        weightedAverageDividendYield: null,
       },
     })
 
