@@ -722,7 +722,8 @@ export function PortfolioHoldingsPanel({
                       {formatPercent(holding.weight, { scale: "fraction" })}
                     </td>
                     <td className="px-3 py-3 text-right">
-                      {holding.dividendYieldTtm === null
+                      {holding.dividendYieldTtm === null ||
+                      holding.dividendYieldTtm === undefined
                         ? formatPercent(0, {
                             decimals: 2,
                             scale: "fraction",
