@@ -52,30 +52,37 @@ export function SectionFrame({
   children,
   className,
 }: {
-  title: string
+  title?: string
   description?: string
   aside?: React.ReactNode
   children: React.ReactNode
   className?: string
 }) {
+  const hasTitle = (title?.length ?? 0) > 0
+  const hasHeader = hasTitle || description !== undefined || aside !== undefined
+
   return (
     <section className={cn("mt-5 px-4 sm:px-6", className)}>
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1.5 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 className="font-departureMono text-sm tracking-tight">
-              {title}
-            </h2>
-            {description ? (
-              <p className="mt-1 text-sm leading-5 text-muted-foreground">
-                {description}
-              </p>
+        {hasHeader ? (
+          <div className="flex flex-col gap-1.5 md:flex-row md:items-end md:justify-between">
+            <div>
+              {hasTitle ? (
+                <h2 className="font-departureMono text-sm tracking-tight">
+                  {title}
+                </h2>
+              ) : null}
+              {description ? (
+                <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                  {description}
+                </p>
+              ) : null}
+            </div>
+            {aside ? (
+              <div className="text-xs text-muted-foreground">{aside}</div>
             ) : null}
           </div>
-          {aside ? (
-            <div className="text-xs text-muted-foreground">{aside}</div>
-          ) : null}
-        </div>
+        ) : null}
         {children}
       </div>
     </section>
