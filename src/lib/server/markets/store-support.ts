@@ -2,6 +2,10 @@ import "server-only"
 
 import type { SymbolDirectoryEntry } from "@/lib/shared/markets/core"
 import type {
+  PortfolioHoldingRecord,
+  PortfolioRecord,
+} from "@/lib/shared/markets/portfolio"
+import type {
   SavedScreenerRecord,
   ScreenerFilterState,
   WatchlistRecord,
@@ -43,6 +47,26 @@ export interface SavedScreenRow {
   updatedAt: Date | string
 }
 
+export interface PortfolioRow {
+  id: string
+  name: string
+  baseCurrency: string
+  cashBalance: unknown
+  createdAt: Date | string
+  updatedAt: Date | string
+}
+
+export interface PortfolioHoldingRow {
+  id: string
+  symbol: string
+  shares: unknown
+  averageCost: unknown
+  targetWeight: unknown
+  notes: string | null
+  createdAt: Date | string
+  updatedAt: Date | string
+}
+
 export interface CachedMarketPayloadSnapshot<T> {
   payload: T
   expiresAt: string
@@ -78,6 +102,23 @@ export function parseStringArray(value: unknown): string[] {
     .filter((item): item is string => typeof item === "string")
     .map((item) => item.trim().toUpperCase())
     .filter(Boolean)
+}
+
+export function parseNumericValue(value: unknown): number | null {
+  if (value === null || value === undefined) {
+    return null
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null
+  }
+
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+
+  return null
 }
 
 export function mapWatchlistRow(row: WatchlistRow): WatchlistRecord {
@@ -117,6 +158,32 @@ export function mapSavedScreenRow(row: SavedScreenRow): SavedScreenerRecord {
       typeof row.filters === "object" && row.filters !== null
         ? (row.filters as ScreenerFilterState)
         : {},
+    createdAt: toIsoString(row.createdAt),
+    updatedAt: toIsoString(row.updatedAt),
+  }
+}
+
+export function mapPortfolioRow(row: PortfolioRow): PortfolioRecord {
+  return {
+    id: row.id,
+    name: row.name,
+    baseCurrency: row.baseCurrency,
+    cashBalance: parseNumericValue(row.cashBalance) ?? 0,
+    createdAt: toIsoString(row.createdAt),
+    updatedAt: toIsoString(row.updatedAt),
+  }
+}
+
+export function mapPortfolioHoldingRow(
+  row: PortfolioHoldingRow
+): PortfolioHoldingRecord {
+  return {
+    id: row.id,
+    symbol: row.symbol,
+    shares: parseNumericValue(row.shares) ?? 0,
+    averageCost: parseNumericValue(row.averageCost) ?? 0,
+    targetWeight: parseNumericValue(row.targetWeight),
+    notes: row.notes,
     createdAt: toIsoString(row.createdAt),
     updatedAt: toIsoString(row.updatedAt),
   }

@@ -52,6 +52,43 @@ CREATE TABLE IF NOT EXISTS watchlist_items (
 CREATE INDEX IF NOT EXISTS watchlist_items_lookup_idx
 ON watchlist_items ("userId", "watchlistId", position ASC);
 
+CREATE TABLE IF NOT EXISTS portfolio (
+  "userId" text NOT NULL,
+  id text NOT NULL,
+  name text NOT NULL,
+  "baseCurrency" text NOT NULL DEFAULT 'USD',
+  "cashBalance" numeric(20, 4) NOT NULL DEFAULT 0,
+  "createdAt" timestamp(3) without time zone NOT NULL,
+  "updatedAt" timestamp(3) without time zone NOT NULL,
+  PRIMARY KEY ("userId", id)
+);
+
+CREATE INDEX IF NOT EXISTS portfolio_user_updated_at_idx
+ON portfolio ("userId", "updatedAt" DESC);
+
+CREATE TABLE IF NOT EXISTS portfolio_holdings (
+  "userId" text NOT NULL,
+  "portfolioId" text NOT NULL,
+  id text NOT NULL,
+  symbol text NOT NULL,
+  shares numeric(20, 6) NOT NULL,
+  "averageCost" numeric(20, 6) NOT NULL,
+  "targetWeight" numeric(10, 6),
+  notes text,
+  "createdAt" timestamp(3) without time zone NOT NULL,
+  "updatedAt" timestamp(3) without time zone NOT NULL,
+  PRIMARY KEY ("userId", id),
+  CONSTRAINT portfolio_holdings_portfolio_fk
+    FOREIGN KEY ("userId", "portfolioId")
+    REFERENCES portfolio ("userId", id)
+    ON DELETE CASCADE,
+  CONSTRAINT portfolio_holdings_unique_symbol
+    UNIQUE ("userId", "portfolioId", symbol)
+);
+
+CREATE INDEX IF NOT EXISTS portfolio_holdings_lookup_idx
+ON portfolio_holdings ("userId", "portfolioId", symbol);
+
 CREATE TABLE IF NOT EXISTS saved_screens (
   "userId" text NOT NULL,
   id text NOT NULL,
@@ -106,6 +143,12 @@ DROP CONSTRAINT IF EXISTS "watchlist_items_userId_fkey";
 
 ALTER TABLE IF EXISTS saved_screens
 DROP CONSTRAINT IF EXISTS "saved_screens_userId_fkey";
+
+ALTER TABLE IF EXISTS portfolio
+DROP CONSTRAINT IF EXISTS "portfolio_userId_fkey";
+
+ALTER TABLE IF EXISTS portfolio_holdings
+DROP CONSTRAINT IF EXISTS "portfolio_holdings_userId_fkey";
 `
 
 if (!databaseUrl) {

@@ -2,6 +2,7 @@ import "server-only"
 
 import type {
   AftermarketSnapshot,
+  CompanyProfile,
   DividendSnapshot,
   MetricStat,
   QuoteSnapshot,
@@ -40,6 +41,29 @@ import {
   QUOTE_FETCH_CONCURRENCY,
   TECHNICAL_TTL_SECONDS,
 } from "./service-support"
+
+function normalizePercentValueAsFraction(
+  value: number | null | undefined
+): number | null {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return null
+  }
+
+  return Math.abs(value) > 1 ? value / 100 : value
+}
+
+export function getResearchDividendYieldFraction(
+  snapshot: DividendSnapshot | null
+): number | null {
+  if (!snapshot) {
+    return null
+  }
+
+  return (
+    snapshot.dividendYieldTtm ??
+    normalizePercentValueAsFraction(snapshot.latestDividendYield)
+  )
+}
 
 export async function getIntradayCharts(
   symbol: string
@@ -130,6 +154,19 @@ export async function getStockFinancialScores(
     fallback: null,
     staleOnError: true,
     fetcher: () => client.fundamentals.getFinancialScores(symbol),
+  })
+}
+
+export async function getStockCompanyProfile(
+  symbol: string
+): Promise<CompanyProfile | null> {
+  return withMarketCache({
+    cacheKey: `stock:${symbol}:profile`,
+    category: "profile",
+    ttlSeconds: PROFILE_TTL_SECONDS,
+    fallback: null,
+    staleOnError: true,
+    fetcher: () => client.company.getProfile(symbol),
   })
 }
 
@@ -377,14 +414,7 @@ export async function getPeerComparisonRows(
         StockDossier["valuation"],
         ShareFloatSnapshot | null,
       ] = await Promise.all([
-        withMarketCache({
-          cacheKey: `stock:${symbol}:profile`,
-          category: "profile",
-          ttlSeconds: PROFILE_TTL_SECONDS,
-          fallback: null,
-          staleOnError: true,
-          fetcher: () => client.company.getProfile(symbol),
-        }),
+        getStockCompanyProfile(symbol),
         getCachedQuoteSnapshot(symbol),
         withMarketCache({
           cacheKey: `stock:${symbol}:ratios`,
@@ -425,7 +455,7 @@ export async function getPeerComparisonRows(
         marketCap: profile?.marketCap ?? quote?.marketCap ?? null,
         peRatio: getMetricNumberByLabel(ratios, "P / E"),
         fcfYield: getMetricNumberByLabel(keyMetrics, "FCF Yield"),
-        dividendYieldTtm: dividendSnapshot?.dividendYieldTtm ?? null,
+        dividendYieldTtm: getResearchDividendYieldFraction(dividendSnapshot),
         dividendPerShareTtm: dividendSnapshot?.dividendPerShareTtm ?? null,
         dividendPayoutRatioTtm:
           dividendSnapshot?.dividendPayoutRatioTtm ?? null,
