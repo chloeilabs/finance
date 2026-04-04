@@ -12,6 +12,7 @@ vi.mock("../store", async () => {
 import { createCompanyClient } from "../client/company"
 import { createDirectoryClient } from "../client/directory"
 import { createFundamentalsClient } from "../client/fundamentals"
+import { createMarketStructureClient } from "../client/market-structure"
 import { createPriceDataClient } from "../client/price-data"
 import { createQuotesClient } from "../client/quotes"
 import { createReferenceDataClient } from "../client/reference-data"
@@ -328,6 +329,178 @@ describe("market client mappers", () => {
         volume: 222164543,
       },
     ])
+  })
+
+  it("maps treasury rates with the 30 year tenor for macro panels", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          {
+            date: "2026-04-03",
+            month3: 3.71,
+            year2: 3.84,
+            year10: 4.35,
+            year30: 4.91,
+          },
+        ]),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
+      )
+    ) as typeof fetch
+
+    const client = createMarketStructureClient()
+
+    await expect(client.macro.getTreasuryRates()).resolves.toEqual([
+      {
+        date: "2026-04-03",
+        label: "3M Treasury",
+        previous: null,
+        value: 3.71,
+      },
+      {
+        date: "2026-04-03",
+        label: "2Y Treasury",
+        previous: null,
+        value: 3.84,
+      },
+      {
+        date: "2026-04-03",
+        label: "10Y Treasury",
+        previous: null,
+        value: 4.35,
+      },
+      {
+        date: "2026-04-03",
+        label: "30Y Treasury",
+        previous: null,
+        value: 4.91,
+      },
+    ])
+  })
+
+  it("falls back to the next available treasury tenor when 30 year is unavailable", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          {
+            date: "2026-04-03",
+            month3: 3.71,
+            month6: 3.73,
+            year1: 3.72,
+            year2: 3.84,
+            year5: 3.99,
+            year7: 4.17,
+            year10: 4.35,
+            year30: null,
+          },
+        ]),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
+      )
+    ) as typeof fetch
+
+    const client = createMarketStructureClient()
+
+    await expect(client.macro.getTreasuryRates().then((rates) => rates.slice(0, 4)))
+      .resolves.toEqual([
+        {
+          date: "2026-04-03",
+          label: "3M Treasury",
+          previous: null,
+          value: 3.71,
+        },
+        {
+          date: "2026-04-03",
+          label: "2Y Treasury",
+          previous: null,
+          value: 3.84,
+        },
+        {
+          date: "2026-04-03",
+          label: "10Y Treasury",
+          previous: null,
+          value: 4.35,
+        },
+        {
+          date: "2026-04-03",
+          label: "5Y Treasury",
+          previous: null,
+          value: 3.99,
+        },
+      ])
+  })
+
+  it("includes BTCUSD in the benchmark quote set", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify([
+            {
+              name: "S&P 500",
+              price: 6582.69,
+              symbol: "^GSPC",
+            },
+            {
+              name: "NASDAQ Composite",
+              price: 21879.18,
+              symbol: "^IXIC",
+            },
+            {
+              name: "Dow Jones Industrial Average",
+              price: 46504.67,
+              symbol: "^DJI",
+            },
+            {
+              name: "Ignore Me",
+              price: 999,
+              symbol: "SPY",
+            },
+          ]),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify([
+            {
+              change: 310,
+              changePercentage: 0.46743,
+              currency: "USD",
+              name: "Bitcoin USD",
+              price: 66630.15,
+              symbol: "BTCUSD",
+            },
+          ]),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        )
+      ) as typeof fetch
+
+    const quotesClient = createQuotesClient()
+    const benchmarks = await quotesClient.getIndexQuotes()
+
+    expect(benchmarks.map((quote) => quote.symbol)).toEqual([
+      "^GSPC",
+      "^IXIC",
+      "^DJI",
+      "BTCUSD",
+    ])
+    expect(benchmarks[3]).toMatchObject({
+      currency: "USD",
+      name: "Bitcoin USD",
+      price: 66630.15,
+      symbol: "BTCUSD",
+    })
   })
 
   it("preserves dividend scaling across ratios, events, and screener rows", async () => {

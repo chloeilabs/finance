@@ -395,11 +395,9 @@ export interface MarketOverviewData {
     sparklines: Record<string, number[]>
   }
   indexes: QuoteSnapshot[]
-  indexSparklines: Record<string, number[]>
   movers: MarketMoverBucket[]
   sectors: SectorSnapshot[]
   sectorValuations: SectorValuationSnapshot[]
-  sectorHistory: SectorHistorySeries[]
   calendar: CalendarEvent[]
   macro: MacroRate[]
   economicCalendar: CalendarEvent[]
