@@ -1,6 +1,4 @@
 export const AvailableModels = {
-  OPENROUTER_GOOGLE_GEMINI_3_1_PRO_PREVIEW_CUSTOMTOOLS:
-    "google/gemini-3.1-pro-preview-customtools",
   OPENROUTER_MINIMAX_M2_7: "minimax/minimax-m2.7",
   OPENROUTER_Z_AI_GLM_5: "z-ai/glm-5",
 } as const
@@ -26,7 +24,6 @@ export interface ModelInfo extends ModelListItem {
 export const OPENROUTER_MODELS = [
   AvailableModels.OPENROUTER_MINIMAX_M2_7,
   AvailableModels.OPENROUTER_Z_AI_GLM_5,
-  AvailableModels.OPENROUTER_GOOGLE_GEMINI_3_1_PRO_PREVIEW_CUSTOMTOOLS,
 ] as const
 
 export const ALL_MODELS = [...OPENROUTER_MODELS] as const
@@ -60,10 +57,6 @@ export function resolveModelName(
 }
 
 export const ModelInfos: Record<ModelType, ModelInfo> = {
-  [AvailableModels.OPENROUTER_GOOGLE_GEMINI_3_1_PRO_PREVIEW_CUSTOMTOOLS]: {
-    id: AvailableModels.OPENROUTER_GOOGLE_GEMINI_3_1_PRO_PREVIEW_CUSTOMTOOLS,
-    name: "Gemini 3.1 Pro",
-  },
   [AvailableModels.OPENROUTER_MINIMAX_M2_7]: {
     id: AvailableModels.OPENROUTER_MINIMAX_M2_7,
     name: "MiniMax M2.7",
