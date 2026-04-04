@@ -85,7 +85,7 @@ export function formatSignedNumber(
 
 export function formatNumber(
   value: number | null | undefined,
-  options: { digits?: number } = {}
+  options: { digits?: number; minimumDigits?: number } = {}
 ) {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return "N/A"
@@ -93,7 +93,7 @@ export function formatNumber(
 
   return new Intl.NumberFormat("en-US", {
     maximumFractionDigits: options.digits ?? 2,
-    minimumFractionDigits: options.digits ?? 0,
+    minimumFractionDigits: options.minimumDigits ?? options.digits ?? 0,
   }).format(value)
 }
 

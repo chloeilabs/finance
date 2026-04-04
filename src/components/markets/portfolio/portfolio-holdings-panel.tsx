@@ -617,9 +617,6 @@ export function PortfolioHoldingsPanel({
                     Dividend
                   </th>
                   <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
-                    Sector
-                  </th>
-                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
                     Actions
                   </th>
                 </tr>
@@ -644,7 +641,10 @@ export function PortfolioHoldingsPanel({
                       </div>
                     </td>
                     <td className="px-3 py-3 text-right">
-                      {formatNumber(holding.shares, { digits: 4 })}
+                      {formatNumber(holding.shares, {
+                        digits: 4,
+                        minimumDigits: 0,
+                      })}
                     </td>
                     <td className="px-3 py-3 text-right">
                       {formatCurrency(holding.averageCost, { currency: "USD" })}
@@ -711,9 +711,6 @@ export function PortfolioHoldingsPanel({
                     </td>
                     <td className="px-3 py-3 text-right">
                       {formatPercent(holding.dividendYieldTtm, { scale: "fraction" })}
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      {holding.sector ?? "N/A"}
                     </td>
                     <td className="px-3 py-3 text-right">
                       <div className="flex justify-end gap-1">
