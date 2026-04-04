@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest"
 import { PortfolioOverview } from "../portfolio-overview"
 
 describe("PortfolioOverview", () => {
-  it("renders a weighted average dividend yield card", () => {
+  it("renders the mobile two-row summary grid", () => {
     const html = renderToStaticMarkup(
       <PortfolioOverview
         summary={{
@@ -23,7 +23,14 @@ describe("PortfolioOverview", () => {
       />
     )
 
+    expect(html).toContain("grid-cols-3")
+    expect(html).toContain("sm:grid-cols-6")
+    expect(html).toContain("Total Value")
+    expect(html).toContain("Day P/L")
+    expect(html).toContain("Total P/L")
+    expect(html).toContain("Cash")
     expect(html).toContain("Income Yield")
+    expect(html).toContain("Holdings")
     expect(html).toContain("3.15%")
   })
 })
