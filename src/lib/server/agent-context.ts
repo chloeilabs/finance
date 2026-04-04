@@ -9,6 +9,11 @@ import {
   type PromptOverlay,
   type PromptProvider,
 } from "./agent-prompt-steering"
+import {
+  type AgentPortfolioPromptContextStatus,
+  formatAgentPortfolioPromptContext,
+  getAgentPortfolioPromptContext,
+} from "./markets/service-portfolio-context"
 
 interface RuntimePromptContext {
   now: Date
@@ -29,6 +34,7 @@ export interface AgentPromptPreludeMessage {
 }
 
 export interface AgentPromptContract {
+  portfolioContextStatus: AgentPortfolioPromptContextStatus
   systemInstruction: string
   preludeMessages: AgentPromptPreludeMessage[]
 }
@@ -134,33 +140,58 @@ function composeSystemInstruction(params: {
   return blocks.join("\n\n")
 }
 
-function createPreludeMessages(params: {
+async function createPreludeMessages(params: {
+  viewer: AuthViewer
   authUserContext: string
   runtimeContext: RuntimePromptContext
-}): AgentPromptPreludeMessage[] {
-  return [
-    {
-      role: "system",
-      content: formatPromptBlock(
-        "RUNTIME DATE CONTEXT",
-        formatRuntimeDateContext(params.runtimeContext)
-      ),
-    },
-    {
-      role: "system",
-      content: formatPromptBlock("AUTH USER CONTEXT", params.authUserContext),
-    },
-  ]
+}): Promise<{
+  portfolioContextStatus: AgentPortfolioPromptContextStatus
+  preludeMessages: AgentPromptPreludeMessage[]
+}> {
+  const portfolioContext = await getAgentPortfolioPromptContext({
+    userId: params.viewer.id,
+    now: params.runtimeContext.now,
+  })
+
+  return {
+    portfolioContextStatus: portfolioContext.status,
+    preludeMessages: [
+      {
+        role: "system",
+        content: formatPromptBlock(
+          "RUNTIME DATE CONTEXT",
+          formatRuntimeDateContext(params.runtimeContext)
+        ),
+      },
+      {
+        role: "system",
+        content: formatPromptBlock("AUTH USER CONTEXT", params.authUserContext),
+      },
+      {
+        role: "system",
+        content: formatPromptBlock(
+          "PORTFOLIO CONTEXT",
+          formatAgentPortfolioPromptContext(portfolioContext)
+        ),
+      },
+    ],
+  }
 }
 
-export function buildAgentPromptContract(
+export async function buildAgentPromptContract(
   viewer: AuthViewer,
   runtimeContext: RuntimePromptContext,
   overrides: AgentContextOverrides = {}
-): AgentPromptContract {
+): Promise<AgentPromptContract> {
   const authUserContext = formatAuthUserContext(viewer)
+  const prelude = await createPreludeMessages({
+    viewer,
+    authUserContext,
+    runtimeContext,
+  })
 
   return {
+    portfolioContextStatus: prelude.portfolioContextStatus,
     systemInstruction: composeSystemInstruction({
       operatingInstruction: overrides.operatingInstruction,
       providerOverlaysEnabled: overrides.providerOverlaysEnabled,
@@ -168,9 +199,6 @@ export function buildAgentPromptContract(
       provider: runtimeContext.provider,
       overlays: runtimeContext.overlays,
     }),
-    preludeMessages: createPreludeMessages({
-      authUserContext,
-      runtimeContext,
-    }),
+    preludeMessages: prelude.preludeMessages,
   }
 }
