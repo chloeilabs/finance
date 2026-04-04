@@ -27,6 +27,7 @@ import { LogoHover } from "../../graphics/logo/logo-hover"
 import { ScrollToBottom } from "../../task/scroll-to-bottom"
 import { Messages } from "../messages/messages"
 import { PromptForm } from "../prompt-form/prompt-form"
+import { resolveHomeContentLayout } from "./home-content-layout"
 import { HomePromptSuggestions } from "./home-prompt-suggestions"
 import { useThreads } from "./threads-context"
 import { useAgentSession } from "./use-agent-session"
@@ -95,12 +96,19 @@ export function HomePageContent({
   const showHomeView = !hasMessages || isFallbackEnteringConversation
   const showPromptSuggestions = (homePromptSuggestions?.length ?? 0) > 0
   const resolvedHomePromptSuggestions = homePromptSuggestions ?? []
+  const resolvedLayout = resolveHomeContentLayout({
+    assistantMessageLayout,
+    contentWidthMode,
+    integratedLayout,
+    isMobile,
+    userMessageLayout,
+  })
   const homePromptContainerClass =
-    contentWidthMode === "rail"
+    resolvedLayout.contentWidthMode === "rail"
       ? "flex h-full w-full flex-1 flex-col px-3 pt-3"
       : "mx-auto flex h-full w-full max-w-3xl flex-1 flex-col px-4 pt-6 sm:px-6"
   const messagePaneContainerClass =
-    contentWidthMode === "rail"
+    resolvedLayout.contentWidthMode === "rail"
       ? "relative z-0 flex w-full grow flex-col items-stretch px-3 pt-2"
       : "relative z-0 mx-auto flex w-full max-w-3xl grow flex-col items-center px-4 sm:px-6"
 
@@ -279,13 +287,13 @@ export function HomePageContent({
               >
                 <Messages
                   assistantActivityLayout={assistantActivityLayout}
-                  assistantMessageLayout={assistantMessageLayout}
+                  assistantMessageLayout={resolvedLayout.assistantMessageLayout}
                   craftingShimmerLayout={craftingShimmerLayout}
                   messages={state.messages}
                   disableEditing={state.isSubmitting || state.isStreaming}
                   onEditMessage={handleEditMessage}
                   isStreamPending={state.isSubmitting && !state.isStreaming}
-                  userMessageLayout={userMessageLayout}
+                  userMessageLayout={resolvedLayout.userMessageLayout}
                 />
               </div>
 
