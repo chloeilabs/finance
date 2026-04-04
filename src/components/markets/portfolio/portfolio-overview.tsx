@@ -14,7 +14,7 @@ const SUMMARY_ITEMS: {
   {
     key: "totalValue",
     label: "Total value",
-    formatter: (value) => formatCurrency(value, { currency: "USD", compact: true }),
+    formatter: (value) => formatCurrency(value, { currency: "USD" }),
   },
   {
     key: "dayChangeValue",
@@ -30,6 +30,11 @@ const SUMMARY_ITEMS: {
     key: "cashBalance",
     label: "Cash",
     formatter: (value) => formatCurrency(value, { currency: "USD", compact: true }),
+  },
+  {
+    key: "weightedAverageDividendYield",
+    label: "Weighted Avg Dividend Yield",
+    formatter: (value) => formatPercent(value, { scale: "fraction" }),
   },
 ]
 
@@ -50,7 +55,7 @@ export function PortfolioOverview({
 }) {
   return (
     <div className="overflow-hidden border border-border/40">
-      <div className="grid gap-px bg-border/40 lg:grid-cols-5">
+      <div className="grid gap-px bg-border/40 lg:grid-cols-6">
         {SUMMARY_ITEMS.map((item) => (
           <div
             key={item.key}

@@ -32,6 +32,7 @@ export interface PortfolioSummary {
   totalValue: number
   investedValue: number
   totalCostBasis: number
+  weightedAverageDividendYield: number | null
   cashBalance: number
   dayChangeValue: number
   dayChangePercent: number | null

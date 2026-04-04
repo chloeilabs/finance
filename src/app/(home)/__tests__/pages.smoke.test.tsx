@@ -103,7 +103,7 @@ describe("market route smoke tests", () => {
     vi.mocked(getCurrentViewer).mockResolvedValue({
       email: "markets@example.test",
       id: "user_123",
-      name: "Markets Tester",
+      name: "Morgan Tester",
     } as Awaited<ReturnType<typeof getCurrentViewer>>)
 
     vi.mocked(getMarketOverviewData).mockResolvedValue({
@@ -408,6 +408,7 @@ describe("market route smoke tests", () => {
         totalValue: 2500,
         unrealizedGainLoss: 150,
         unrealizedGainLossPercent: 0.125,
+        weightedAverageDividendYield: 0.01,
       },
     })
   })
@@ -448,7 +449,7 @@ describe("market route smoke tests", () => {
   it("renders the portfolio page with the expected sections", async () => {
     const html = renderToStaticMarkup(await PortfolioPage())
 
-    expect(html).toContain("Portfolio")
+    expect(html).toContain("Morgan&#x27;s Portfolio")
     expect(html).toContain("Overview")
     expect(html).toContain("Holdings")
     expect(html).toContain("Allocation")
@@ -478,12 +479,13 @@ describe("market route smoke tests", () => {
         totalValue: 0,
         unrealizedGainLoss: 0,
         unrealizedGainLossPercent: null,
+        weightedAverageDividendYield: null,
       },
     })
 
     const html = renderToStaticMarkup(await PortfolioPage())
 
-    expect(html).toContain("Portfolio")
+    expect(html).toContain("Morgan&#x27;s Portfolio")
     expect(html).toContain("Portfolio holdings panel")
   })
 

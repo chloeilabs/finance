@@ -5,11 +5,13 @@ export function PageHeader({
   title,
   description,
   actions,
+  titleClassName,
 }: {
   eyebrow?: string
   title: string
   description?: string
   actions?: React.ReactNode
+  titleClassName?: string
 }) {
   return (
     <header className="px-4 pt-4 pb-1 sm:px-6 sm:pt-5">
@@ -21,7 +23,13 @@ export function PageHeader({
             </div>
           ) : null}
           <div className="space-y-1">
-            <h1 className="text-2xl tracking-tight sm:text-3xl">{title}</h1>
+            <h1
+              className={cn(
+                titleClassName ?? "text-2xl tracking-tight sm:text-3xl"
+              )}
+            >
+              {title}
+            </h1>
             {description ? (
               <p className="max-w-3xl text-sm leading-5 text-muted-foreground">
                 {description}

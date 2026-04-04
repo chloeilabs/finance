@@ -526,17 +526,11 @@ export function PortfolioHoldingsPanel({
             />
             <ToolbarMetric
               label="Invested"
-              value={formatCurrency(investedValue, {
-                currency: "USD",
-                compact: true,
-              })}
+              value={formatCurrency(investedValue, { currency: "USD" })}
             />
             <ToolbarMetric
               label="Cost Basis"
-              value={formatCurrency(totalCostBasis, {
-                currency: "USD",
-                compact: true,
-              })}
+              value={formatCurrency(totalCostBasis, { currency: "USD" })}
             />
             <ToolbarMetric
               label="Cash"
