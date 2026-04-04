@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
     const userTimeZone = resolveUserTimeZone(request)
     const promptProvider = resolvePromptProvider(selectedModel)
     const promptOverlays = inferPromptOverlays(parsed.data.messages)
-    const promptContract = buildAgentPromptContract(
+    const promptContract = await buildAgentPromptContract(
       {
         id: session.user.id,
         name: session.user.name,
@@ -154,6 +154,12 @@ export async function POST(request: NextRequest) {
         overlays: promptOverlays,
       }
     )
+
+    if (promptContract.portfolioContextStatus === "unavailable") {
+      console.warn(
+        `[agent:${requestId}] Portfolio context unavailable; continuing without saved portfolio data.`
+      )
+    }
 
     if (!openRouterApiKey) {
       return createJsonErrorResponse({
