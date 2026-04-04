@@ -13,7 +13,7 @@ const SUMMARY_ITEMS: {
 }[] = [
   {
     key: "totalValue",
-    label: "Total value",
+    label: "Total Value",
     formatter: (value) => formatCurrency(value, { currency: "USD" }),
   },
   {
@@ -33,7 +33,7 @@ const SUMMARY_ITEMS: {
   },
   {
     key: "weightedAverageDividendYield",
-    label: "Weighted Avg Dividend Yield",
+    label: "Income Yield",
     formatter: (value) => formatPercent(value, { scale: "fraction" }),
   },
 ]

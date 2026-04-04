@@ -23,7 +23,7 @@ describe("PortfolioOverview", () => {
       />
     )
 
-    expect(html).toContain("Weighted Avg Dividend Yield")
+    expect(html).toContain("Income Yield")
     expect(html).toContain("3.15%")
   })
 })
