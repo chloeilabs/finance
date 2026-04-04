@@ -1,6 +1,6 @@
 "use client"
 
-import { Pencil, Plus, Search, Trash2, Wallet, X } from "lucide-react"
+import { MoreHorizontal, Pencil, Plus, Search, Trash2, Wallet, X } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMemo, useState, useTransition } from "react"
@@ -8,6 +8,13 @@ import { toast } from "sonner"
 
 import { SymbolSearch } from "@/components/markets/search/symbol-search"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import {
   Sheet,
@@ -580,37 +587,37 @@ export function PortfolioHoldingsPanel({
             <table className="min-w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b border-border/50 bg-background/80 text-left">
-                  <th className="px-3 py-2 font-departureMono text-xs tracking-tight">
+                  <th className="px-3 py-2 font-departureMono text-xs tracking-tight whitespace-nowrap">
                     Symbol
                   </th>
-                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground whitespace-nowrap">
                     Shares
                   </th>
-                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground whitespace-nowrap">
                     Avg Cost
                   </th>
-                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground whitespace-nowrap">
                     Last Price
                   </th>
-                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground whitespace-nowrap">
                     Price Change
                   </th>
-                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground whitespace-nowrap">
                     Market Value
                   </th>
-                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground whitespace-nowrap">
                     Day P/L
                   </th>
-                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground whitespace-nowrap">
                     Total P/L
                   </th>
-                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground whitespace-nowrap">
                     Weight
                   </th>
-                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
-                    Dividend
+                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground whitespace-nowrap">
+                    Yield
                   </th>
-                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
+                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground whitespace-nowrap">
                     Actions
                   </th>
                 </tr>
@@ -718,30 +725,39 @@ export function PortfolioHoldingsPanel({
                       {formatPercent(holding.dividendYieldTtm, { scale: "fraction" })}
                     </td>
                     <td className="px-3 py-3 text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          disabled={isHoldingPending}
-                          size="icon-xs"
-                          variant="ghost"
-                          onClick={() => {
-                            openHoldingEdit(holding)
-                          }}
-                        >
-                          <Pencil className="size-3.5" />
-                          <span className="sr-only">Edit holding</span>
-                        </Button>
-                        <Button
-                          disabled={isHoldingPending}
-                          size="icon-xs"
-                          variant="ghost"
-                          onClick={() => {
-                            handleDelete(holding.id)
-                          }}
-                        >
-                          <Trash2 className="size-3.5" />
-                          <span className="sr-only">Delete holding</span>
-                        </Button>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-label={`Actions for ${holding.symbol}`}
+                            disabled={isHoldingPending}
+                            size="icon-xs"
+                            variant="ghost"
+                          >
+                            <MoreHorizontal className="size-3.5" />
+                            <span className="sr-only">Holding actions</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-36" side="bottom">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              openHoldingEdit(holding)
+                            }}
+                          >
+                            <Pencil className="size-3.5" />
+                            <span>Edit holding</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => {
+                              handleDelete(holding.id)
+                            }}
+                          >
+                            <Trash2 className="size-3.5" />
+                            <span>Delete holding</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}

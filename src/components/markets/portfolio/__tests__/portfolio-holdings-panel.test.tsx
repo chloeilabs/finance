@@ -19,6 +19,16 @@ vi.mock("@/components/markets/search/symbol-search", () => ({
   SymbolSearch: () => <div>Symbol search</div>,
 }))
 
+vi.mock("@/components/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DropdownMenuContent: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuItem: ({ children }: { children: ReactNode }) => <button>{children}</button>,
+  DropdownMenuSeparator: () => <hr />,
+  DropdownMenuTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+}))
+
 vi.mock("@/components/ui/sheet", () => ({
   Sheet: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   SheetContent: ({ children }: { children: ReactNode }) => (
@@ -34,7 +44,7 @@ vi.mock("@/components/ui/sheet", () => ({
 import { PortfolioHoldingsPanel } from "../portfolio-holdings-panel"
 
 describe("PortfolioHoldingsPanel", () => {
-  it("keeps negative profit and loss values on one line", () => {
+  it("keeps negative profit and loss values on one line and groups row actions", () => {
     const html = renderToStaticMarkup(
       <PortfolioHoldingsPanel
         holdings={[
@@ -79,5 +89,9 @@ describe("PortfolioHoldingsPanel", () => {
     expect(html).toMatch(/class="[^"]*whitespace-nowrap[^"]*">-1\.69%<\/div>/)
     expect(html).toMatch(/class="[^"]*whitespace-nowrap[^"]*">-\$28\.68<\/div>/)
     expect(html).toMatch(/class="[^"]*whitespace-nowrap[^"]*">-2\.36%<\/div>/)
+    expect(html).toMatch(/class="[^"]*whitespace-nowrap[^"]*">Total P\/L<\/th>/)
+    expect(html).toContain("Holding actions")
+    expect(html).toContain("Edit holding")
+    expect(html).toContain("Delete holding")
   })
 })
