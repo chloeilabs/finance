@@ -1,11 +1,15 @@
 import { useQuery } from "@tanstack/react-query"
 
 import { redirectToSignIn } from "@/lib/auth-client"
-import { type ModelInfo } from "@/lib/shared/llm/models"
+import {
+  type ModelInfo,
+  type ModelListItem,
+  sanitizeModelInfos,
+} from "@/lib/shared/llm/models"
 
 type HttpError = Error & { status?: number }
 
-function isModelInfo(value: unknown): value is ModelInfo {
+function isModelListItem(value: unknown): value is ModelListItem {
   if (typeof value !== "object" || value === null) {
     return false
   }
@@ -14,8 +18,8 @@ function isModelInfo(value: unknown): value is ModelInfo {
   return typeof candidate.id === "string" && typeof candidate.name === "string"
 }
 
-function isModelInfoArray(value: unknown): value is ModelInfo[] {
-  return Array.isArray(value) && value.every(isModelInfo)
+function isModelListItemArray(value: unknown): value is ModelListItem[] {
+  return Array.isArray(value) && value.every(isModelListItem)
 }
 
 function createHttpError(status: number, message: string): HttpError {
@@ -43,10 +47,10 @@ export function useModels() {
       }
 
       const data: unknown = await response.json()
-      if (!isModelInfoArray(data)) {
+      if (!isModelListItemArray(data)) {
         throw new Error("Invalid model response.")
       }
-      return data
+      return sanitizeModelInfos(data)
     },
     staleTime: 0,
     gcTime: 0,

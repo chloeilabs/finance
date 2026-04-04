@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useModels } from "@/hooks/agent/use-models"
-import { ModelInfos, type ModelType } from "@/lib/shared/llm/models"
+import { type ModelType, resolveModelName } from "@/lib/shared/llm/models"
 
 export function ModelSelector({
   selectedModel,
@@ -46,11 +46,11 @@ export function ModelSelector({
     }
   }, [])
 
-  const triggerLabel = selectedModel
-    ? ModelInfos[selectedModel].name
-    : modelsStatus === "pending"
-      ? "Loading models..."
-      : "No Model Selected"
+  const selectedModelLabel = resolveModelName(selectedModel, availableModels)
+
+  const triggerLabel =
+    selectedModelLabel ??
+    (modelsStatus === "pending" ? "Loading models..." : "No Model Selected")
 
   return (
     <Popover open={isModelSelectorOpen} onOpenChange={setIsModelSelectorOpen}>
@@ -96,7 +96,9 @@ export function ModelSelector({
                   handleModelSelection(model.id)
                 }}
               >
-                <span>{ModelInfos[model.id].name}</span>
+                <span>
+                  {resolveModelName(model.id, availableModels) ?? model.name}
+                </span>
               </Button>
             ))
           ) : modelsStatus === "pending" ? (
