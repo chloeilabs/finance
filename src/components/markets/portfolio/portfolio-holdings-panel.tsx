@@ -651,6 +651,7 @@ export function PortfolioHoldingsPanel({
                     <td className="px-3 py-3 text-right">
                       <div
                         className={cn(
+                          "whitespace-nowrap",
                           getValueToneClass(getTickerPriceChangeValue(holding))
                         )}
                       >
@@ -660,7 +661,7 @@ export function PortfolioHoldingsPanel({
                       </div>
                       <div
                         className={cn(
-                          "text-xs",
+                          "text-xs whitespace-nowrap",
                           getValueToneClass(getTickerPriceChangeValue(holding))
                         )}
                       >
@@ -671,12 +672,17 @@ export function PortfolioHoldingsPanel({
                       {formatCurrency(holding.marketValue, { currency: "USD" })}
                     </td>
                     <td className="px-3 py-3 text-right">
-                      <div className={cn(getValueToneClass(holding.dayChangeValue))}>
+                      <div
+                        className={cn(
+                          "whitespace-nowrap",
+                          getValueToneClass(holding.dayChangeValue)
+                        )}
+                      >
                         {formatCurrency(holding.dayChangeValue, { currency: "USD" })}
                       </div>
                       <div
                         className={cn(
-                          "text-xs",
+                          "text-xs whitespace-nowrap",
                           getValueToneClass(holding.dayChangeValue)
                         )}
                       >
@@ -684,14 +690,19 @@ export function PortfolioHoldingsPanel({
                       </div>
                     </td>
                     <td className="px-3 py-3 text-right">
-                      <div className={cn(getValueToneClass(holding.unrealizedGainLoss))}>
+                      <div
+                        className={cn(
+                          "whitespace-nowrap",
+                          getValueToneClass(holding.unrealizedGainLoss)
+                        )}
+                      >
                         {formatCurrency(holding.unrealizedGainLoss, {
                           currency: "USD",
                         })}
                       </div>
                       <div
                         className={cn(
-                          "text-xs",
+                          "text-xs whitespace-nowrap",
                           getValueToneClass(holding.unrealizedGainLoss)
                         )}
                       >
