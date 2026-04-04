@@ -24,7 +24,7 @@
 - `threads-persistence.ts`: queued thread sync, delete, rename, and migration orchestration
 - `threads-api.ts`: thread route request helpers
 - `threads-storage.ts`: local-storage migration and merge helpers
-- `agent-context.ts`: stable system prompt assembly plus runtime prelude messages
+- `agent-context.ts`: stable system prompt assembly plus runtime prelude messages for date, auth, and saved portfolio context
 - `agent-prompt-steering.ts`: additive provider and request overlays inferred from the conversation
 - `openrouter-responses.ts`: provider stream orchestration and merged tool wiring
 - `ai-sdk-fmp-mcp-tools.ts`: FMP MCP session setup, usage accounting, and metadata normalization
@@ -33,4 +33,5 @@
 
 - no regression in request-id and rate-limit handling
 - no loss of thread switching or rename/pin/delete behavior
+- portfolio context refreshes on the next turn after portfolio edits without writing hidden thread messages
 - streaming timeline remains stable for text, reasoning, tools, and sources, including normalized `fmp_mcp` events from dynamic remote MCP tools

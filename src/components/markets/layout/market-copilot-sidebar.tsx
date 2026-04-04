@@ -17,10 +17,10 @@ import { cn } from "@/lib/utils"
 import { getCopilotOpenHref } from "./market-copilot-sidebar-utils"
 
 const COPILOT_SUGGESTIONS = [
-  "What is the bull case and bear case for Nvidia here?",
-  "What has to go right for Tesla over the next two quarters?",
-  "Does Apple's current valuation still fit the growth outlook?",
-  "What would make you change the thesis on Microsoft here?",
+  "What stands out in my portfolio right now?",
+  "Where is my biggest concentration risk?",
+  "Which positions are driving my income and total return?",
+  "If I wanted to reduce risk, where would you start?",
 ] as const
 
 function MarketCopilotPanel({

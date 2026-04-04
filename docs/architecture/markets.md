@@ -24,6 +24,7 @@
 - `service-overview.ts`: home and news aggregation
 - `service-dossier.ts`: stable dossier facade for stock and watchlist flows
 - `service-portfolio.ts`: single-portfolio page assembly, holding enrichment, and derived allocation/summary math
+- `service-portfolio-context.ts`: read-only saved portfolio snapshot formatting for `/copilot` request-time prompt context
 - `service-dossier-overview.ts`: stock summary and locked-section resolution
 - `service-dossier-sections.ts`: trading, financial, context, street-view, and business section builders
 - `service-dossier-research.ts`: watchlist research assembly
@@ -38,3 +39,9 @@
 - `fmp-plan-validation*.ts`: validated Starter dataset access snapshot plus coarse capability compatibility layer
 - `errors.ts` / `api-errors.ts`: domain error contracts
 - `../llm/ai-sdk-fmp-mcp-tools.ts`: remote FMP MCP session bootstrap and usage-tracked tool wrapping for `/copilot`
+
+## Copilot Portfolio Context
+
+- `/copilot` reads saved portfolio state at request time and injects it into the prompt prelude instead of persisting hidden thread messages.
+- the portfolio snapshot stays read-only in the agent path: no default portfolio creation and no route contract changes
+- when saved portfolio context is unavailable, `/copilot` continues without it and tells the model not to assume holdings from stale conversation state
