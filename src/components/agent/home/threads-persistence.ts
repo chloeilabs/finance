@@ -38,11 +38,11 @@ export function useThreadPersistence(params: {
   setThreads: Dispatch<SetStateAction<Thread[]>>
   threads: Thread[]
 }) {
-  const pendingSyncsRef = useRef<Map<string, Thread>>(new Map())
-  const pendingImmediatePersistIdsRef = useRef<Set<string>>(new Set())
+  const pendingSyncsRef = useRef(new Map<string, Thread>())
+  const pendingImmediatePersistIdsRef = useRef(new Set<string>())
   const flushTimeoutRef = useRef<number | null>(null)
   const flushQueuedThreadsRef = useRef<() => Promise<void>>(EMPTY_ASYNC_FLUSH)
-  const inFlightControllersRef = useRef<Map<string, AbortController>>(new Map())
+  const inFlightControllersRef = useRef(new Map<string, AbortController>())
 
   const clearScheduledFlush = useCallback(() => {
     if (flushTimeoutRef.current !== null) {
