@@ -54,6 +54,16 @@ function mapQuote(item: unknown): QuoteSnapshot | null {
     exchange: pickString(record, ["exchange", "exchangeShortName"]),
     currency: pickString(record, ["currency"]),
     timestamp: pickString(record, ["timestamp", "date"]),
+    eps: pickNumber(record, ["eps"]),
+    pe: pickNumber(record, ["pe"]),
+    sharesOutstanding: pickNumber(record, [
+      "sharesOutstanding",
+      "sharesOut",
+    ]),
+    earningsAnnouncement: pickString(record, [
+      "earningsAnnouncement",
+      "earningsDate",
+    ]),
   }
 }
 

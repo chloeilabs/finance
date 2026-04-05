@@ -181,6 +181,13 @@ export async function getStockOverviewCore(symbol: string) {
             beta: null,
             marketCap: null,
             image: null,
+            lastDiv: null,
+            range: null,
+            phone: null,
+            address: null,
+            currency: null,
+            isActivelyTrading: fallbackDirectoryEntry.isActivelyTrading,
+            isEtf: fallbackDirectoryEntry.isEtf,
           }
         : null),
     quote,
