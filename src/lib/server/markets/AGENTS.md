@@ -1,8 +1,22 @@
 # Markets Rules
 
-- All daily cache keys and FMP date ranges must use `createMarketDateClock()` and `America/New_York`.
+## Scope
+
+Applies to `src/lib/server/markets/**`. Use this subtree for market-time rules, FMP access, cache policy, storage invariants, and stable market-service facades.
+
+For longer background, read [docs/architecture/markets.md](../../../docs/architecture/markets.md). For workflow and verification, use `.agents/skills/markets-workflow/SKILL.md`.
+
+## Invariants
+
+- All day-based cache keys and FMP date ranges must use `createMarketDateClock()` with `America/New_York`.
 - Keep FMP access behind shared client helpers with timeout, retry, and structured `FmpRequestError` handling.
-- Prefer stale-cache fallback over hard failure for market pages when live refresh fails.
+- Prefer stale-cache fallback over hard failure when a live refresh fails.
 - Treat undefined-table errors as storage initialization failures and surface `pnpm markets:migrate` guidance.
-- Keep provider access, cache policy, directory/search logic, and user storage logic in focused modules; preserve `service.ts` as a stable facade when splitting code.
+- Keep provider access, cache policy, directory/search logic, and user storage logic in focused modules.
+- Preserve `service.ts` as a stable facade when splitting implementation details.
 - Do not seed the full symbol directory in the live search path.
+
+## Verification Focus
+
+- Run the repo verification matrix for substantial changes.
+- Add `pnpm markets:capabilities` when FMP capability assumptions changed.

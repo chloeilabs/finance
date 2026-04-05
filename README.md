@@ -24,7 +24,7 @@ The app runs on [http://localhost:3000](http://localhost:3000).
 ## Working in this repo
 
 - Start with `AGENTS.md` for the repo contract.
-- Use local AGENTS files under `src/app/api`, `src/lib/server/markets`, and `src/components/agent` when you are working in those areas.
+- Use the nearest nested `AGENTS.md` for specialized areas, including `src/app/api`, `src/app/api/agent`, `src/lib/server/markets`, and `src/components/agent`.
 - Repo-specific repeatable workflows live under `.agents/skills`.
 - Expanded repo guidance lives in `docs/agents/*` and architecture notes live in `docs/architecture/*`.
 
