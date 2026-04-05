@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { authClient } from "@/lib/auth-client"
 
 import { buildAuthHref, getAuthErrorMessage } from "./auth-form-utils"
+import { PasswordInput } from "./password-input"
 
 export function SignUpForm({ redirectTo }: { redirectTo: string }) {
   const router = useRouter()
@@ -93,7 +94,7 @@ export function SignUpForm({ redirectTo }: { redirectTo: string }) {
           type="text"
           value={name}
           autoComplete="name"
-          placeholder="Yurie User"
+          placeholder="Jane Doe"
           onChange={(event) => {
             setName(event.target.value)
           }}
@@ -120,9 +121,8 @@ export function SignUpForm({ redirectTo }: { redirectTo: string }) {
         <label htmlFor="sign-up-password" className="text-sm font-medium">
           Password
         </label>
-        <Input
+        <PasswordInput
           id="sign-up-password"
-          type="password"
           value={password}
           autoComplete="new-password"
           placeholder="At least 8 characters"
@@ -139,12 +139,12 @@ export function SignUpForm({ redirectTo }: { redirectTo: string }) {
         >
           Confirm Password
         </label>
-        <Input
+        <PasswordInput
           id="sign-up-confirm-password"
-          type="password"
           value={confirmPassword}
           autoComplete="new-password"
           placeholder="Repeat your password"
+          revealLabel="confirm password"
           onChange={(event) => {
             setConfirmPassword(event.target.value)
           }}
