@@ -36,15 +36,20 @@ export async function withMarketCache<T>(params: {
     return cached
   }
 
-  const staleCached = params.staleOnError
-    ? await getCachedMarketPayloadSnapshot<T>(params.cacheKey, {
-        includeExpired: true,
-      }).catch(() => undefined)
-    : undefined
-
   const allowLive = params.allowLive ?? true
 
   if (!allowLive || !(await mayUseLiveFmp())) {
+    if (params.staleOnError) {
+      const staleSnapshot = await getCachedMarketPayloadSnapshot<T>(
+        params.cacheKey,
+        { includeExpired: true }
+      ).catch(() => undefined)
+
+      if (staleSnapshot?.payload !== undefined) {
+        return staleSnapshot.payload
+      }
+    }
+
     return params.fallback
   }
 
@@ -59,7 +64,18 @@ export async function withMarketCache<T>(params: {
     return value
   } catch (error) {
     if (error instanceof FmpRequestError) {
-      return staleCached?.payload ?? params.fallback
+      if (params.staleOnError) {
+        const staleSnapshot = await getCachedMarketPayloadSnapshot<T>(
+          params.cacheKey,
+          { includeExpired: true }
+        ).catch(() => undefined)
+
+        if (staleSnapshot?.payload !== undefined) {
+          return staleSnapshot.payload
+        }
+      }
+
+      return params.fallback
     }
 
     throw error
