@@ -2,7 +2,6 @@
 
 ## Responsibilities
 
-- provider access: FMP request and mapping logic
 - provider access: FMP REST request and mapping logic plus FMP MCP access for `/copilot`
 - cache policy: TTLs, stale-on-error fallback, cache keys
 - market time: `createMarketDateClock()` for all day-based queries
@@ -20,7 +19,7 @@
 ## Current Focused Modules
 
 - `cache.ts`: market cache orchestration and stale fallback
-- `service.ts`: stable facade plus higher-level page orchestration
+- `service.ts`: stable re-export facade for market service consumers
 - `service-overview.ts`: home and news aggregation
 - `service-dossier.ts`: stable dossier facade for stock and watchlist flows
 - `service-portfolio.ts`: single-portfolio page assembly, holding enrichment, and derived allocation/summary math
