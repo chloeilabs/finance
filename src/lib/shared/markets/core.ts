@@ -60,6 +60,10 @@ export interface QuoteSnapshot {
   exchange: string | null
   currency: string | null
   timestamp: string | null
+  eps: number | null
+  pe: number | null
+  sharesOutstanding: number | null
+  earningsAnnouncement: string | null
 }
 
 export interface MarketMoverBucket {
@@ -166,6 +170,13 @@ export interface CompanyProfile {
   beta: number | null
   marketCap: number | null
   image: string | null
+  lastDiv: number | null
+  range: string | null
+  phone: string | null
+  address: string | null
+  currency: string | null
+  isActivelyTrading: boolean
+  isEtf: boolean
 }
 
 export interface DividendSnapshot {
