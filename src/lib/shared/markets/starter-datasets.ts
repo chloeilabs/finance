@@ -278,7 +278,7 @@ const NAME_FIELD: StarterDatasetQueryField = {
 }
 
 const YEAR_FIELD: StarterDatasetQueryField = {
-  defaultValue: new Date().getFullYear(),
+  defaultValue: new Date().getUTCFullYear(),
   key: "year",
   label: "Year",
   required: true,
@@ -996,12 +996,12 @@ const DATASET_DEFINITIONS: StarterDatasetDefinitionTemplate[] = [
   },
   {
     category: "profile",
-    defaultParams: () => ({
-      limit: 10,
-      quarter: Math.max(1, Math.min(4, Math.ceil((new Date().getUTCMonth() + 1) / 3))),
-      symbol: "AAPL",
-      year: new Date().getFullYear(),
-    }),
+    defaultParams: (clock) => {
+      const [yearStr, monthStr] = clock.today.split("-")
+      const year = Number(yearStr)
+      const quarter = Math.max(1, Math.min(4, Math.ceil(Number(monthStr) / 3)))
+      return { limit: 10, quarter, symbol: "AAPL", year }
+    },
     description: "Institutional ownership / 13F analytics by holder.",
     docsUrl: STABLE_DOCS_BASE,
     id: "institutional-ownership",
@@ -1439,11 +1439,12 @@ const DATASET_DEFINITIONS: StarterDatasetDefinitionTemplate[] = [
   },
   {
     category: "analyst",
-    defaultParams: () => ({
-      quarter: Math.max(1, Math.min(4, Math.ceil((new Date().getUTCMonth() + 1) / 3))),
-      symbol: "AAPL",
-      year: new Date().getFullYear(),
-    }),
+    defaultParams: (clock) => {
+      const [yearStr, monthStr] = clock.today.split("-")
+      const year = Number(yearStr)
+      const quarter = Math.max(1, Math.min(4, Math.ceil(Number(monthStr) / 3)))
+      return { quarter, symbol: "AAPL", year }
+    },
     description: "Full earnings-call transcript by symbol, year, and quarter.",
     docsUrl: STABLE_DOCS_BASE,
     id: "earning-call-transcript",
