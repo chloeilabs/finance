@@ -35,10 +35,7 @@ export default async function SignUpPage({
   }
 
   return (
-    <AuthShell
-      title="Create Account"
-      footer="New accounts can sign in immediately after registration."
-    >
+    <AuthShell title="Create Account">
       <SignUpForm redirectTo={redirectTo} />
     </AuthShell>
   )

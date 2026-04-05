@@ -35,10 +35,7 @@ export default async function SignInPage({
   }
 
   return (
-    <AuthShell
-      title="Sign In"
-      footer="Sessions persist for 30 days unless you sign out."
-    >
+    <AuthShell title="Sign In">
       <SignInForm redirectTo={redirectTo} />
     </AuthShell>
   )
