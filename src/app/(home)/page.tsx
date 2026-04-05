@@ -1,7 +1,5 @@
 import {
   CalendarList,
-  FilingList,
-  InsiderFeedList,
   MoverGrid,
   NewsList,
   PageHeader,
@@ -9,13 +7,19 @@ import {
   SectionFrame,
   SectorGrid,
 } from "@/components/markets/ui/market-primitives"
-import { formatSignedNumber } from "@/lib/markets-format"
+import { formatNumericDate, formatSignedNumber } from "@/lib/markets-format"
 import { getCurrentViewer } from "@/lib/server/auth-session"
 import {
-  getLatestInsiderFeed,
-  getLatestSecActivity,
   getMarketOverviewData,
 } from "@/lib/server/markets/service"
+
+function formatRiskPremium(value: number | null | undefined) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "N/A"
+  }
+
+  return `${formatSignedNumber(value)}%`
+}
 
 export default async function Home() {
   const viewer = await getCurrentViewer()
@@ -24,11 +28,13 @@ export default async function Home() {
     return null
   }
 
-  const [overview, latestFilings, latestInsiderTrades] = await Promise.all([
-    getMarketOverviewData(viewer.id),
-    getLatestSecActivity(),
-    getLatestInsiderFeed(),
-  ])
+  const overview = await getMarketOverviewData(viewer.id)
+  const riskPremium = overview.riskPremium
+  const impliedBaseEquityPremium =
+    riskPremium?.countryRiskPremium != null &&
+    riskPremium.totalEquityRiskPremium != null
+      ? riskPremium.totalEquityRiskPremium - riskPremium.countryRiskPremium
+      : null
 
   return (
     <div className="pb-10">
@@ -123,58 +129,54 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-2">
-            <div className="space-y-3">
-              <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
-                US risk premium
-              </div>
-              <div className="market-grid-2 market-panel-grid grid">
-                <div className="market-panel-tile px-3 py-2.5 sm:px-4">
-                  <div className="text-xs text-muted-foreground">
-                    Country Risk Premium
-                  </div>
-                  <div className="mt-2 text-lg tracking-tight">
-                    {formatSignedNumber(
-                      overview.riskPremium?.countryRiskPremium
-                    )}
-                  </div>
+          <div className="space-y-3">
+            <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
+              US risk premium
+            </div>
+            <p className="max-w-3xl text-xs leading-5 text-muted-foreground">
+              Extra annual return investors demand over a risk-free rate to own{" "}
+              {riskPremium?.country ?? "United States"} equities.
+              Total equity risk premium equals the base mature-market premium
+              plus the country-specific risk overlay.
+            </p>
+            <div className="market-grid-3 market-panel-grid grid">
+              <div className="market-panel-tile px-3 py-2.5 sm:px-4">
+                <div className="text-xs text-muted-foreground">
+                  Country Risk Premium
                 </div>
-                <div className="market-panel-tile px-3 py-2.5 sm:px-4">
-                  <div className="text-xs text-muted-foreground">
-                    Total Equity Risk Premium
-                  </div>
-                  <div className="mt-2 text-lg tracking-tight">
-                    {formatSignedNumber(
-                      overview.riskPremium?.totalEquityRiskPremium
-                    )}
-                  </div>
+                <div className="mt-2 text-lg tracking-tight">
+                  {formatRiskPremium(riskPremium?.countryRiskPremium)}
+                </div>
+                <div className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Country-specific sovereign and market-risk add-on.
+                </div>
+              </div>
+              <div className="market-panel-tile px-3 py-2.5 sm:px-4">
+                <div className="text-xs text-muted-foreground">
+                  Implied Base Equity Premium
+                </div>
+                <div className="mt-2 text-lg tracking-tight">
+                  {formatRiskPremium(impliedBaseEquityPremium)}
+                </div>
+                <div className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Mature-market equity premium before the country overlay.
+                </div>
+              </div>
+              <div className="market-panel-tile px-3 py-2.5 sm:px-4">
+                <div className="text-xs text-muted-foreground">
+                  Total Equity Risk Premium
+                </div>
+                <div className="mt-2 text-lg tracking-tight">
+                  {formatRiskPremium(riskPremium?.totalEquityRiskPremium)}
+                </div>
+                <div className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Common input for cost-of-equity and discount-rate models.
                 </div>
               </div>
             </div>
-
-            <div className="space-y-3">
-              <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
-                Exchange state
-              </div>
-              <div className="market-grid-3 market-panel-grid grid">
-                {overview.marketHours.map((item) => (
-                  <div
-                    key={item.exchange}
-                    className="market-panel-tile px-3 py-2.5 sm:px-4"
-                  >
-                    <div className="font-departureMono text-xs tracking-tight">
-                      {item.exchange}
-                    </div>
-                    <div className="mt-2 text-sm">
-                      {item.isMarketOpen ? "Open" : "Closed"}
-                    </div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {item.openingHour ?? "N/A"} to {item.closingHour ?? "N/A"}{" "}
-                      {item.timezone ?? ""}
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="text-xs leading-5 text-muted-foreground">
+              Shorthand: cost of equity = risk-free rate + beta x total equity
+              risk premium.
             </div>
           </div>
 
@@ -193,7 +195,7 @@ export default async function Home() {
                   </div>
                   <div className="mt-2 text-sm">{item.name ?? "Holiday"}</div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    {item.date ?? "Date N/A"}
+                    {formatNumericDate(item.date)}
                   </div>
                 </div>
               ))}
@@ -233,22 +235,6 @@ export default async function Home() {
                 General feed
               </div>
               <NewsList stories={overview.generalNews} />
-            </div>
-          </div>
-
-          <div className="grid gap-6 xl:grid-cols-2">
-            <div className="space-y-3">
-              <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
-                Latest SEC activity
-              </div>
-              <FilingList items={latestFilings} />
-            </div>
-
-            <div className="space-y-3">
-              <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
-                Latest insider tape
-              </div>
-              <InsiderFeedList items={latestInsiderTrades} />
             </div>
           </div>
         </div>
