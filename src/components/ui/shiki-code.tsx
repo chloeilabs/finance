@@ -68,7 +68,7 @@ export function ShikiCode({
   inline?: boolean
   language?: string
 }) {
-  const [highlightedCode, setHighlightedCode] = useState<string>("")
+  const [highlightedCode, setHighlightedCode] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const blockContainerRef = useRef<HTMLElement | null>(null)
   const { copyToClipboard, isCopied } = useCopyToClipboard()
