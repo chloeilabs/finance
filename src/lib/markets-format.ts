@@ -115,6 +115,38 @@ export function formatDate(value: string | null | undefined) {
   }).format(parsed)
 }
 
+export function formatNumericDate(value: string | null | undefined) {
+  if (!value) {
+    return "N/A"
+  }
+
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+
+  if (dateOnlyMatch) {
+    const year = dateOnlyMatch[1]
+    const month = dateOnlyMatch[2]
+    const day = dateOnlyMatch[3]
+
+    if (!year || !month || !day) {
+      return value
+    }
+
+    return `${month}/${day}/${year}`
+  }
+
+  const parsed = new Date(value)
+
+  if (Number.isNaN(parsed.getTime())) {
+    return value
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric",
+  }).format(parsed)
+}
+
 export function formatDateTime(value: string | null | undefined) {
   if (!value) {
     return "N/A"

@@ -26,9 +26,7 @@ vi.mock("@/lib/server/auth-session", () => ({
 vi.mock("@/lib/server/markets/service", () => ({
   getEtfDossier: vi.fn(),
   getLatestGeneralMarketNews: vi.fn(),
-  getLatestInsiderFeed: vi.fn(),
   getLatestMarketNews: vi.fn(),
-  getLatestSecActivity: vi.fn(),
   getMarketOverviewData: vi.fn(),
   getMultiAssetSnapshot: vi.fn(),
   getPortfolioPageData: vi.fn(),
@@ -76,9 +74,7 @@ import { getCurrentViewer } from "@/lib/server/auth-session"
 import {
   getEtfDossier,
   getLatestGeneralMarketNews,
-  getLatestInsiderFeed,
   getLatestMarketNews,
-  getLatestSecActivity,
   getMarketOverviewData,
   getPortfolioPageData,
   getStockDossier,
@@ -111,7 +107,6 @@ describe("market route smoke tests", () => {
       generalNews: [],
       indexes: [],
       macro: [],
-      marketHours: [],
       marketHolidays: [],
       movers: [
         {
@@ -135,8 +130,6 @@ describe("market route smoke tests", () => {
 
     vi.mocked(getLatestGeneralMarketNews).mockResolvedValue([])
     vi.mocked(getLatestMarketNews).mockResolvedValue([])
-    vi.mocked(getLatestSecActivity).mockResolvedValue([])
-    vi.mocked(getLatestInsiderFeed).mockResolvedValue([])
     vi.mocked(resolveTickerInstrumentKind).mockResolvedValue("stock")
     vi.mocked(getEtfDossier).mockResolvedValue({
       aftermarket: null,
@@ -415,7 +408,11 @@ describe("market route smoke tests", () => {
     expect(html).not.toContain("Cross-Asset + Macro")
     expect(html).not.toContain("Cross-asset tape")
     expect(html).not.toContain("Catalysts + News")
+    expect(html).not.toContain("Exchange state")
+    expect(html).toContain("Implied Base Equity Premium")
     expect(html).toContain("Upcoming catalysts")
+    expect(html).not.toContain("Latest SEC activity")
+    expect(html).not.toContain("Latest insider tape")
     expect(html).toContain("No quotes available")
     expect(html).toContain("No sector snapshot")
     expect(html).toContain("No market news")
@@ -425,6 +422,8 @@ describe("market route smoke tests", () => {
     const html = renderToStaticMarkup(await NewsPage())
 
     expect(html).toContain("Market news")
+    expect(html).not.toContain("Latest SEC activity")
+    expect(html).not.toContain("Latest insider tape")
     expect(html).toContain("No market news")
   })
 

@@ -401,7 +401,6 @@ export interface MarketOverviewData {
   calendar: CalendarEvent[]
   macro: MacroRate[]
   economicCalendar: CalendarEvent[]
-  marketHours: MarketHoursSnapshot[]
   marketHolidays: MarketHoliday[]
   riskPremium: RiskPremiumSnapshot | null
   news: NewsStory[]
