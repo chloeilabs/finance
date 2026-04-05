@@ -23,10 +23,11 @@ Use this skill for changes under `src/lib/server/markets`, `src/components/marke
 ## Workflow
 
 1. Read `src/lib/server/markets/AGENTS.md` and [docs/architecture/markets.md](../../../docs/architecture/markets.md).
-2. Check whether the change touches provider access, cache semantics, storage initialization, or market-time logic.
-3. Keep route handlers thin and push market logic into focused server modules.
-4. When splitting code, preserve stable facades so page and route imports stay readable.
-5. Verify with the full repo matrix and add `pnpm markets:capabilities` when FMP capability assumptions changed.
+2. When the change touches market pages or market UI, also check the root `AGENTS.md` guidance for the relevant market route/component subtree.
+3. Check whether the change touches provider access, cache semantics, storage initialization, or market-time logic.
+4. Keep route handlers thin and push market logic into focused server modules.
+5. When splitting code, preserve stable facades so page and route imports stay readable.
+6. Verify with the full repo matrix and add `pnpm markets:capabilities` when FMP capability assumptions changed.
 
 ## Expected Output
 
