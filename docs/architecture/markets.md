@@ -2,7 +2,6 @@
 
 ## Responsibilities
 
-- provider access: FMP request and mapping logic
 - provider access: FMP REST request and mapping logic plus FMP MCP access for `/copilot`
 - cache policy: TTLs, stale-on-error fallback, cache keys
 - market time: `createMarketDateClock()` for all day-based queries
