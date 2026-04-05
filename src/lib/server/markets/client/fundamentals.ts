@@ -106,9 +106,13 @@ export function createFundamentalsClient() {
         { key: "priceToBookRatioTTM", label: "P / B" },
       ])
     },
-    async getIncomeStatement(symbol: string): Promise<StatementTable | null> {
+    async getIncomeStatement(
+      symbol: string,
+      options?: { period?: "annual" | "quarter" }
+    ): Promise<StatementTable | null> {
       const payload = await fetchFmpJson("/stable/income-statement", {
         symbol,
+        period: options?.period,
       })
 
       return buildStatementTable({
@@ -120,12 +124,17 @@ export function createFundamentalsClient() {
           { key: "operatingIncome", label: "Operating Income" },
           { key: "netIncome", label: "Net Income" },
           { key: "eps", label: "EPS" },
+          { key: "weightedAverageShsOut", label: "Shares Outstanding" },
         ],
       })
     },
-    async getBalanceSheet(symbol: string): Promise<StatementTable | null> {
+    async getBalanceSheet(
+      symbol: string,
+      options?: { period?: "annual" | "quarter" }
+    ): Promise<StatementTable | null> {
       const payload = await fetchFmpJson("/stable/balance-sheet-statement", {
         symbol,
+        period: options?.period,
       })
 
       return buildStatementTable({
@@ -140,9 +149,13 @@ export function createFundamentalsClient() {
         ],
       })
     },
-    async getCashFlow(symbol: string): Promise<StatementTable | null> {
+    async getCashFlow(
+      symbol: string,
+      options?: { period?: "annual" | "quarter" }
+    ): Promise<StatementTable | null> {
       const payload = await fetchFmpJson("/stable/cash-flow-statement", {
         symbol,
+        period: options?.period,
       })
 
       return buildStatementTable({

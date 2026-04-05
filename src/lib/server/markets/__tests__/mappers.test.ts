@@ -266,6 +266,44 @@ describe("market client mappers", () => {
     ])
   })
 
+  it("maps quote fields including eps, pe, and earningsAnnouncement", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          {
+            change: 1.5,
+            changePercentage: 0.85,
+            currency: "USD",
+            earningsAnnouncement: "2026-07-31T00:00:00.000+0000",
+            eps: 7.73,
+            exchange: "NASDAQ",
+            name: "Apple Inc.",
+            pe: 28.91,
+            price: 228.5,
+            sharesOutstanding: 15022100000,
+            symbol: "AAPL",
+            volume: 45123456,
+          },
+        ]),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
+      )
+    ) as typeof fetch
+
+    const quotesClient = createQuotesClient()
+    const result = await quotesClient.getQuote("AAPL")
+
+    expect(result).toMatchObject({
+      eps: 7.73,
+      pe: 28.91,
+      sharesOutstanding: 15022100000,
+      earningsAnnouncement: "2026-07-31T00:00:00.000+0000",
+      symbol: "AAPL",
+    })
+  })
+
   it("maps multi-asset quote and compact chart responses", async () => {
     globalThis.fetch = vi
       .fn()
