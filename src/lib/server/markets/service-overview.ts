@@ -9,7 +9,6 @@ import type {
 } from "@/lib/shared/markets/core"
 import type {
   MarketHoliday,
-  MarketHoursSnapshot,
   MarketOverviewData,
   RiskPremiumSnapshot,
   SectorValuationSnapshot,
@@ -23,6 +22,7 @@ import {
   isCapabilityEnabled,
 } from "./config"
 import { createMarketDateClock } from "./market-clock"
+import { selectUpcomingMarketHolidays } from "./market-holidays"
 import {
   CALENDAR_TTL_SECONDS,
   client,
@@ -139,43 +139,28 @@ async function getEconomicCalendarSnapshot(): Promise<CalendarEvent[]> {
   })
 }
 
-async function getMarketHoursSnapshot(): Promise<MarketHoursSnapshot[]> {
-  const clock = createMarketDateClock()
-
-  const results = await Promise.all(
-    CORE_MARKET_EXCHANGES.map((exchange) =>
-      withMarketCache({
-        cacheKey: `market-hours:${exchange}:${clock.today}`,
-        category: "market-structure",
-        ttlSeconds: MARKET_STRUCTURE_TTL_SECONDS,
-        fallback: null as MarketHoursSnapshot | null,
-        staleOnError: true,
-        fetcher: () => client.marketStructure.getExchangeMarketHours(exchange),
-      })
-    )
-  )
-
-  return results.filter((item): item is MarketHoursSnapshot => item !== null)
-}
-
 async function getMarketHolidaySnapshot(): Promise<MarketHoliday[]> {
   const clock = createMarketDateClock()
 
   const results = await Promise.all(
     CORE_MARKET_EXCHANGES.map((exchange) =>
       withMarketCache({
-        cacheKey: `market-holidays:${exchange}:${clock.today}`,
+        cacheKey: `market-holidays:v2:${exchange}:${clock.today}`,
         category: "market-structure",
         ttlSeconds: MARKET_STRUCTURE_TTL_SECONDS,
         fallback: [] as MarketHoliday[],
         staleOnError: true,
         fetcher: async () => {
-          const items =
-            await client.marketStructure.getHolidaysByExchange(exchange)
+          const items = await client.marketStructure.getHolidaysByExchange(
+            exchange
+          )
 
-          return items
-            .filter((item) => item.date && item.date >= clock.today)
-            .slice(0, 2)
+          return selectUpcomingMarketHolidays({
+            exchange,
+            items,
+            today: clock.today,
+            limit: 2,
+          })
         },
       })
     )
@@ -444,7 +429,6 @@ export async function getMarketOverviewData(
     news,
     generalNews,
     economicCalendar,
-    marketHours,
     marketHolidays,
     sectorValuations,
     riskPremium,
@@ -490,7 +474,6 @@ export async function getMarketOverviewData(
     }),
     getLatestGeneralMarketNews(8),
     getEconomicCalendarSnapshot(),
-    getMarketHoursSnapshot(),
     getMarketHolidaySnapshot(),
     getSectorValuationSnapshot(),
     getMarketRiskPremiumSnapshot(),
@@ -513,7 +496,6 @@ export async function getMarketOverviewData(
       .slice(0, 10),
     macro,
     economicCalendar: dedupeCalendarEvents(economicCalendar).slice(0, 10),
-    marketHours,
     marketHolidays: marketHolidays.slice(0, 6),
     riskPremium,
     news: dedupeNews(news).slice(0, 10),
