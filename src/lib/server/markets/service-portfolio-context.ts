@@ -154,7 +154,7 @@ const PORTFOLIO_RENDER_STAGES: readonly PortfolioPromptRenderStage[] = [
     rowMode: "full",
   },
   {
-    includeGuidance: true,
+    includeGuidance: false,
     includeLatestPrice: false,
     includeLatestPriceSource: false,
     includeNotes: false,
