@@ -110,4 +110,67 @@ describe("fetchFmpJson", () => {
       status: 503,
     })
   })
+
+  it("raises a data error when FMP returns an Error Message on 200", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({ "Error Message": "Limit Reach" }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    ) as typeof fetch
+
+    await expect(
+      fetchFmpJson("/stable/quote", { symbol: "AAPL" }, { retries: 0 })
+    ).rejects.toMatchObject({
+      code: "fmp_data_error",
+      status: 200,
+    })
+  })
+
+  it("treats an empty response body as an empty array", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response("", { status: 200 })
+    ) as typeof fetch
+
+    await expect(
+      fetchFmpJson("/stable/quote", { symbol: "AAPL" }, { retries: 0 })
+    ).resolves.toEqual([])
+  })
+
+  it("treats a whitespace-only response body as an empty array", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response("   \n  ", { status: 200 })
+    ) as typeof fetch
+
+    await expect(
+      fetchFmpJson("/stable/quote", { symbol: "AAPL" }, { retries: 0 })
+    ).resolves.toEqual([])
+  })
+
+  it("respects Retry-After header on 429 responses", async () => {
+    let callCount = 0
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      callCount += 1
+      if (callCount === 1) {
+        return Promise.resolve(
+          new Response("", {
+            status: 429,
+            headers: { "Retry-After": "1" },
+          })
+        )
+      }
+      return Promise.resolve(
+        new Response(JSON.stringify([{ ok: true }]), { status: 200 })
+      )
+    }) as typeof fetch
+
+    const result = await fetchFmpJson(
+      "/stable/quote",
+      { symbol: "AAPL" },
+      { retries: 1 }
+    )
+
+    expect(result).toEqual([{ ok: true }])
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2)
+  })
 })

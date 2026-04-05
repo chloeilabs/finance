@@ -92,6 +92,44 @@ function wait(ms: number): Promise<void> {
   })
 }
 
+function parseRetryAfterMs(response: Response): number | null {
+  const header = response.headers.get("Retry-After")
+
+  if (!header) {
+    return null
+  }
+
+  const seconds = Number(header)
+
+  if (Number.isFinite(seconds) && seconds > 0 && seconds <= 120) {
+    return seconds * 1000
+  }
+
+  return null
+}
+
+function isFmpErrorPayload(
+  body: unknown
+): body is Record<string, unknown> & { "Error Message": string } {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return false
+  }
+
+  const record = body as Record<string, unknown>
+
+  return typeof record["Error Message"] === "string"
+}
+
+async function safeParseJson(response: Response): Promise<unknown> {
+  const text = await response.text()
+
+  if (!text.trim()) {
+    return []
+  }
+
+  return JSON.parse(text)
+}
+
 export async function fetchFmpJson(
   path: string,
   params: Record<string, string | number | boolean | undefined> = {},
@@ -133,6 +171,9 @@ export async function fetchFmpJson(
       await recordMarketApiUsage(FMP_PROVIDER_NAME)
 
       if (!response.ok) {
+        const retryAfterMs =
+          response.status === 429 ? parseRetryAfterMs(response) : null
+
         const error = new FmpRequestError({
           message: `FMP request failed for ${path} with status ${String(response.status)}.`,
           status: response.status,
@@ -144,14 +185,25 @@ export async function fetchFmpJson(
         })
 
         if (attempt < retries && error.retryable) {
-          await wait(250 * (attempt + 1))
+          await wait(retryAfterMs ?? 250 * (attempt + 1))
           continue
         }
 
         throw error
       }
 
-      return await response.json()
+      const body = await safeParseJson(response)
+
+      if (isFmpErrorPayload(body)) {
+        throw new FmpRequestError({
+          message: `FMP returned an error for ${path}: ${body["Error Message"]}`,
+          status: 200,
+          code: "fmp_data_error",
+          retryable: false,
+        })
+      }
+
+      return body
     } catch (error) {
       if (attempt < retries && isRetryableFetchError(error)) {
         await wait(250 * (attempt + 1))
