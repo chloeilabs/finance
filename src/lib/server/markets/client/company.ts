@@ -9,7 +9,14 @@ import type {
 } from "@/lib/shared/markets/intelligence"
 
 import { fetchFmpJson } from "../fmp-request"
-import { asArray, asNumber, asRecord, pickNumber, pickString } from "./support"
+import {
+  asArray,
+  asBoolean,
+  asNumber,
+  asRecord,
+  pickNumber,
+  pickString,
+} from "./support"
 
 function mapProfile(item: unknown): CompanyProfile | null {
   const record = asRecord(item)
@@ -42,6 +49,13 @@ function mapProfile(item: unknown): CompanyProfile | null {
     beta: pickNumber(record, ["beta"]),
     marketCap: pickNumber(record, ["mktCap", "marketCap"]),
     image: pickString(record, ["image"]),
+    lastDiv: pickNumber(record, ["lastDiv", "lastDividend"]),
+    range: pickString(record, ["range"]),
+    phone: pickString(record, ["phone"]),
+    address: pickString(record, ["address"]),
+    currency: pickString(record, ["currency"]),
+    isActivelyTrading: asBoolean(record.isActivelyTrading),
+    isEtf: asBoolean(record.isEtf),
   }
 }
 
