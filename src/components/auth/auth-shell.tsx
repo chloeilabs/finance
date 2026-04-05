@@ -12,7 +12,7 @@ export function AuthShell({
 }: {
   title: string
   description?: string
-  footer: React.ReactNode
+  footer?: React.ReactNode
   children: React.ReactNode
 }) {
   return (
@@ -30,7 +30,7 @@ export function AuthShell({
                 )}
               >
                 <LogoHover size="md" />
-                <span className="font-departureMono">Yurie</span>
+                <span className="font-departureMono">Yurie Markets</span>
               </Link>
 
               <div className="flex flex-col gap-1">
@@ -45,9 +45,11 @@ export function AuthShell({
 
             {children}
 
-            <div className="border-t border-border pt-4 text-sm text-muted-foreground">
-              {footer}
-            </div>
+            {footer ? (
+              <div className="border-t border-border pt-4 text-sm text-muted-foreground">
+                {footer}
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

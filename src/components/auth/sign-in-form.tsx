@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { authClient } from "@/lib/auth-client"
 
 import { buildAuthHref, getAuthErrorMessage } from "./auth-form-utils"
+import { PasswordInput } from "./password-input"
 
 export function SignInForm({ redirectTo }: { redirectTo: string }) {
   const router = useRouter()
@@ -91,9 +92,8 @@ export function SignInForm({ redirectTo }: { redirectTo: string }) {
         <label htmlFor="sign-in-password" className="text-sm font-medium">
           Password
         </label>
-        <Input
+        <PasswordInput
           id="sign-in-password"
-          type="password"
           value={password}
           autoComplete="current-password"
           placeholder="••••••••"

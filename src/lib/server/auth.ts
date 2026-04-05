@@ -149,14 +149,45 @@ function getAllowedHosts(trustedOrigins: string[]): string[] {
   return [...allowedHosts]
 }
 
-function getCookieDomain(): string | null {
-  const cookieDomain = process.env.BETTER_AUTH_COOKIE_DOMAIN?.trim()
+function isLoopbackHostname(hostname: string): boolean {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1" ||
+    hostname === "[::1]"
+  )
+}
+
+export function resolveAuthCookieDomain(
+  baseUrl: string,
+  configuredCookieDomain: string | undefined = process.env.BETTER_AUTH_COOKIE_DOMAIN
+): string | null {
+  const cookieDomain = configuredCookieDomain?.trim()
 
   if (!cookieDomain) {
     return null
   }
 
-  return cookieDomain.replace(/^\./u, "")
+  const normalizedCookieDomain = cookieDomain.replace(/^\./u, "").toLowerCase()
+
+  try {
+    const hostname = new URL(baseUrl).hostname.toLowerCase()
+
+    if (isLoopbackHostname(hostname)) {
+      return null
+    }
+
+    if (
+      hostname === normalizedCookieDomain ||
+      hostname.endsWith(`.${normalizedCookieDomain}`)
+    ) {
+      return normalizedCookieDomain
+    }
+  } catch {
+    return null
+  }
+
+  return null
 }
 
 function createAuth() {
@@ -164,7 +195,7 @@ function createAuth() {
   const betterAuthSecret = getRequiredEnv("BETTER_AUTH_SECRET")
   const trustedOrigins = getTrustedOrigins(betterAuthUrl)
   const allowedHosts = getAllowedHosts(trustedOrigins)
-  const cookieDomain = getCookieDomain()
+  const cookieDomain = resolveAuthCookieDomain(betterAuthUrl)
   const baseURL =
     allowedHosts.length > 1
       ? {
