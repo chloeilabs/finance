@@ -72,3 +72,35 @@ See [docs/agents/verification.md](docs/agents/verification.md) for scoped checks
 - `src/app/api/AGENTS.md`
 - `src/lib/server/markets/AGENTS.md`
 - `src/components/agent/AGENTS.md`
+
+## Cursor Cloud specific instructions
+
+### PostgreSQL
+
+The cloud VM does not ship with PostgreSQL. Start the cluster before running migrations or the dev server:
+
+```bash
+sudo pg_ctlcluster 16 main start
+```
+
+A local database is pre-configured (user `yurie`, password `yurie`, database `yurie` on `localhost:5432`). The environment may have a shell-level `DATABASE_URL` that shadows `.env.local`. Override it explicitly when running migration scripts by exporting `DATABASE_URL`, `BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL` to match the values in `.env.local`.
+
+### Running migrations
+
+After `pnpm install` and before `pnpm dev`, run all three migrations:
+
+```bash
+pnpm auth:migrate
+pnpm threads:migrate
+pnpm markets:migrate
+```
+
+`threads:migrate` and `markets:migrate` read `.env.local` via `--env-file-if-exists`, but `auth:migrate` (better-auth CLI) reads `process.env` directly, so the shell-level `DATABASE_URL` export above is required.
+
+### Verification commands
+
+See the repo README "Scripts" section. The four required verification commands are: `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm build`.
+
+### Dev server
+
+`pnpm dev` starts on port 3000. All routes are auth-gated; unauthenticated requests redirect to `/sign-in`. Without `FMP_API_KEY`, the market workspace renders its shell but data sections show setup warnings. Without `OPENROUTER_API_KEY`, the copilot workspace loads but cannot send messages.
