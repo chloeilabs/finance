@@ -124,4 +124,30 @@ describe("MarketCopilotSidebar", () => {
     expect(historyIndex).toBeGreaterThan(newChatIndex)
     expect(openIndex).toBeGreaterThan(historyIndex)
   })
+
+  it("renders a desktop resize handle capped at 40 percent", () => {
+    mockUseThreads.mockReturnValue({
+      currentThreadId: null,
+      setCurrentThreadId: vi.fn(),
+      threads: [],
+    })
+
+    const html = renderToStaticMarkup(
+      <MarketCopilotSidebar
+        initialSelectedModel={null}
+        onOpenChange={() => undefined}
+        open
+        resetToken={0}
+        viewer={{
+          email: "markets@example.test",
+          id: "user_123",
+          name: "Markets Tester",
+        }}
+      />
+    )
+
+    expect(html).toContain('aria-label="Resize Copilot sidebar"')
+    expect(html).toContain("max-width:40%")
+    expect(html).toContain("width:352px")
+  })
 })
