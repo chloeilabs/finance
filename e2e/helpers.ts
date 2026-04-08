@@ -61,7 +61,7 @@ function getFileEnv(): Record<string, string> {
   return cachedFileEnv
 }
 
-function getEnv(name: string): string | undefined {
+export function getEnv(name: string): string | undefined {
   const runtimeValue = process.env[name]?.trim()
   if (runtimeValue) {
     return runtimeValue

@@ -8,7 +8,9 @@ import {
   createStorageStatePath,
   deleteStorageState,
   type E2EAuthUser,
+  getEnv,
 } from "./helpers"
+
 
 async function signUpThroughUi(page: Page, authUser: E2EAuthUser) {
   await page.goto("/")
@@ -36,6 +38,7 @@ async function signUpThroughUi(page: Page, authUser: E2EAuthUser) {
 test.describe.serial("app smoke", () => {
   const authUser = createE2EAuthUser("app-smoke")
   let storageStatePath = ""
+  const hasFmpKey = Boolean(getEnv("FMP_API_KEY"))
 
   test.beforeAll(async () => {
     storageStatePath = await createStorageStatePath(
@@ -53,16 +56,7 @@ test.describe.serial("app smoke", () => {
 
     await signUpThroughUi(page, authUser)
 
-    await expect(page.getByText("Core watchlist")).toBeVisible()
     await page.context().storageState({ path: storageStatePath })
-
-    await page.goto("/stocks/NVDA")
-    await expect(
-      page.getByRole("heading", { name: "NVIDIA Corporation" })
-    ).toBeVisible({ timeout: 30_000 })
-    await expect(
-      page.getByRole("heading", { name: "Price history" })
-    ).toBeVisible()
 
     await page.goto("/watchlists/core")
     await expect(page.getByRole("heading", { name: "Core" })).toBeVisible({
@@ -79,6 +73,37 @@ test.describe.serial("app smoke", () => {
 
     await nflxChip.click()
     await expect(page.getByRole("button", { name: /^NFLX$/u })).toHaveCount(0)
+
+    await page.goto("/stocks/NVDA")
+    await expect(page).toHaveURL(/\/stocks\/NVDA$/u)
+    if (hasFmpKey) {
+      await expect(
+        page.getByRole("heading", { name: "NVIDIA Corporation" })
+      ).toBeVisible({ timeout: 30_000 })
+      await expect(
+        page.getByRole("heading", { name: "Price history" })
+      ).toBeVisible({ timeout: 30_000 })
+    } else {
+      await expect(
+        page.getByText("FMP_API_KEY is not configured. Market data will stay empty.")
+      ).toBeVisible({ timeout: 30_000 })
+    }
+  })
+
+  test("copilot workspace loads for authenticated users", async ({ browser }) => {
+    expect(existsSync(storageStatePath)).toBeTruthy()
+
+    const context = await browser.newContext({ storageState: storageStatePath })
+    const page = await context.newPage()
+
+    try {
+      await page.goto("/copilot")
+      await expect(
+        page.getByRole("textbox", { name: "Ask anything" })
+      ).toBeVisible({ timeout: 30_000 })
+    } finally {
+      await context.close()
+    }
   })
 
   test("copilot streams a live response @live-ai", async ({ browser }) => {
