@@ -37,6 +37,10 @@ function MarketCopilotPanel({
   const router = useRouter()
   const { currentThreadId, setCurrentThreadId, threads } = useThreads()
   const [historyOpen, setHistoryOpen] = useState(false)
+  const activeThread = currentThreadId
+    ? threads.find((thread) => thread.id === currentThreadId)
+    : null
+  const showNewChat = (activeThread?.messages.length ?? 0) > 0
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-background">
@@ -48,28 +52,19 @@ function MarketCopilotPanel({
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
-          <Button
-            className="h-7 px-2 font-departureMono text-[10px] tracking-tight text-muted-foreground hover:text-foreground"
-            onClick={() => {
-              router.push(getCopilotOpenHref(currentThreadId))
-            }}
-            size="sm"
-            variant="ghost"
-          >
-            Open
-          </Button>
-
-          <Button
-            className="h-7 px-2 font-departureMono text-[10px] tracking-tight text-muted-foreground hover:text-foreground"
-            onClick={() => {
-              setHistoryOpen(false)
-              onNewChat()
-            }}
-            size="sm"
-            variant="ghost"
-          >
-            New Chat
-          </Button>
+          {showNewChat ? (
+            <Button
+              className="h-7 px-2 font-departureMono text-[10px] tracking-tight text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setHistoryOpen(false)
+                onNewChat()
+              }}
+              size="sm"
+              variant="ghost"
+            >
+              New Chat
+            </Button>
+          ) : null}
 
           <Button
             className="h-7 px-2 font-departureMono text-[10px] tracking-tight text-muted-foreground hover:text-foreground"
@@ -80,6 +75,17 @@ function MarketCopilotPanel({
             variant="ghost"
           >
             History
+          </Button>
+
+          <Button
+            className="h-7 px-2 font-departureMono text-[10px] tracking-tight text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              router.push(getCopilotOpenHref(currentThreadId))
+            }}
+            size="sm"
+            variant="ghost"
+          >
+            Open
           </Button>
 
           <Button
