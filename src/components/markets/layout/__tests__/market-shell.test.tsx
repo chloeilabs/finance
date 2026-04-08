@@ -75,4 +75,20 @@ describe("MarketShell", () => {
     expect(html).not.toContain("Search symbols, companies, ETFs")
     expect(html).toContain("Workspace")
   })
+
+  it("renders custom header actions when provided", () => {
+    const html = renderToStaticMarkup(
+      <MarketShell
+        headerActions={<div>Copilot actions</div>}
+        showSymbolSearch={false}
+        viewer={viewer}
+        warnings={[]}
+        watchlists={[]}
+      >
+        <div>Workspace</div>
+      </MarketShell>
+    )
+
+    expect(html).toContain("Copilot actions")
+  })
 })

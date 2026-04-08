@@ -29,6 +29,7 @@ import { MarketSidebar } from "./market-sidebar"
 export function MarketShell({
   children,
   enableCopilotRail = true,
+  headerActions,
   initialCopilotOpen = false,
   initialSelectedModel,
   initialSidebarOpen = false,
@@ -40,6 +41,7 @@ export function MarketShell({
 }: {
   children: React.ReactNode
   enableCopilotRail?: boolean
+  headerActions?: React.ReactNode
   initialCopilotOpen?: boolean
   initialSelectedModel?: ModelType | null
   initialSidebarOpen?: boolean
@@ -81,6 +83,7 @@ export function MarketShell({
               ) : null}
 
               <div className="ml-auto flex shrink-0 items-center gap-1.5">
+                {headerActions}
                 {enableCopilotRail ? (
                   <MarketCopilotToggle
                     onToggle={() => {

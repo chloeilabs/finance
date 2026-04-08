@@ -6,6 +6,7 @@ import {
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
+import { CopilotPageToolbar } from "@/components/agent/home/copilot-page-toolbar"
 import { HomePageContent } from "@/components/agent/home/home-content"
 import { ThreadsProvider } from "@/components/agent/home/threads-context"
 import { MarketShell } from "@/components/markets/layout/market-shell"
@@ -68,6 +69,7 @@ export default async function CopilotPage({
     >
       <MarketShell
         enableCopilotRail={false}
+        headerActions={<CopilotPageToolbar />}
         initialSidebarOpen={initialSidebarOpen}
         showSymbolSearch={false}
         viewer={viewer}
