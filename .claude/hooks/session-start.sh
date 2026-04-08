@@ -7,4 +7,4 @@ fi
 
 cd "${CLAUDE_PROJECT_DIR:-$(dirname "$(dirname "$(dirname "$(realpath "$0")")")")}"
 
-pnpm install
+timeout 120 pnpm install || { echo "pnpm install failed or timed out" >&2; exit 1; }
