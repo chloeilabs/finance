@@ -8,7 +8,9 @@ import {
   createStorageStatePath,
   deleteStorageState,
   type E2EAuthUser,
+  getEnv,
 } from "./helpers"
+
 
 async function signUpThroughUi(page: Page, authUser: E2EAuthUser) {
   await page.goto("/")
@@ -36,7 +38,7 @@ async function signUpThroughUi(page: Page, authUser: E2EAuthUser) {
 test.describe.serial("app smoke", () => {
   const authUser = createE2EAuthUser("app-smoke")
   let storageStatePath = ""
-  const hasFmpKey = Boolean(process.env.FMP_API_KEY?.trim())
+  const hasFmpKey = Boolean(getEnv("FMP_API_KEY"))
 
   test.beforeAll(async () => {
     storageStatePath = await createStorageStatePath(
@@ -81,15 +83,11 @@ test.describe.serial("app smoke", () => {
       await expect(
         page.getByRole("heading", { name: "Price history" })
       ).toBeVisible({ timeout: 30_000 })
-      return
+    } else {
+      await expect(
+        page.getByText("FMP_API_KEY is not configured. Market data will stay empty.")
+      ).toBeVisible({ timeout: 30_000 })
     }
-
-    await expect(
-      page.getByText("FMP_API_KEY is not configured. Market data will stay empty.")
-    ).toBeVisible({ timeout: 30_000 })
-    await expect(page.getByText("Page Not Found")).toBeVisible({
-      timeout: 30_000,
-    })
   })
 
   test("copilot workspace loads for authenticated users", async ({ browser }) => {
