@@ -2,7 +2,7 @@
 
 import { HatGlasses, X } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 import { HomePageContent } from "@/components/agent/home/home-content"
 import { ThreadSearchDialog } from "@/components/agent/home/thread-search-dialog"
@@ -14,6 +14,16 @@ import type { AuthViewer } from "@/lib/shared/auth"
 import type { ModelType } from "@/lib/shared/llm/models"
 import { cn } from "@/lib/utils"
 
+import {
+  clampMarketCopilotWidth,
+  DEFAULT_MARKET_COPILOT_WIDTH_PX,
+  getMarketCopilotMaxWidthPx,
+  MARKET_COPILOT_RELEASE_SNAP_THRESHOLD_PX,
+  MARKET_COPILOT_WIDTH_STEP_PX,
+  MAX_MARKET_COPILOT_WIDTH_RATIO,
+  resolveMarketCopilotWidthFromPointer,
+  snapMarketCopilotWidth,
+} from "./market-copilot-sidebar-resize"
 import { getCopilotOpenHref } from "./market-copilot-sidebar-utils"
 
 const COPILOT_SUGGESTIONS = [
@@ -164,8 +174,103 @@ export function MarketCopilotSidebar({
   viewer: AuthViewer
 }) {
   const isMobile = useIsMobile()
+  const [isResizing, setIsResizing] = useState(false)
   const [localResetToken, setLocalResetToken] = useState(0)
+  const [desktopWidth, setDesktopWidth] = useState(
+    DEFAULT_MARKET_COPILOT_WIDTH_PX
+  )
+  const asideRef = useRef<HTMLElement | null>(null)
+  const resizeStateRef = useRef<{
+    containerRight: number
+    containerWidth: number
+    pointerId: number
+  } | null>(null)
   const { setCurrentThreadId } = useThreads()
+
+  const getDesktopContainerWidth = useCallback(() => {
+    if (typeof window === "undefined") {
+      return DEFAULT_MARKET_COPILOT_WIDTH_PX
+    }
+
+    return (
+      asideRef.current?.parentElement?.getBoundingClientRect().width ??
+      window.innerWidth
+    )
+  }, [])
+
+  const syncDesktopWidth = useCallback(() => {
+    const containerWidth = getDesktopContainerWidth()
+
+    setDesktopWidth((currentWidth) =>
+      clampMarketCopilotWidth(currentWidth, containerWidth)
+    )
+  }, [getDesktopContainerWidth])
+
+  const updateDesktopWidth = useCallback(
+    (nextWidth: number) => {
+      const containerWidth = getDesktopContainerWidth()
+
+      setDesktopWidth(clampMarketCopilotWidth(nextWidth, containerWidth))
+    },
+    [getDesktopContainerWidth]
+  )
+
+  const clearResizeState = useCallback(() => {
+    resizeStateRef.current = null
+    document.body.style.removeProperty("cursor")
+    document.body.style.removeProperty("user-select")
+  }, [])
+
+  const updateResizeWidthFromPointer = useCallback((pointerX: number) => {
+    const resizeState = resizeStateRef.current
+
+    if (!resizeState) {
+      return
+    }
+
+    setDesktopWidth((currentWidth) => {
+      const nextWidth = resolveMarketCopilotWidthFromPointer({
+        containerRight: resizeState.containerRight,
+        pointerX,
+        containerWidth: resizeState.containerWidth,
+      })
+
+      return nextWidth === currentWidth ? currentWidth : nextWidth
+    })
+  }, [])
+
+  const finishResize = useCallback(() => {
+    const resizeState = resizeStateRef.current
+
+    if (resizeState) {
+      setDesktopWidth((currentWidth) =>
+        snapMarketCopilotWidth(
+          currentWidth,
+          resizeState.containerWidth,
+          MARKET_COPILOT_RELEASE_SNAP_THRESHOLD_PX
+        )
+      )
+    }
+
+    clearResizeState()
+    setIsResizing(false)
+  }, [clearResizeState])
+
+  useEffect(() => {
+    if (isMobile || !open) {
+      return
+    }
+
+    const syncFrame = window.requestAnimationFrame(syncDesktopWidth)
+    window.addEventListener("resize", syncDesktopWidth)
+
+    return () => {
+      window.cancelAnimationFrame(syncFrame)
+      window.removeEventListener("resize", syncDesktopWidth)
+    }
+  }, [isMobile, open, syncDesktopWidth])
+
+  useEffect(() => clearResizeState, [clearResizeState])
 
   return isMobile ? (
     <Sheet onOpenChange={onOpenChange} open={open}>
@@ -188,19 +293,118 @@ export function MarketCopilotSidebar({
       </SheetContent>
     </Sheet>
   ) : open ? (
-    <aside className="hidden h-full min-h-0 w-[22rem] shrink-0 overflow-hidden border-t border-l border-border/50 md:flex md:flex-col">
-      <MarketCopilotPanel
-        key={resetToken + localResetToken}
-        initialSelectedModel={initialSelectedModel}
-        onNewChat={() => {
-          setCurrentThreadId(null)
-          setLocalResetToken((currentToken) => currentToken + 1)
+    <aside
+      ref={asideRef}
+      aria-label="Copilot sidebar"
+      className={cn(
+        "relative hidden h-full min-h-0 shrink-0 overflow-hidden border-t border-l border-border/50 md:flex md:flex-col",
+        isResizing
+          ? "duration-0"
+          : "transition-[width] duration-150 ease-[cubic-bezier(0.2,0.9,0.2,1)]"
+      )}
+      style={{
+        maxWidth: `${String(MAX_MARKET_COPILOT_WIDTH_RATIO * 100)}%`,
+        minWidth: `${String(DEFAULT_MARKET_COPILOT_WIDTH_PX)}px`,
+        willChange: isResizing ? "width" : undefined,
+        width: `${String(desktopWidth)}px`,
+      }}
+    >
+      <button
+        aria-controls="market-copilot-sidebar-panel"
+        aria-label="Resize Copilot sidebar"
+        className="group/copilot-resize absolute inset-y-0 left-0 z-10 w-3 -translate-x-1/2 cursor-col-resize touch-none outline-none"
+        onDoubleClick={() => {
+          updateDesktopWidth(DEFAULT_MARKET_COPILOT_WIDTH_PX)
         }}
-        onClose={() => {
-          onOpenChange(false)
+        onKeyDown={(event) => {
+          if (event.key === "ArrowLeft") {
+            event.preventDefault()
+            updateDesktopWidth(desktopWidth + MARKET_COPILOT_WIDTH_STEP_PX)
+            return
+          }
+
+          if (event.key === "ArrowRight") {
+            event.preventDefault()
+            updateDesktopWidth(desktopWidth - MARKET_COPILOT_WIDTH_STEP_PX)
+            return
+          }
+
+          if (event.key === "Home") {
+            event.preventDefault()
+            updateDesktopWidth(DEFAULT_MARKET_COPILOT_WIDTH_PX)
+            return
+          }
+
+          if (event.key === "End") {
+            event.preventDefault()
+            updateDesktopWidth(
+              getMarketCopilotMaxWidthPx(getDesktopContainerWidth())
+            )
+          }
         }}
-        viewer={viewer}
+        onPointerCancel={finishResize}
+        onPointerDown={(event) => {
+          const containerRect =
+            asideRef.current?.parentElement?.getBoundingClientRect()
+
+          if (!containerRect) {
+            return
+          }
+
+          event.preventDefault()
+          setIsResizing(true)
+          resizeStateRef.current = {
+            containerRight: containerRect.right,
+            containerWidth: containerRect.width,
+            pointerId: event.pointerId,
+          }
+          document.body.style.setProperty("cursor", "col-resize")
+          document.body.style.setProperty("user-select", "none")
+          event.currentTarget.setPointerCapture(event.pointerId)
+          updateResizeWidthFromPointer(event.clientX)
+        }}
+        onPointerMove={(event) => {
+          if (resizeStateRef.current?.pointerId !== event.pointerId) {
+            return
+          }
+
+          updateResizeWidthFromPointer(event.clientX)
+        }}
+        onPointerUp={(event) => {
+          if (resizeStateRef.current?.pointerId !== event.pointerId) {
+            return
+          }
+
+          if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+            event.currentTarget.releasePointerCapture(event.pointerId)
+          }
+
+          finishResize()
+        }}
+        title="Resize Copilot sidebar"
+        type="button"
+      >
+        <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border/60 transition-colors group-hover/copilot-resize:bg-foreground/20 group-focus-visible/copilot-resize:bg-foreground/35" />
+      </button>
+
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 left-0 w-px bg-border/60"
       />
+      <div id="market-copilot-sidebar-panel" className="min-h-0 flex-1">
+        <MarketCopilotPanel
+          key={resetToken + localResetToken}
+          initialSelectedModel={initialSelectedModel}
+          onNewChat={() => {
+            setCurrentThreadId(null)
+            setLocalResetToken((currentToken) => currentToken + 1)
+          }}
+          onClose={() => {
+            onOpenChange(false)
+          }}
+          viewer={viewer}
+        />
+      </div>
     </aside>
   ) : null
 }
