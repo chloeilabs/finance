@@ -33,6 +33,8 @@ const COPILOT_SUGGESTIONS = [
   "If I wanted to reduce risk, where would you start?",
 ] as const
 
+const MARKET_COPILOT_DIVIDER_LINE_CLASS = "bg-border/60"
+
 function MarketCopilotPanel({
   initialSelectedModel,
   onNewChat,
@@ -54,7 +56,18 @@ function MarketCopilotPanel({
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-background">
-      <div className="flex items-center justify-between gap-3 border-b border-border/50 px-4 py-2.5">
+      <div
+        className={cn(
+          "relative flex items-center justify-between gap-3 px-4 py-2.5"
+        )}
+      >
+        <div
+          aria-hidden="true"
+          className={cn(
+            "pointer-events-none absolute inset-x-0 bottom-0 h-px",
+            MARKET_COPILOT_DIVIDER_LINE_CLASS
+          )}
+        />
         <div className="min-w-0 select-none">
           <div className="font-departureMono text-sm tracking-tight text-foreground">
             Copilot
@@ -297,7 +310,7 @@ export function MarketCopilotSidebar({
       ref={asideRef}
       aria-label="Copilot sidebar"
       className={cn(
-        "relative hidden h-full min-h-0 shrink-0 overflow-hidden border-t border-l border-border/50 md:flex md:flex-col",
+        "relative hidden h-full min-h-0 shrink-0 overflow-hidden md:flex md:flex-col",
         isResizing
           ? "duration-0"
           : "transition-[width] duration-150 ease-[cubic-bezier(0.2,0.9,0.2,1)]"
@@ -309,6 +322,13 @@ export function MarketCopilotSidebar({
         width: `${String(desktopWidth)}px`,
       }}
     >
+      <div
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute inset-x-0 top-0 h-px",
+          MARKET_COPILOT_DIVIDER_LINE_CLASS
+        )}
+      />
       <button
         aria-controls="market-copilot-sidebar-panel"
         aria-label="Resize Copilot sidebar"
@@ -384,12 +404,19 @@ export function MarketCopilotSidebar({
         title="Resize Copilot sidebar"
         type="button"
       >
-        <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border/60 transition-colors group-hover/copilot-resize:bg-foreground/20 group-focus-visible/copilot-resize:bg-foreground/35" />
+        <span
+          className={cn(
+            "absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-transparent transition-colors group-hover/copilot-resize:bg-foreground/20 group-focus-visible/copilot-resize:bg-foreground/35"
+          )}
+        />
       </button>
 
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 left-0 w-px bg-border/60"
+        className={cn(
+          "pointer-events-none absolute inset-y-0 left-0 w-px",
+          MARKET_COPILOT_DIVIDER_LINE_CLASS
+        )}
       />
       <div id="market-copilot-sidebar-panel" className="min-h-0 flex-1">
         <MarketCopilotPanel
