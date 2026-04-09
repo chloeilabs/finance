@@ -8,6 +8,7 @@ import {
 } from "@/lib/constants"
 import {
   isModelType,
+  migrateModelId,
   type ModelInfo,
   type ModelType,
 } from "@/lib/shared/llm/models"
@@ -17,8 +18,16 @@ function readStoredSelectedModel(): ModelType | null {
     return null
   }
 
-  const value = window.localStorage.getItem(MODEL_SELECTOR_STORAGE_KEY)
-  return isModelType(value) ? value : null
+  const raw = window.localStorage.getItem(MODEL_SELECTOR_STORAGE_KEY)
+  if (!raw) return null
+  const value = migrateModelId(raw)
+  if (isModelType(value)) {
+    if (value !== raw) {
+      window.localStorage.setItem(MODEL_SELECTOR_STORAGE_KEY, value)
+    }
+    return value
+  }
+  return null
 }
 
 function writeStoredSelectedModel(model: ModelType | null) {
