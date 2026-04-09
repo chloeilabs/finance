@@ -1,4 +1,7 @@
+import type { NextRequest } from "next/server"
 import { describe, expect, it } from "vitest"
+
+import type { ModelType } from "@/lib/shared/llm/models"
 
 import {
   applyRateLimitHeaders,
@@ -14,11 +17,11 @@ import {
 
 function createMockRequest(
   headers: Record<string, string> = {}
-): import("next/server").NextRequest {
+): NextRequest {
   return {
     headers: new Headers(headers),
     signal: new AbortController().signal,
-  } as unknown as import("next/server").NextRequest
+  } as unknown as NextRequest
 }
 
 describe("resolveUserTimeZone", () => {
@@ -106,7 +109,7 @@ describe("isOpenRouterModel", () => {
 
   it("returns false for an unknown model", () => {
     expect(
-      isOpenRouterModel("unknown/model" as import("@/lib/shared/llm/models").ModelType)
+      isOpenRouterModel("unknown/model" as ModelType)
     ).toBe(false)
   })
 })

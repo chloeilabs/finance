@@ -55,13 +55,15 @@ describe("normalizeSymbols", () => {
 
 describe("mapWithConcurrency", () => {
   it("returns an empty array for empty input", async () => {
-    const result = await mapWithConcurrency([], 4, async (x) => x)
+    const result = await mapWithConcurrency([], 4, (x) => Promise.resolve(x))
     expect(result).toEqual([])
   })
 
   it("maps all items preserving order", async () => {
     const items = [1, 2, 3, 4, 5]
-    const result = await mapWithConcurrency(items, 2, async (x) => x * 10)
+    const result = await mapWithConcurrency(items, 2, (x) =>
+      Promise.resolve(x * 10)
+    )
     expect(result).toEqual([10, 20, 30, 40, 50])
   })
 
@@ -87,8 +89,9 @@ describe("mapWithConcurrency", () => {
   it("passes the index to the mapper", async () => {
     const items = ["a", "b", "c"]
     const indices: number[] = []
-    await mapWithConcurrency(items, 3, async (_, i) => {
+    await mapWithConcurrency(items, 3, (_, i) => {
       indices.push(i)
+      return Promise.resolve()
     })
     expect(indices).toEqual([0, 1, 2])
   })
