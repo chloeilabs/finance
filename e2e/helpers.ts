@@ -3,6 +3,7 @@ import { mkdir, rm } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 
+import { expect, type Page } from "@playwright/test"
 import { Client } from "pg"
 
 export interface E2EAuthUser {
@@ -150,6 +151,32 @@ async function deleteAuthDataForUser(userId: string, email: string) {
       throw error
     }
   })
+}
+
+export async function signUpThroughUi(
+  page: Page,
+  authUser: E2EAuthUser
+): Promise<void> {
+  await page.goto("/")
+  await expect(page).toHaveURL(/\/sign-in$/u)
+
+  await page.getByRole("link", { name: /sign up/i }).click()
+  await expect(page).toHaveURL(/\/sign-up$/u)
+
+  await page.getByRole("textbox", { name: "Full Name" }).fill(authUser.name)
+  await page.getByRole("textbox", { name: "Email" }).fill(authUser.email)
+  await page
+    .getByRole("textbox", { name: "Password", exact: true })
+    .fill(authUser.password)
+  await page
+    .getByRole("textbox", { name: "Confirm Password" })
+    .fill(authUser.password)
+  await page.getByRole("button", { name: "Create Account" }).click()
+
+  await expect(page).toHaveURL(/\/$/u, { timeout: 30_000 })
+  await expect(
+    page.getByRole("heading", { name: "Market overview" })
+  ).toBeVisible({ timeout: 30_000 })
 }
 
 export function createE2EAuthUser(label: string): E2EAuthUser {

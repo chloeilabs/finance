@@ -1,39 +1,15 @@
 import { existsSync } from "node:fs"
 
-import { expect, type Page, test } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 
 import {
   cleanupTestUser,
   createE2EAuthUser,
   createStorageStatePath,
   deleteStorageState,
-  type E2EAuthUser,
   getEnv,
+  signUpThroughUi,
 } from "./helpers"
-
-
-async function signUpThroughUi(page: Page, authUser: E2EAuthUser) {
-  await page.goto("/")
-  await expect(page).toHaveURL(/\/sign-in$/u)
-
-  await page.getByRole("link", { name: /sign up/i }).click()
-  await expect(page).toHaveURL(/\/sign-up$/u)
-
-  await page.getByRole("textbox", { name: "Full Name" }).fill(authUser.name)
-  await page.getByRole("textbox", { name: "Email" }).fill(authUser.email)
-  await page
-    .getByRole("textbox", { name: "Password", exact: true })
-    .fill(authUser.password)
-  await page
-    .getByRole("textbox", { name: "Confirm Password" })
-    .fill(authUser.password)
-  await page.getByRole("button", { name: "Create Account" }).click()
-
-  await expect(page).toHaveURL(/\/$/u, { timeout: 30_000 })
-  await expect(
-    page.getByRole("heading", { name: "Market overview" })
-  ).toBeVisible({ timeout: 30_000 })
-}
 
 test.describe.serial("app smoke", () => {
   const authUser = createE2EAuthUser("app-smoke")
