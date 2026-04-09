@@ -101,12 +101,12 @@ describe("buildLockedSection", () => {
   it("returns a LockedMarketSection with the given fields", () => {
     const section = buildLockedSection(
       "Insider Trading",
-      "insider_trading",
+      "insiderTrades",
       "Requires premium."
     )
     expect(section).toEqual({
       title: "Insider Trading",
-      capability: "insider_trading",
+      capability: "insiderTrades",
       description: "Requires premium.",
     })
   })
@@ -136,9 +136,9 @@ describe("compactMetricStats", () => {
 describe("compactTables", () => {
   it("removes null entries", () => {
     const tables: (StatementTable | null)[] = [
-      { title: "Income", headers: [], rows: [] },
+      { title: "Income", columns: [], rows: [] },
       null,
-      { title: "Balance", headers: [], rows: [] },
+      { title: "Balance", columns: [], rows: [] },
     ]
     const result = compactTables(tables)
     expect(result).toHaveLength(2)
@@ -150,9 +150,9 @@ describe("compactTables", () => {
 describe("dedupeNews", () => {
   it("removes duplicate stories by id", () => {
     const stories: NewsStory[] = [
-      { id: "1", title: "First", url: "", date: "", source: "" },
-      { id: "2", title: "Second", url: "", date: "", source: "" },
-      { id: "1", title: "Duplicate", url: "", date: "", source: "" },
+      { id: "1", title: "First", url: "", publishedAt: "", symbol: null, text: null, site: null, image: null },
+      { id: "2", title: "Second", url: "", publishedAt: "", symbol: null, text: null, site: null, image: null },
+      { id: "1", title: "Duplicate", url: "", publishedAt: "", symbol: null, text: null, site: null, image: null },
     ]
     const result = dedupeNews(stories)
     expect(result).toHaveLength(2)
