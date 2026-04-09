@@ -1,10 +1,20 @@
+/**
+ * Playwright configuration for live browser smoke tests.
+ *
+ * Unlike the default config this does NOT start a local dev server —
+ * the target environment must already be running.  Point
+ * PLAYWRIGHT_BASE_URL at the deployment you want to test:
+ *
+ *   PLAYWRIGHT_BASE_URL=https://staging.example.com pnpm test:e2e:live
+ */
+
 import { defineConfig, devices } from "@playwright/test"
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000"
 
 export default defineConfig({
   testDir: "./e2e",
-  testIgnore: "live.smoke.spec.ts",
+  testMatch: "live.smoke.spec.ts",
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
@@ -25,10 +35,5 @@ export default defineConfig({
       height: 960,
     },
   },
-  webServer: {
-    command: "pnpm dev",
-    url: baseURL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  // No webServer — the target environment is expected to be running already.
 })
