@@ -6,7 +6,7 @@ import {
   SEARCH_TOOL_NAMES,
   TOOL_NAMES,
 } from "@/lib/shared/agent/messages"
-import { isModelType, type ModelType } from "@/lib/shared/llm/models"
+import { isModelType, migrateModelId, type ModelType } from "@/lib/shared/llm/models"
 import {
   DEFAULT_THREAD_TITLE,
   deriveThreadTitle,
@@ -219,7 +219,8 @@ function normalizeThreadMetadata(
 }
 
 function sanitizeModelValue(value: unknown): ModelType | undefined {
-  return isModelType(value) ? value : undefined
+  const migrated = typeof value === "string" ? migrateModelId(value) : value
+  return isModelType(migrated) ? migrated : undefined
 }
 
 function sanitizeThreadPayloadModels(payload: unknown): unknown {
