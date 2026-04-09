@@ -13,7 +13,12 @@ import tseslint from "typescript-eslint"
 
 const tsconfigRootDir = path.dirname(fileURLToPath(import.meta.url))
 const sourceFiles = ["src/**/*.{ts,tsx}"]
-const e2eFiles = ["e2e/**/*.ts", "playwright.config.ts", "vitest.config.ts"]
+const e2eFiles = [
+  "e2e/**/*.ts",
+  "playwright.config.ts",
+  "playwright.live.config.ts",
+  "vitest.config.ts",
+]
 const scriptFiles = ["auth.ts"]
 const typeCheckedFiles = [...sourceFiles, ...e2eFiles, ...scriptFiles]
 const nodeConfigFiles = [
