@@ -1,6 +1,6 @@
 export const AvailableModels = {
   OPENROUTER_MINIMAX_M2_7: "minimax/minimax-m2.7",
-  OPENROUTER_Z_AI_GLM_5: "z-ai/glm-5",
+  OPENROUTER_Z_AI_GLM_5_1: "z-ai/glm-5.1",
 } as const
 
 export type ModelType = (typeof AvailableModels)[keyof typeof AvailableModels]
@@ -10,6 +10,14 @@ export function isModelType(value: unknown): value is ModelType {
     typeof value === "string" &&
     Object.values(AvailableModels).includes(value as ModelType)
   )
+}
+
+const LEGACY_MODEL_MIGRATIONS: Record<string, ModelType> = {
+  "z-ai/glm-5": AvailableModels.OPENROUTER_Z_AI_GLM_5_1,
+}
+
+export function migrateModelId(value: string): ModelType | string {
+  return LEGACY_MODEL_MIGRATIONS[value] ?? value
 }
 
 export interface ModelListItem {
@@ -23,7 +31,7 @@ export interface ModelInfo extends ModelListItem {
 
 export const OPENROUTER_MODELS = [
   AvailableModels.OPENROUTER_MINIMAX_M2_7,
-  AvailableModels.OPENROUTER_Z_AI_GLM_5,
+  AvailableModels.OPENROUTER_Z_AI_GLM_5_1,
 ] as const
 
 export const ALL_MODELS = [...OPENROUTER_MODELS] as const
@@ -61,8 +69,8 @@ export const ModelInfos: Record<ModelType, ModelInfo> = {
     id: AvailableModels.OPENROUTER_MINIMAX_M2_7,
     name: "MiniMax M2.7",
   },
-  [AvailableModels.OPENROUTER_Z_AI_GLM_5]: {
-    id: AvailableModels.OPENROUTER_Z_AI_GLM_5,
-    name: "Z.AI GLM-5",
+  [AvailableModels.OPENROUTER_Z_AI_GLM_5_1]: {
+    id: AvailableModels.OPENROUTER_Z_AI_GLM_5_1,
+    name: "Z.AI GLM-5.1",
   },
 }

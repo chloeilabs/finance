@@ -6,6 +6,7 @@ import { useModels } from "@/hooks/agent/use-models"
 import type { Message } from "@/lib/shared/agent/messages"
 import {
   AvailableModels,
+  migrateModelId,
   type ModelType,
   resolveDefaultModel,
 } from "@/lib/shared/llm/models"
@@ -60,6 +61,14 @@ export function UserMessage({
 
     if (isModelType(message.llmModel)) {
       return message.llmModel
+    }
+
+    const migratedLlmModel =
+      typeof message.llmModel === "string"
+        ? migrateModelId(message.llmModel)
+        : undefined
+    if (isModelType(migratedLlmModel)) {
+      return migratedLlmModel
     }
 
     return resolveDefaultModel(availableModels)

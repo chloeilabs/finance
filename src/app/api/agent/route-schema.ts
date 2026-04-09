@@ -5,7 +5,7 @@ import {
   AGENT_MAX_MESSAGES,
   AGENT_MAX_TOTAL_CHARS,
 } from "@/lib/server/agent-runtime-config"
-import { ALL_MODELS } from "@/lib/shared/llm/models"
+import { ALL_MODELS, migrateModelId } from "@/lib/shared/llm/models"
 
 export const allowedModels = ALL_MODELS
 
@@ -18,7 +18,12 @@ const agentMessageSchema = z
 
 export const agentStreamRequestSchema = z
   .object({
-    model: z.enum(allowedModels).optional(),
+    model: z
+      .preprocess(
+        (val) => (typeof val === "string" ? migrateModelId(val) : val),
+        z.enum(allowedModels)
+      )
+      .optional(),
     messages: z.array(agentMessageSchema).min(1).max(AGENT_MAX_MESSAGES),
   })
   .strict()

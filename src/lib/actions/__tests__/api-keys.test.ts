@@ -23,8 +23,8 @@ describe("getModels", () => {
         name: "MiniMax M2.7",
       },
       {
-        id: "z-ai/glm-5",
-        name: "Z.AI GLM-5",
+        id: "z-ai/glm-5.1",
+        name: "Z.AI GLM-5.1",
       },
     ])
   })
