@@ -16,7 +16,10 @@ export default async function NewsPage() {
 
   return (
     <div className="pb-10">
-      <PageHeader eyebrow="News" title="Market news" />
+      <PageHeader
+        title="Market news"
+        titleClassName="font-departureMono text-base tracking-tight sm:text-lg"
+      />
 
       <SectionFrame title="Stock feed">
         <NewsList stories={stories} />
