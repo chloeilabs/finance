@@ -434,6 +434,8 @@ describe("market route smoke tests", () => {
     const html = renderToStaticMarkup(await NewsPage())
 
     expect(html).toContain("Market news")
+    expect(html).toContain("font-departureMono text-base tracking-tight sm:text-lg")
+    expect(html).not.toContain(">News</div>")
     expect(html).not.toContain("Latest SEC activity")
     expect(html).not.toContain("Latest insider tape")
     expect(html).toContain("No market news")
