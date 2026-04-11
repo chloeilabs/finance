@@ -16,7 +16,7 @@ const LEGACY_MODEL_MIGRATIONS: Record<string, ModelType> = {
   "z-ai/glm-5": AvailableModels.OPENROUTER_Z_AI_GLM_5_1,
 }
 
-export function migrateModelId(value: string): ModelType | string {
+export function migrateModelId(value: string): string {
   return LEGACY_MODEL_MIGRATIONS[value] ?? value
 }
 

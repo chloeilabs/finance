@@ -130,7 +130,7 @@ export function ShikiCode({
       <Button
         type="button"
         variant="ghost"
-        size="iconXs"
+        size="icon-xs"
         aria-label={isCopied ? "Copied" : "Copy code"}
         className="translate-x-[3px] text-muted-foreground hover:text-foreground"
         onClick={() => {

@@ -216,7 +216,7 @@ export function UserMessage({
                     <Button
                       type="button"
                       variant="ghost"
-                      size="iconXs"
+                      size="icon-xs"
                       tabIndex={-1}
                       className="p-0 text-muted-foreground hover:bg-sidebar-border hover:text-foreground"
                       onClick={handleStopEditing}
@@ -258,7 +258,7 @@ export function UserMessage({
                   onClick={() => {
                     void handleSubmit()
                   }}
-                  size="iconSm"
+                  size="icon-sm"
                   variant="default"
                   disabled={
                     !editValue.trim() || isEditPending || !selectedModel
