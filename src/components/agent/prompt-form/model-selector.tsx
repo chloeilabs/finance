@@ -67,8 +67,11 @@ export function ModelSelector({
           </PopoverTrigger>
         </TooltipTrigger>
         {!isModelSelectorOpen && (
-          <TooltipContent side="top" align="start" shortcut="⌘.">
-            Model Selector
+          <TooltipContent side="top" align="start">
+            <span>Model Selector</span>
+            <kbd className="rounded-none border border-sidebar-border px-1 font-mono text-[10px]">
+              ⌘.
+            </kbd>
           </TooltipContent>
         )}
       </Tooltip>

@@ -13,7 +13,7 @@ import {
 import { cn } from "@/lib/utils"
 
 type LauncherTriggerVariant = "ghost" | "outline"
-type LauncherTriggerSize = "icon" | "iconSm" | "iconXs"
+type LauncherTriggerSize = "icon" | "icon-sm" | "icon-xs"
 
 interface FamilyApp {
   name: string
@@ -134,7 +134,7 @@ function AppLauncherCard({
 export function AppLauncher({
   className,
   triggerVariant = "ghost",
-  triggerSize = "iconSm",
+  triggerSize = "icon-sm",
 }: {
   className?: string
   triggerVariant?: LauncherTriggerVariant

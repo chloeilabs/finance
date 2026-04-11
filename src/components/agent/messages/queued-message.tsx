@@ -21,7 +21,7 @@ export function QueuedAction({
       <Button
         type="button"
         variant="ghost"
-        size="iconXs"
+        size="icon-xs"
         className="p-0 text-muted-foreground hover:bg-sidebar-border hover:text-foreground"
         onClick={onClear}
       >

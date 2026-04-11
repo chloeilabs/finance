@@ -115,7 +115,7 @@ function MarketCopilotPanel({
             aria-label="Close Copilot"
             className="-mr-1 shrink-0"
             onClick={onClose}
-            size="iconSm"
+            size="icon-sm"
             variant="ghost"
           >
             <X className="size-4" />
