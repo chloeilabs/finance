@@ -13,7 +13,7 @@ import {
 import { cn } from "@/lib/utils"
 
 type LauncherTriggerVariant = "ghost" | "outline"
-type LauncherTriggerSize = "icon" | "iconSm" | "iconXs"
+type LauncherTriggerSize = "icon" | "icon-sm" | "icon-xs"
 
 interface FamilyApp {
   name: string
@@ -134,7 +134,7 @@ function AppLauncherCard({
 export function AppLauncher({
   className,
   triggerVariant = "ghost",
-  triggerSize = "iconSm",
+  triggerSize = "icon-sm",
 }: {
   className?: string
   triggerVariant?: LauncherTriggerVariant
@@ -157,7 +157,7 @@ export function AppLauncher({
 
       <PopoverContent
         align="end"
-        className="w-[22rem] max-w-[calc(100vw-1rem)] overflow-hidden border-border/70 bg-background/95 p-0 backdrop-blur-sm"
+        className="w-[22rem] max-w-[calc(100vw-1rem)] gap-0 overflow-hidden border-border/70 bg-background/95 p-0 backdrop-blur-sm"
         sideOffset={8}
       >
         <div className="border-b border-border/70 px-4 py-3">

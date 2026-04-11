@@ -7,6 +7,7 @@ import localFont from "next/font/local"
 import { Toaster } from "sonner"
 
 import { QueryClientProvider } from "@/components/layout/query-client-provider"
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
 const departureMono = localFont({
@@ -65,8 +66,10 @@ export default function RootLayout({
         className={cn(departureMono.variable, "overscroll-none antialiased")}
       >
         <QueryClientProvider>
-          {children}
-          <Toaster />
+          <TooltipProvider>
+            {children}
+            <Toaster />
+          </TooltipProvider>
         </QueryClientProvider>
       </body>
     </html>
