@@ -6,6 +6,11 @@ import type { Metadata, Viewport } from "next"
 import localFont from "next/font/local"
 import { Toaster } from "sonner"
 
+import {
+  appDescription,
+  appLauncherName,
+  appTitle,
+} from "@/app/app-metadata"
 import { QueryClientProvider } from "@/components/layout/query-client-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
@@ -21,14 +26,14 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: "Yurie Markets",
-  description: "Stock research terminal for the Yurie family of apps.",
-  applicationName: "Yurie Markets",
+  title: appTitle,
+  description: appDescription,
+  applicationName: appTitle,
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Yurie Markets",
+    title: appLauncherName,
   },
   icons: {
     icon: [

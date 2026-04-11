@@ -49,14 +49,6 @@ const YURIE_FAMILY_APPS: FamilyApp[] = [
       "border-stone-950/10 bg-linear-to-br from-cyan-200 via-sky-100 to-indigo-100 text-stone-950",
     external: true,
   },
-  {
-    name: "Benchmarks",
-    shortName: "BM",
-    href: "https://yuriebench.yurie.ai",
-    badgeClassName:
-      "border-stone-950/10 bg-linear-to-br from-fuchsia-200 via-pink-100 to-orange-100 text-stone-950",
-    external: true,
-  },
 ]
 
 function AppLauncherCard({
