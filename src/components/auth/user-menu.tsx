@@ -24,12 +24,12 @@ export function UserMenu({
   viewer,
   className,
   triggerVariant = "ghost",
-  triggerSize = "iconSm",
+  triggerSize = "icon-sm",
 }: {
   viewer: AuthViewer
   className?: string
   triggerVariant?: "ghost" | "outline"
-  triggerSize?: "icon" | "iconSm" | "iconXs"
+  triggerSize?: "icon" | "icon-sm" | "icon-xs"
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()

@@ -214,7 +214,7 @@ export function PromptForm({
             <div className="flex min-w-0 items-center justify-end gap-[8px]">
               <Button
                 type="submit"
-                size="iconSm"
+                size="icon-sm"
                 disabled={isSubmitButtonDisabled}
                 className="shrink-0 ring-offset-background"
               >
