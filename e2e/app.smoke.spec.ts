@@ -57,7 +57,7 @@ test.describe.serial("app smoke", () => {
         page.getByRole("heading", { name: "NVIDIA Corporation" })
       ).toBeVisible({ timeout: 30_000 })
       await expect(
-        page.getByRole("heading", { name: "Price history" })
+        page.getByRole("toolbar", { name: "Price history timeframe" })
       ).toBeVisible({ timeout: 30_000 })
     } else {
       await expect(
