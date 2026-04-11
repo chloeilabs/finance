@@ -1,11 +1,16 @@
 import type { MetadataRoute } from "next"
 
+import {
+  appDescription,
+  appLauncherName,
+  appTitle,
+} from "@/app/app-metadata"
 import { installIconThemeColor } from "@/app/install-icon"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
     background_color: installIconThemeColor,
-    description: "Multi-provider AI agent.",
+    description: appDescription,
     display: "standalone",
     icons: [
       {
@@ -21,8 +26,8 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
       },
     ],
-    name: "Yurie",
-    short_name: "Yurie",
+    name: appTitle,
+    short_name: appLauncherName,
     start_url: "/",
     theme_color: installIconThemeColor,
   }
