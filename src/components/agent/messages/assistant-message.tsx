@@ -288,10 +288,7 @@ export function AssistantMessage({
     <div className="group/assistant-message relative flex w-full min-w-0 flex-col gap-1 self-stretch">
       {showActivitySection && (
         <div
-          className={cn(
-            "pt-2",
-            resolvedActivityLayout === "default" && "px-3"
-          )}
+          className={cn("pt-2", resolvedActivityLayout === "default" && "px-3")}
         >
           <div className="mb-1">
             <button
@@ -420,7 +417,7 @@ export function AssistantMessage({
             <Button
               type="button"
               variant="ghost"
-              size="iconXs"
+              size="icon-xs"
               className="text-muted-foreground hover:text-foreground"
               onClick={() => {
                 void copyToClipboard(content)

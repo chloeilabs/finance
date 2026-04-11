@@ -10,7 +10,7 @@ Yurie Markets — a Next.js 16 (App Router) stock research terminal with two aut
 ## Tech Stack
 
 - **Framework**: Next.js 16, React 19, TypeScript (strict)
-- **Styling**: Tailwind CSS 4, shadcn/ui (base-lyra), Lucide icons
+- **Styling**: Tailwind CSS 4, shadcn/ui (radix-lyra), Lucide icons
 - **Database**: PostgreSQL with Kysely
 - **Auth**: Better Auth
 - **AI**: Vercel AI SDK + OpenRouter + MCP (FMP, Tavily)
