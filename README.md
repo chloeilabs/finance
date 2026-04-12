@@ -1,3 +1,8 @@
+> [!IMPORTANT]
+> This GitHub repository is archived.
+> Active development and Railway deployments moved to GitLab:
+> https://gitlab.com/yurieos/markets
+
 # Yurie Markets
 
 Yurie Markets is a Next.js 16 stock research terminal for the Yurie family of apps. It is auth-gated, FMP-backed, and designed around US equities first, with watchlists, screeners, stock dossiers, calendars, market breadth, and a secondary `/copilot` workspace that preserves the original Yurie agent stack.
