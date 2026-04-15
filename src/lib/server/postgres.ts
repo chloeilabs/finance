@@ -2,10 +2,10 @@ import { Kysely, PostgresDialect } from "kysely"
 import { Pool } from "pg"
 
 declare global {
-  var yuriePgPool: Pool | undefined
-  var yurieDatabase: Kysely<Record<string, never>> | undefined
-  var yurieAuthPgPool: Pool | undefined
-  var yurieAuthDatabase: Kysely<Record<string, never>> | undefined
+  var financePgPool: Pool | undefined
+  var financeDatabase: Kysely<Record<string, never>> | undefined
+  var financeAuthPgPool: Pool | undefined
+  var financeAuthDatabase: Kysely<Record<string, never>> | undefined
 }
 
 export const DATABASE_URL_ENV_NAME = "DATABASE_URL" as const
@@ -59,20 +59,20 @@ function getPrimaryDatabaseOrNull(): Kysely<Record<string, never>> | null {
     return null
   }
 
-  const existingDatabase = globalThis.yurieDatabase
+  const existingDatabase = globalThis.financeDatabase
   if (existingDatabase) {
     return existingDatabase
   }
 
   const pgPool =
-    globalThis.yuriePgPool ??
+    globalThis.financePgPool ??
     createPool(getRequiredDatabaseUrl(DATABASE_URL_ENV_NAME))
   const database = createDatabase(pgPool)
 
-  globalThis.yuriePgPool ??= pgPool
-  globalThis.yurieDatabase ??= database
+  globalThis.financePgPool ??= pgPool
+  globalThis.financeDatabase ??= database
 
-  return globalThis.yurieDatabase
+  return globalThis.financeDatabase
 }
 
 export function getDatabase(): Kysely<Record<string, never>> {
@@ -97,19 +97,19 @@ function getAuthDatabaseOrNull(): Kysely<Record<string, never>> | null {
     return getPrimaryDatabaseOrNull()
   }
 
-  const existingDatabase = globalThis.yurieAuthDatabase
+  const existingDatabase = globalThis.financeAuthDatabase
   if (existingDatabase) {
     return existingDatabase
   }
 
   const pgPool =
-    globalThis.yurieAuthPgPool ?? createPool(authDatabaseUrl)
+    globalThis.financeAuthPgPool ?? createPool(authDatabaseUrl)
   const database = createDatabase(pgPool)
 
-  globalThis.yurieAuthPgPool ??= pgPool
-  globalThis.yurieAuthDatabase ??= database
+  globalThis.financeAuthPgPool ??= pgPool
+  globalThis.financeAuthDatabase ??= database
 
-  return globalThis.yurieAuthDatabase
+  return globalThis.financeAuthDatabase
 }
 
 export function getAuthDatabase(): Kysely<Record<string, never>> {

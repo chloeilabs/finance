@@ -99,9 +99,9 @@ describe("POST /api/agent", () => {
     process.env.OPENROUTER_API_KEY = "test-openrouter-key"
     mockedDependencies.getRequestSession.mockResolvedValue({
       user: {
-        email: "yurie@example.com",
+        email: "finance@example.com",
         id: "user_123",
-        name: "Yurie User",
+        name: "Finance User",
       },
     })
     mockedDependencies.createAgentTextStream.mockReturnValue(

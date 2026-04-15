@@ -7,7 +7,7 @@ import {
 } from "./postgres"
 
 declare global {
-  var yurieAuth: ReturnType<typeof createAuth> | undefined
+  var financeAuth: ReturnType<typeof createAuth> | undefined
 }
 
 const AUTH_DEFAULT_RATE_LIMIT_WINDOW_SECONDS = 10
@@ -16,6 +16,10 @@ const AUTH_CREDENTIAL_RATE_LIMIT_WINDOW_SECONDS = 15 * 60
 const AUTH_CREDENTIAL_RATE_LIMIT_MAX_REQUESTS = 5
 const THIRTY_DAYS_IN_SECONDS = 60 * 60 * 24 * 30
 const RAILWAY_URL_ENV_NAME_PATTERN = /^RAILWAY_SERVICE_.+_URL$/
+const VERCEL_ENV = "VERCEL_ENV" as const
+const VERCEL_BRANCH_URL_ENV = "VERCEL_BRANCH_URL" as const
+const VERCEL_URL_ENV = "VERCEL_URL" as const
+const VERCEL_PROJECT_PRODUCTION_URL_ENV = "VERCEL_PROJECT_PRODUCTION_URL" as const
 const AUTH_UNAVAILABLE_RESPONSE_HEADERS = {
   "Cache-Control": "no-store",
   "X-Content-Type-Options": "nosniff",
@@ -23,13 +27,14 @@ const AUTH_UNAVAILABLE_RESPONSE_HEADERS = {
 export const AUTH_REQUIRED_ENV_NAMES = [
   DATABASE_URL_ENV_NAME,
   "BETTER_AUTH_SECRET",
-  "BETTER_AUTH_URL",
 ] as const
 export const AUTH_UNAVAILABLE_MESSAGE = "Authentication is not configured."
 
-type AuthRequiredEnvName = (typeof AUTH_REQUIRED_ENV_NAMES)[number]
+type AuthRequiredEnvName =
+  | (typeof AUTH_REQUIRED_ENV_NAMES)[number]
+  | "BETTER_AUTH_URL"
 
-function getConfiguredEnv(name: AuthRequiredEnvName): string | null {
+function getConfiguredValue(name: string): string | null {
   const value = process.env[name]?.trim()
   if (!value) {
     return null
@@ -38,8 +43,53 @@ function getConfiguredEnv(name: AuthRequiredEnvName): string | null {
   return value
 }
 
+function getConfiguredEnv(name: AuthRequiredEnvName): string | null {
+  if (name === "BETTER_AUTH_URL") {
+    return getConfiguredAuthBaseUrl()
+  }
+
+  return getConfiguredValue(name)
+}
+
+function getConfiguredVercelAuthUrl(): string | null {
+  const vercelEnvironment = getConfiguredValue(VERCEL_ENV)
+  const vercelOriginCandidates =
+    vercelEnvironment === "production"
+      ? [
+          getConfiguredValue(VERCEL_PROJECT_PRODUCTION_URL_ENV),
+          getConfiguredValue(VERCEL_BRANCH_URL_ENV),
+          getConfiguredValue(VERCEL_URL_ENV),
+        ]
+      : [
+          getConfiguredValue(VERCEL_BRANCH_URL_ENV),
+          getConfiguredValue(VERCEL_URL_ENV),
+          getConfiguredValue(VERCEL_PROJECT_PRODUCTION_URL_ENV),
+        ]
+
+  for (const originCandidate of vercelOriginCandidates) {
+    const normalizedOrigin = normalizeOrigin(originCandidate ?? "")
+    if (normalizedOrigin) {
+      return normalizedOrigin
+    }
+  }
+
+  return null
+}
+
+function getConfiguredAuthBaseUrl(): string | null {
+  return getConfiguredValue("BETTER_AUTH_URL") ?? getConfiguredVercelAuthUrl()
+}
+
 function getMissingAuthConfig(): AuthRequiredEnvName[] {
-  return AUTH_REQUIRED_ENV_NAMES.filter((name) => !getConfiguredEnv(name))
+  const missing: AuthRequiredEnvName[] = AUTH_REQUIRED_ENV_NAMES.filter((name) =>
+    !getConfiguredEnv(name)
+  )
+
+  if (!getConfiguredAuthBaseUrl()) {
+    missing.push("BETTER_AUTH_URL")
+  }
+
+  return missing
 }
 
 export function isAuthConfigured(): boolean {
@@ -65,6 +115,15 @@ export function createAuthUnavailableResponse(headers?: HeadersInit): Response {
 function getRequiredEnv(
   name: Exclude<AuthRequiredEnvName, typeof DATABASE_URL_ENV_NAME>
 ): string {
+  if (name === "BETTER_AUTH_URL") {
+    const baseUrl = getConfiguredAuthBaseUrl()
+    if (!baseUrl) {
+      throw new Error(`Missing ${name}.`)
+    }
+
+    return baseUrl
+  }
+
   const value = getConfiguredEnv(name)
 
   if (!value) {
@@ -253,6 +312,6 @@ export function getAuthOrNull(): ReturnType<typeof createAuth> | null {
     return null
   }
 
-  globalThis.yurieAuth ??= createAuth()
-  return globalThis.yurieAuth
+  globalThis.financeAuth ??= createAuth()
+  return globalThis.financeAuth
 }

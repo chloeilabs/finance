@@ -302,7 +302,7 @@ export function AppSidebar({ onGoHome }: { onGoHome?: () => void }) {
             <LogoBurst className="shrink-0" size="md" />
             <div className="min-w-0 group-data-[collapsible=icon]:hidden">
               <p className="font-departureMono text-[18px] leading-none tracking-[0.08em] text-sidebar-foreground">
-                Yurie
+                Finance
               </p>
             </div>
           </div>

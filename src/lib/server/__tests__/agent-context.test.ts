@@ -24,8 +24,8 @@ import {
 
 const viewer = {
   id: "user-123",
-  name: "Yurie User",
-  email: "yurie@example.com",
+  name: "Finance User",
+  email: "finance@example.com",
 }
 
 describe("buildAgentPromptContract", () => {
@@ -103,7 +103,7 @@ describe("buildAgentPromptContract", () => {
       "Current UTC timestamp: 2026-03-29T18:45:00.000Z"
     )
     expect(contract.preludeMessages[1]?.content).toContain(
-      "Authenticated user display name: Yurie User"
+      "Authenticated user display name: Finance User"
     )
     expect(contract.preludeMessages[2]?.content).toContain("PORTFOLIO CONTEXT")
     expect(contract.preludeMessages[2]?.content).toContain("Summary: ready")

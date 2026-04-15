@@ -1,6 +1,6 @@
-# Yurie Markets
+# Finance
 
-Yurie Markets is a Next.js 16 stock research terminal for the Yurie family of apps. It is auth-gated, FMP-backed, and designed around US equities first, with watchlists, screeners, stock dossiers, calendars, market breadth, and a secondary `/copilot` workspace that preserves the original Yurie agent stack.
+Finance is a Next.js 16 stock research terminal from Chloei. It is auth-gated, FMP-backed, and designed around US equities first, with watchlists, screeners, stock dossiers, calendars, market breadth, and a secondary `/copilot` workspace that preserves the Chloei agent stack.
 
 ## Requirements
 
@@ -32,12 +32,12 @@ The app runs on [http://localhost:3000](http://localhost:3000).
 
 - `DATABASE_URL`
 - `BETTER_AUTH_SECRET`
-- `BETTER_AUTH_URL`
+- `BETTER_AUTH_URL` for local development and any non-Vercel deployment
 
 ## Optional environment
 
 - `AUTH_DATABASE_URL`: optional Better Auth database override; falls back to `DATABASE_URL` when unset
-- `BETTER_AUTH_COOKIE_DOMAIN`: optional shared cookie domain for cross-subdomain Better Auth sessions (for example `yurie.ai`)
+- `BETTER_AUTH_COOKIE_DOMAIN`: optional shared cookie domain for cross-subdomain Better Auth sessions (for example `chloei.ai`)
 - `FMP_API_KEY`: enables Financial Modeling Prep market data and FMP MCP tools inside `/copilot`
 - `FMP_PLAN_TIER`: manual Financial Modeling Prep plan label used for server-side capability gating (`STARTER`, `PREMIUM`, or `ULTIMATE`)
 - `OPENROUTER_API_KEY`: enables the `/copilot` agent workspace
@@ -74,7 +74,7 @@ Without `FMP_API_KEY`, the market shell still renders but the data sections rema
 - `/screeners`: submit-based company screener
 - `/watchlists/[id]`: durable user watchlist
 - `/stocks/[symbol]`: stock dossier page
-- `/copilot`: Yurie agent workspace
+- `/copilot`: Finance copilot workspace
 
 ## Storage
 
@@ -92,9 +92,10 @@ Without `FMP_API_KEY`, the market shell still renders but the data sections rema
 
 - FMP access is server-only. The browser never sees the API key. The same `FMP_API_KEY` now powers both the market workspace and FMP MCP tool access in `/copilot`.
 - Tests now live in domain-local `__tests__` directories to keep runtime folders lower-noise for both humans and Codex.
-- To share logins with another Yurie app, point both apps at the same Better Auth database and secret, set `BETTER_AUTH_COOKIE_DOMAIN` to the shared parent domain, and include every live subdomain in `BETTER_AUTH_TRUSTED_ORIGINS`.
+- To share logins with another Chloei app, point both apps at the same Better Auth database and secret, set `BETTER_AUTH_COOKIE_DOMAIN` to the shared parent domain, and include every live subdomain in `BETTER_AUTH_TRUSTED_ORIGINS`.
 - The FMP integration uses `/stable/*` endpoints with plan-aware fallbacks for tiers that do not expose batch quotes, batch index quotes, ETF asset exposure, or DCF.
 - `/copilot` auto-enables the full remote FMP MCP catalog when `FMP_API_KEY` is configured and falls back to the existing tool set if MCP discovery is unavailable.
+- On Vercel preview deployments, Better Auth falls back to the deployment URL when `BETTER_AUTH_URL` is unset.
 - Set `FMP_PLAN_TIER=STARTER` for Starter access. Starter is treated as US-only with 300 calls per minute and 20 GB over a trailing 30-day window.
 - Thread metadata now supports a bound stock symbol so the copilot path can attach to a company later without creating a separate chat system.
 

@@ -86,13 +86,11 @@ describe("SignUpPage", () => {
     expect(markup).toContain("Create Account")
     expect(markup).toContain("Sign in")
     expect(markup).toContain('placeholder="Jane Doe"')
-    expect(markup).not.toContain('placeholder="Yurie User"')
+    expect(markup).not.toContain('placeholder="Finance User"')
     expect(markup).toContain('aria-label="Show password"')
     expect(markup).toContain('aria-label="Show confirm password"')
     expect((markup.match(/>Show</g) ?? []).length).toBe(2)
-    expect(markup).not.toContain(
-      "By creating an account, you agree to Yurie Markets&#x27; Terms of Service and Privacy Policy."
-    )
+    expect(markup).not.toContain("By creating an account, you agree to Finance")
     expect(markup).not.toContain("<footer")
     expect(redirect).not.toHaveBeenCalled()
   })
