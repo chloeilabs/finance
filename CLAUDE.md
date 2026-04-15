@@ -2,7 +2,7 @@
 
 ## Project
 
-Yurie Markets — a Next.js 16 (App Router) stock research terminal with two auth-gated surfaces:
+Finance — a Next.js 16 (App Router) stock research terminal from Chloei with two auth-gated surfaces:
 
 - `/(home)`: market research workspace (watchlists, screeners, stock dossiers, calendars, breadth)
 - `/copilot`: AI agent workspace (OpenRouter streaming with MCP tools)
