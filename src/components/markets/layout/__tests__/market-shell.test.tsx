@@ -47,7 +47,7 @@ describe("MarketShell", () => {
   const viewer = {
     email: "markets@example.test",
     id: "user_123",
-    name: "Markets Tester",
+    name: "Finance Tester",
   }
 
   it("shows the symbol search by default", () => {

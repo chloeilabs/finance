@@ -30,7 +30,7 @@ export function AuthShell({
                 )}
               >
                 <LogoHover size="md" />
-                <span className="font-departureMono">Yurie Markets</span>
+                <span className="font-departureMono">Finance</span>
               </Link>
 
               <div className="flex flex-col gap-1">

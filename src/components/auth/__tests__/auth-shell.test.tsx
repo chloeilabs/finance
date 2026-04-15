@@ -30,15 +30,14 @@ vi.mock("@/components/graphics/logo/logo-hover", () => ({
 import { AuthShell } from "../auth-shell"
 
 describe("AuthShell", () => {
-  it("renders the auth brand as Yurie Markets", () => {
+  it("renders the auth brand as Finance", () => {
     const markup = renderToStaticMarkup(
       <AuthShell title="Sign In">
         <div>Form content</div>
       </AuthShell>
     )
 
-    expect(markup).toContain("Yurie Markets")
-    expect(markup).not.toContain(">Yurie<")
+    expect(markup).toContain("Finance")
     expect(markup).toContain("Sign In")
   })
 })

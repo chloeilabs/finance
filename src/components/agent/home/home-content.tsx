@@ -85,14 +85,14 @@ export function HomePageContent({
   const homeHeroTransitionStyle: CSSProperties | undefined = isMobile
     ? undefined
     : {
-        viewTransitionName: "yurie-home-hero",
+        viewTransitionName: "finance-home-hero",
       }
   const threadPaneTransitionStyle: CSSProperties | undefined = isMobile
     ? undefined
     : {
-        viewTransitionName: "yurie-thread-pane",
+        viewTransitionName: "finance-thread-pane",
       }
-  const promptViewTransitionName = isMobile ? undefined : "yurie-prompt-shell"
+  const promptViewTransitionName = isMobile ? undefined : "finance-prompt-shell"
   const showHomeView = !hasMessages || isFallbackEnteringConversation
   const showPromptSuggestions = (homePromptSuggestions?.length ?? 0) > 0
   const resolvedHomePromptSuggestions = homePromptSuggestions ?? []
@@ -214,8 +214,8 @@ export function HomePageContent({
             "relative flex h-full w-full flex-col",
             isFallbackEnteringConversation &&
               (isMobile
-                ? "pointer-events-none absolute inset-0 z-20 animate-[yurie-home-layer-out_110ms_var(--ease-out-cubic)_forwards] bg-background"
-                : "pointer-events-none absolute inset-0 z-20 animate-[yurie-home-layer-out_140ms_var(--ease-in-out-cubic)_forwards] bg-background")
+                ? "pointer-events-none absolute inset-0 z-20 animate-[finance-home-layer-out_110ms_var(--ease-out-cubic)_forwards] bg-background"
+                : "pointer-events-none absolute inset-0 z-20 animate-[finance-home-layer-out_140ms_var(--ease-in-out-cubic)_forwards] bg-background")
           )}
         >
           {showPromptSuggestions ? (
@@ -250,7 +250,7 @@ export function HomePageContent({
                 className="flex items-center gap-4 font-departureMono text-2xl font-medium tracking-tighter select-none"
               >
                 <LogoHover size="lg" />
-                Welcome to <span className="text-muted-foreground">Yurie</span>
+                Welcome to <span className="text-muted-foreground">Finance</span>
               </div>
 
               <PromptForm
@@ -273,8 +273,8 @@ export function HomePageContent({
             "relative flex min-h-0 w-full grow flex-col overflow-y-auto",
             isFallbackEnteringConversation &&
               (isMobile
-                ? "animate-[yurie-thread-layer-in_110ms_var(--ease-out-cubic)_both]"
-                : "animate-[yurie-thread-layer-in_150ms_var(--ease-out-cubic)_both]")
+                ? "animate-[finance-thread-layer-in_110ms_var(--ease-out-cubic)_both]"
+                : "animate-[finance-thread-layer-in_150ms_var(--ease-out-cubic)_both]")
           )}
           resize="smooth"
           initial="smooth"

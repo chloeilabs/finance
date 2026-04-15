@@ -88,9 +88,7 @@ describe("SignInPage", () => {
     expect(markup).toContain('aria-label="Show password"')
     expect((markup.match(/>Show</g) ?? []).length).toBe(1)
     expect(markup).toContain('type="password"')
-    expect(markup).not.toContain(
-      "Welcome back. Sign in to access your Yurie Markets workspace."
-    )
+    expect(markup).not.toContain("Welcome back. Sign in to access Finance.")
     expect(markup).not.toContain("<footer")
     expect(redirect).not.toHaveBeenCalled()
   })

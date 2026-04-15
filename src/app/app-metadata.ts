@@ -1,4 +1,3 @@
-export const appTitle = "Yurie Markets"
-export const appLauncherName = "Markets"
-export const appDescription =
-  "Stock research terminal for the Yurie family of apps."
+export const appTitle = "Finance"
+export const appLauncherName = "Finance"
+export const appDescription = "Stock research terminal from Chloei."

@@ -8,7 +8,7 @@ If an agent keeps making the same mistake, update the closest relevant `AGENTS.m
 
 ## Product Surfaces
 
-Yurie Markets is a Next.js App Router app with two authenticated surfaces:
+Finance is a Next.js App Router app from Chloei with two authenticated surfaces:
 
 - `/(home)`: market research workspace
 - `/copilot`: agent workspace
@@ -94,7 +94,7 @@ The cloud VM does not ship with PostgreSQL. Start the cluster before running mig
 sudo pg_ctlcluster 16 main start
 ```
 
-A local database is pre-configured (user `yurie`, password `yurie`, database `yurie` on `localhost:5432`). The environment may expose a shell-level `DATABASE_URL` that shadows `.env.local`; override `DATABASE_URL`, `BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL` from `.env.local` before running `pnpm auth:migrate`.
+A local database is pre-configured (user `finance`, password `finance`, database `finance` on `localhost:5432`). The environment may expose a shell-level `DATABASE_URL` that shadows `.env.local`; override `DATABASE_URL`, `BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL` from `.env.local` before running `pnpm auth:migrate`.
 
 ### Migrations And Dev Server
 

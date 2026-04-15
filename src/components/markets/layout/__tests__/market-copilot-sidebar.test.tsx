@@ -60,7 +60,7 @@ describe("MarketCopilotSidebar", () => {
         viewer={{
           email: "markets@example.test",
           id: "user_123",
-          name: "Markets Tester",
+          name: "Finance Tester",
         }}
       />
     )
@@ -108,7 +108,7 @@ describe("MarketCopilotSidebar", () => {
         viewer={{
           email: "markets@example.test",
           id: "user_123",
-          name: "Markets Tester",
+          name: "Finance Tester",
         }}
       />
     )
@@ -141,7 +141,7 @@ describe("MarketCopilotSidebar", () => {
         viewer={{
           email: "markets@example.test",
           id: "user_123",
-          name: "Markets Tester",
+          name: "Finance Tester",
         }}
       />
     )

@@ -38,11 +38,11 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "/yurie-black.svg",
+        url: "/finance-black.svg",
         media: "(prefers-color-scheme: light)",
       },
       {
-        url: "/yurie.svg",
+        url: "/finance.svg",
         media: "(prefers-color-scheme: dark)",
       },
     ],
