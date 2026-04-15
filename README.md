@@ -96,6 +96,7 @@ Without `FMP_API_KEY`, the market shell still renders but the data sections rema
 - The FMP integration uses `/stable/*` endpoints with plan-aware fallbacks for tiers that do not expose batch quotes, batch index quotes, ETF asset exposure, or DCF.
 - `/copilot` auto-enables the full remote FMP MCP catalog when `FMP_API_KEY` is configured and falls back to the existing tool set if MCP discovery is unavailable.
 - On Vercel preview deployments, Better Auth falls back to the deployment URL when `BETTER_AUTH_URL` is unset.
+- Pull requests trigger CI plus a Vercel preview deployment, and merges to `main` auto-promote to production.
 - Set `FMP_PLAN_TIER=STARTER` for Starter access. Starter is treated as US-only with 300 calls per minute and 20 GB over a trailing 30-day window.
 - Thread metadata now supports a bound stock symbol so the copilot path can attach to a company later without creating a separate chat system.
 
