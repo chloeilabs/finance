@@ -1,13 +1,11 @@
 import { redirectToSignIn } from "@/lib/auth-client"
+import { ASSISTANT_EMPTY_RESPONSE_FALLBACK } from "@/lib/constants"
 import type { Message as AgentMessage } from "@/lib/shared/agent/messages"
 import type { ModelType } from "@/lib/shared/llm/models"
 import { deriveThreadTitle, type Thread } from "@/lib/shared/threads"
 
 import type { AgentStreamAccumulator } from "./agent-stream-state"
-import {
-  createClientMessageId,
-  EMPTY_ASSISTANT_RESPONSE_FALLBACK,
-} from "./home-agent-utils"
+import { createClientMessageId } from "./home-agent-utils"
 
 export const CLIENT_MESSAGE_MAX_CHARS = 16_000
 
@@ -157,7 +155,7 @@ export function ensureAssistantContent(
 
   return {
     ...accumulator,
-    content: EMPTY_ASSISTANT_RESPONSE_FALLBACK,
+    content: ASSISTANT_EMPTY_RESPONSE_FALLBACK,
   }
 }
 

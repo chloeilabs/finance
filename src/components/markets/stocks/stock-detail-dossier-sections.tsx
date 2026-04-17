@@ -1,11 +1,6 @@
-import Link from "next/link"
-
 import {
-  CalendarList,
   EmptyState,
-  FilingList,
   MetricGrid,
-  NewsList,
   SectionFrame,
   StatementTables,
 } from "@/components/markets/ui/market-primitives"
@@ -14,22 +9,17 @@ import {
   formatCompactNumber,
   formatCurrency,
   formatDate,
-  formatLabeledMetricValue,
-  formatMetricValue,
   formatPercent,
 } from "@/lib/markets-format"
 import type {
   EmployeeCountPoint,
-  LockedMarketSection,
   MarketCapPoint,
 } from "@/lib/shared/markets/intelligence"
-import { getTickerHref } from "@/lib/shared/markets/ticker-routes"
 import { cn } from "@/lib/utils"
 
 import { SegmentationBlock } from "./stock-detail-common"
 import {
   getBusinessSection,
-  getContextSection,
   getFinancialSection,
 } from "./stock-detail-data"
 
@@ -335,152 +325,6 @@ export async function StockBusinessMixSection({ symbol }: { symbol: string }) {
               />
             )}
           </div>
-        </div>
-      </SectionFrame>
-    </div>
-  )
-}
-
-export async function StockPeersSection({ symbol }: { symbol: string }) {
-  const business = await getBusinessSection(symbol)
-
-  return (
-    <div id="peers">
-      <SectionFrame title="Peers">
-        {business.peers.length > 0 ? (
-          <div className="market-table-frame">
-            <table className="min-w-full border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-border/50 bg-background/80 text-left">
-                  <th className="px-3 py-2 font-departureMono text-xs tracking-tight">
-                    Symbol
-                  </th>
-                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
-                    Price
-                  </th>
-                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
-                    P/E
-                  </th>
-                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
-                    FCF Yield
-                  </th>
-                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
-                    ROIC
-                  </th>
-                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
-                    DCF
-                  </th>
-                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
-                    Free Float
-                  </th>
-                  <th className="px-3 py-2 text-right font-departureMono text-xs tracking-tight text-muted-foreground">
-                    Piotroski
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {business.peers.map((peer) => (
-                  <tr
-                    key={peer.symbol}
-                    className="border-b border-border/35 last:border-b-0"
-                  >
-                    <td className="px-3 py-3">
-                      <div>
-                        <Link
-                          className="font-departureMono text-sm tracking-tight hover:underline"
-                          href={getTickerHref(peer.symbol, "stock")}
-                        >
-                          {peer.symbol}
-                        </Link>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          {peer.companyName ?? "Peer company"}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      {formatCurrency(peer.price)}
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      {formatMetricValue(peer.peRatio)}
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      {formatLabeledMetricValue("FCF Yield", peer.fcfYield)}
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      {formatLabeledMetricValue("ROIC", peer.roic)}
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      {formatCurrency(peer.dcf)}
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      {formatPercent(peer.freeFloatPercentage)}
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      {formatMetricValue(peer.piotroskiScore)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <EmptyState
-            title="No peer set"
-            description="Peer comparison is unavailable for this symbol."
-          />
-        )}
-      </SectionFrame>
-    </div>
-  )
-}
-
-export async function StockCatalystsSection({ symbol }: { symbol: string }) {
-  const context = await getContextSection(symbol)
-
-  return (
-    <div id="catalysts">
-      <SectionFrame title="Catalysts">
-        <CalendarList events={context.calendar} />
-      </SectionFrame>
-
-      <SectionFrame title="Filings">
-        <FilingList items={context.filings} />
-      </SectionFrame>
-
-      <SectionFrame title="News">
-        <NewsList stories={context.news} />
-      </SectionFrame>
-    </div>
-  )
-}
-
-export function StockPlanLimitsSection({
-  sections,
-}: {
-  sections: LockedMarketSection[]
-}) {
-  if (sections.length === 0) {
-    return null
-  }
-
-  return (
-    <div id="plan-limits">
-      <SectionFrame title="Plan limits">
-        <div className="market-grid-3 market-panel-grid grid">
-          {sections.map((section) => (
-            <div
-              key={section.title}
-              className="market-panel-tile px-3 py-3 sm:px-4"
-            >
-              <div className="font-departureMono text-xs tracking-[0.18em] text-muted-foreground uppercase">
-                Locked
-              </div>
-              <div className="mt-3 text-sm">{section.title}</div>
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                {section.description}
-              </p>
-            </div>
-          ))}
         </div>
       </SectionFrame>
     </div>
