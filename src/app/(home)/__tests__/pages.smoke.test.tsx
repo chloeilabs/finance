@@ -38,14 +38,9 @@ vi.mock("@/lib/server/markets/service", () => ({
 }))
 
 vi.mock("@/components/markets/stocks/stock-detail-sections", () => ({
-  SectionLoadingState: ({ title }: { title: string }) => <div>{title}</div>,
   StockBusinessMixSection: () => <div>Business mix</div>,
-  StockCatalystsSection: () => <div>Catalysts</div>,
   StockFinancialSection: () => <div>Financials</div>,
-  StockPeersSection: () => <div>Peers</div>,
-  StockPlanLimitsSection: () => <div>Plan limits</div>,
   StockQualitySection: () => <div>Quality</div>,
-  StockSectionNav: () => <nav>Stock nav</nav>,
   StockStreetViewSection: () => <div>Street view</div>,
   StockTradingSection: () => <div>Trading</div>,
 }))
