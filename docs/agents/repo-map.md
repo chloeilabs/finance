@@ -32,6 +32,5 @@
 - `AGENTS.md`: root repo contract
 - `src/**/AGENTS.md`: local rules for specialized subtrees, with nearer files overriding broader ones
 - `src/app/api/agent/AGENTS.md`: streaming-specific contract for the authenticated agent route
-- `.agents/skills/*/SKILL.md`: repeatable repo workflows
 - `docs/references/*`: external reference docs vendored into the repo for offline/consistent agent access
 - `.codex/config.toml`: Codex discovery tuning
