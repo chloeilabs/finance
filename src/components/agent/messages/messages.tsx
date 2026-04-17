@@ -6,73 +6,64 @@ import {
   type Message,
 } from "@/lib/shared/agent/messages"
 import type { ModelType } from "@/lib/shared/llm/models"
+import { cn } from "@/lib/utils"
 
 import { AssistantMessage, CraftingShimmer } from "./assistant-message"
 import { UserMessage } from "./user-message"
 
 function groupMessages(messages: Message[]) {
   const groups: Message[][] = []
-  let currentGroup: Message[] = []
 
   for (const message of messages) {
     if (isUserMessage(message)) {
-      if (
-        currentGroup.length > 0 &&
-        currentGroup[0] &&
-        isUserMessage(currentGroup[0])
-      ) {
-        groups.push([...currentGroup])
-        currentGroup = [message]
-      } else {
-        currentGroup.push(message)
-      }
+      groups.push([message])
       continue
     }
 
-    if (isAssistantMessage(message)) {
-      if (
-        currentGroup.length > 0 &&
-        currentGroup[0] &&
-        isAssistantMessage(currentGroup[0])
-      ) {
-        groups.push([...currentGroup])
-        currentGroup = [message]
-      } else {
-        currentGroup.push(message)
-        if (currentGroup.length === 2) {
-          groups.push([...currentGroup])
-          currentGroup = []
-        }
-      }
+    if (!isAssistantMessage(message)) {
+      continue
     }
-  }
 
-  if (currentGroup.length > 0) {
-    groups.push(currentGroup)
+    const lastGroup = groups[groups.length - 1]
+    const firstMessageInLastGroup = lastGroup?.[0]
+
+    if (firstMessageInLastGroup && isUserMessage(firstMessageInLastGroup)) {
+      lastGroup.push(message)
+      continue
+    }
+
+    groups.push([message])
   }
 
   return groups
 }
 
-function getMessageContent(message: Message): string {
-  const parts = message.metadata?.parts ?? []
-  if (parts.length === 0) return message.content
-  const text = parts.map((p) => ("text" in p ? p.text : "")).join("")
-  return text.length > 0 ? text : message.content
+function hasVisibleAssistantActivity(message: Message): boolean {
+  const visibleTextParts = (message.metadata?.parts ?? [])
+    .map((part) => ("text" in part ? part.text : ""))
+    .join("")
+    .trim()
+  const visibleText = visibleTextParts || message.content.trim()
+
+  return Boolean(
+    visibleText ||
+    (message.metadata?.activityTimeline?.length ?? 0) ||
+    (message.metadata?.toolInvocations?.length ?? 0) ||
+    (message.metadata?.sources?.length ?? 0) ||
+    message.metadata?.reasoning?.trim()
+  )
 }
 
 function MessagesComponent({
   assistantActivityLayout,
-  craftingShimmerLayout,
   messages,
   disableEditing,
   onEditMessage,
-  isStreamPending,
+  isStreamPending = false,
   userMessageLayout = "bubble",
   assistantMessageLayout = "default",
 }: {
   assistantActivityLayout?: "default" | "fullWidth"
-  craftingShimmerLayout?: "default" | "fullWidth"
   messages: Message[]
   disableEditing: boolean
   onEditMessage?: (params: {
@@ -80,35 +71,50 @@ function MessagesComponent({
     newContent: string
     newModel: ModelType
   }) => Promise<void> | void
-  isStreamPending: boolean
+  isStreamPending?: boolean
   userMessageLayout?: "bubble" | "fullWidth"
   assistantMessageLayout?: "default" | "fullWidth"
 }) {
   const messageGroups = useMemo(() => groupMessages(messages), [messages])
 
-  const hasStreamingAssistantWithNoContent = useMemo(() => {
-    return messages.some((m) => {
-      if (!isAssistantMessage(m)) return false
-      if (m.metadata?.isStreaming !== true) return false
-      return !getMessageContent(m).trim()
-    })
-  }, [messages])
-
   return (
-    <div className="relative z-0 mb-10 flex w-full grow flex-col gap-6">
+    <div className="relative z-0 mb-10 flex w-full grow flex-col gap-9">
       {messageGroups.map((messageGroup, groupIndex) => {
         const isLastGroup = groupIndex === messageGroups.length - 1
+        const firstMessage = messageGroup[0]
         const lastMessage = messageGroup[messageGroup.length - 1]
         const endsWithUserMessage =
           lastMessage !== undefined && isUserMessage(lastMessage)
+        const lastAssistantMessage = [...messageGroup]
+          .reverse()
+          .find((message) => isAssistantMessage(message))
+        const assistantIsStreaming =
+          lastAssistantMessage?.metadata?.isStreaming === true
+        const assistantHasVisibleActivity = lastAssistantMessage
+          ? hasVisibleAssistantActivity(lastAssistantMessage)
+          : false
         const shouldShowGenerating =
           isLastGroup &&
-          endsWithUserMessage &&
-          isStreamPending &&
-          !hasStreamingAssistantWithNoContent
+          ((assistantIsStreaming && !assistantHasVisibleActivity) ||
+            (endsWithUserMessage && isStreamPending))
 
         return (
-          <div className="flex w-full min-w-0 flex-col gap-6" key={groupIndex}>
+          <div
+            data-message-group="turn"
+            data-user-message-id={
+              firstMessage && isUserMessage(firstMessage) ? firstMessage.id : ""
+            }
+            className={cn(
+              "flex min-w-0 flex-col gap-3",
+              (messageGroup.length > 1 || shouldShowGenerating) && "gap-4"
+            )}
+            key={groupIndex}
+            style={
+              isLastGroup && messageGroups.length > 1
+                ? { minHeight: "calc(-200px + 100dvh)" }
+                : undefined
+            }
+          >
             {messageGroup.map((message) => {
               if (isUserMessage(message)) {
                 return (
@@ -138,10 +144,7 @@ function MessagesComponent({
             })}
 
             {shouldShowGenerating ? (
-              <CraftingShimmer
-                key={`crafting-${String(groupIndex)}`}
-                layout={craftingShimmerLayout ?? assistantMessageLayout}
-              />
+              <CraftingShimmer key={`crafting-${String(groupIndex)}`} />
             ) : null}
           </div>
         )
