@@ -18,4 +18,4 @@ export {
   SectionFrame,
   WarningStrip,
 } from "./market-layout-primitives"
-export { PriceHistoryChart, StockHeadline } from "./market-stock-primitives"
+export { PriceHistoryChart } from "./market-stock-primitives"

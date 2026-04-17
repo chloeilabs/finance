@@ -67,12 +67,13 @@ Without `FMP_API_KEY`, the market shell still renders but the data sections rema
 ## Product routes
 
 - `/`: market overview workspace
-- `/markets`: broad market context
 - `/news`: market news feed
-- `/calendar`: upcoming catalysts
-- `/screeners`: submit-based company screener
+- `/history`: recent research history
+- `/portfolio`: user portfolio workspace
+- `/settings`: account and data settings
 - `/watchlists/[id]`: durable user watchlist
 - `/stocks/[symbol]`: stock dossier page
+- `/etfs/[symbol]`: ETF dossier page
 - `/copilot`: Finance copilot workspace
 
 ## Storage
