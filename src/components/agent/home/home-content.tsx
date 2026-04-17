@@ -35,12 +35,13 @@ import { useAgentSession } from "./use-agent-session"
 type ViewTransitionStarter = (updateCallback: () => void) => unknown
 const DEFAULT_FALLBACK_TRANSITION_MS = 150
 const MOBILE_FALLBACK_TRANSITION_MS = 110
+const STREAMING_SCROLL_EARLY_TRIGGER_PX = 72
+const STREAMING_SCROLL_PROMPT_BUFFER_PX = 24
 
 export function HomePageContent({
   assistantActivityLayout,
   assistantMessageLayout = "default",
   contentWidthMode = "default",
-  craftingShimmerLayout,
   homePromptSuggestions,
   initialSelectedModel,
   initialThreadId = null,
@@ -52,7 +53,6 @@ export function HomePageContent({
   assistantActivityLayout?: "default" | "fullWidth"
   assistantMessageLayout?: "default" | "fullWidth"
   contentWidthMode?: "default" | "rail"
-  craftingShimmerLayout?: "default" | "fullWidth"
   homePromptSuggestions?: readonly string[]
   initialSelectedModel?: ModelType | null
   initialThreadId?: string | null
@@ -65,6 +65,7 @@ export function HomePageContent({
   const [isFallbackEnteringConversation, setIsFallbackEnteringConversation] =
     useState(false)
   const fallbackTransitionTimeoutRef = useRef<number | null>(null)
+  const overflowPinnedTurnIdRef = useRef<string | null>(null)
   const isMobile = useIsMobile()
   const { currentThreadId, setCurrentThreadId, threads } = useThreads()
   const {
@@ -111,6 +112,74 @@ export function HomePageContent({
     resolvedLayout.contentWidthMode === "rail"
       ? "relative z-0 flex w-full grow flex-col items-stretch px-3 pt-2"
       : "relative z-0 mx-auto flex w-full max-w-3xl grow flex-col items-center px-4 sm:px-6"
+
+  const isActiveTurnInProgress = state.isSubmitting || state.isStreaming
+
+  const targetThreadScrollTop = useCallback(
+    (
+      targetScrollTop: number,
+      {
+        contentElement,
+      }: {
+        contentElement: HTMLElement
+      }
+    ) => {
+      const latestTurnGroups = contentElement.querySelectorAll<HTMLElement>(
+        "[data-message-group='turn']"
+      )
+
+      if (latestTurnGroups.length === 0) {
+        return targetScrollTop
+      }
+
+      const latestTurnGroup = latestTurnGroups[latestTurnGroups.length - 1] as
+        | HTMLElement
+        | undefined
+
+      if (!latestTurnGroup) {
+        return targetScrollTop
+      }
+
+      const latestTurnId = latestTurnGroup.dataset.userMessageId ?? null
+      const contentTop = contentElement.getBoundingClientRect().top
+      const latestTurnTop = latestTurnGroup.getBoundingClientRect().top
+      const anchoredTarget = Math.max(latestTurnTop - contentTop, 0)
+      const scrollViewportHeight =
+        contentElement.parentElement?.getBoundingClientRect().height ?? 0
+      const latestVisibleTurnElement =
+        latestTurnGroup.lastElementChild instanceof HTMLElement
+          ? latestTurnGroup.lastElementChild
+          : latestTurnGroup
+      const latestVisibleTurnBoundary =
+        latestVisibleTurnElement.getBoundingClientRect().bottom - latestTurnTop
+      const promptElement =
+        contentElement.querySelector<HTMLElement>("[data-prompt-form]")
+      const promptHeight = promptElement?.getBoundingClientRect().height ?? 0
+      const earlyTriggerOffset = Math.max(
+        STREAMING_SCROLL_EARLY_TRIGGER_PX,
+        promptHeight + STREAMING_SCROLL_PROMPT_BUFFER_PX
+      )
+      const latestTurnNearPrompt =
+        scrollViewportHeight > 0 &&
+        latestVisibleTurnBoundary > scrollViewportHeight - earlyTriggerOffset
+
+      if (isActiveTurnInProgress && latestTurnNearPrompt && latestTurnId) {
+        overflowPinnedTurnIdRef.current = latestTurnId
+      }
+
+      if (
+        latestTurnNearPrompt &&
+        latestTurnId !== null &&
+        (isActiveTurnInProgress ||
+          overflowPinnedTurnIdRef.current === latestTurnId)
+      ) {
+        return targetScrollTop
+      }
+
+      return anchoredTarget
+    },
+    [isActiveTurnInProgress]
+  )
 
   const startFallbackConversationTransition = useCallback(() => {
     if (fallbackTransitionTimeoutRef.current !== null) {
@@ -196,6 +265,12 @@ export function HomePageContent({
     }
   }, [])
 
+  useEffect(() => {
+    if (!hasMessages) {
+      overflowPinnedTurnIdRef.current = null
+    }
+  }, [hasMessages])
+
   const content = (
     <div className="relative flex h-full w-full flex-col">
       {!integratedLayout ? (
@@ -250,7 +325,8 @@ export function HomePageContent({
                 className="flex items-center gap-4 font-departureMono text-2xl font-medium tracking-tighter select-none"
               >
                 <LogoHover size="lg" />
-                Welcome to <span className="text-muted-foreground">Finance</span>
+                Welcome to{" "}
+                <span className="text-muted-foreground">Finance</span>
               </div>
 
               <PromptForm
@@ -278,6 +354,7 @@ export function HomePageContent({
           )}
           resize="smooth"
           initial="smooth"
+          targetScrollTop={targetThreadScrollTop}
         >
           <StickToBottom.Content className="relative flex min-h-full w-full flex-col">
             <div className={messagePaneContainerClass}>
@@ -288,7 +365,6 @@ export function HomePageContent({
                 <Messages
                   assistantActivityLayout={assistantActivityLayout}
                   assistantMessageLayout={resolvedLayout.assistantMessageLayout}
-                  craftingShimmerLayout={craftingShimmerLayout}
                   messages={state.messages}
                   disableEditing={state.isSubmitting || state.isStreaming}
                   onEditMessage={handleEditMessage}
