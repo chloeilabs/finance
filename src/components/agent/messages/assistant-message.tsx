@@ -213,19 +213,15 @@ function normalizeActivityTimeline(message: Message): ActivityTimelineEntry[] {
   return insertSourcesIntoTimeline(fallback, dedupedSources, message.createdAt)
 }
 
-export function CraftingShimmer({
-  layout = "default",
-}: {
-  layout?: "default" | "fullWidth"
-}) {
+export function CraftingShimmer() {
   return (
-    <div
-      className={cn(
-        "shimmer flex h-7 items-center px-3 text-[13px]",
-        layout === "fullWidth" ? "w-full" : "w-fit"
-      )}
-    >
-      Crafting
+    <div className="px-3 pt-2">
+      <div className="flex w-fit items-center">
+        <span
+          aria-hidden="true"
+          className="crafting-dot-pulse mt-px size-2 shrink-0 rounded-full bg-foreground"
+        />
+      </div>
     </div>
   )
 }
@@ -378,7 +374,7 @@ export function AssistantMessage({
                 return (
                   <div
                     key={entry.id}
-                    className="rounded-none border bg-muted/40 px-2.5 py-1.5 text-xs text-muted-foreground [&_.prose]:w-full [&_.prose]:text-xs [&_.prose]:leading-relaxed [&_.prose>*]:my-0 [&_.prose>*+*]:mt-3 [&_.finance-markdown]:w-full"
+                    className="rounded-none border bg-muted/40 px-2.5 py-1.5 text-xs text-muted-foreground [&_.finance-markdown]:w-full [&_.prose]:w-full [&_.prose]:text-xs [&_.prose]:leading-relaxed [&_.prose>*]:my-0 [&_.prose>*+*]:mt-3"
                   >
                     <div className="min-w-0">
                       <MemoizedMarkdown
