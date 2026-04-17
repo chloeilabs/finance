@@ -1,7 +1,4 @@
-import {
-  EmptyState,
-  SectionFrame,
-} from "@/components/markets/ui/market-primitives"
+import { EmptyState } from "@/components/markets/ui/market-primitives"
 import { formatCompactNumber } from "@/lib/markets-format"
 import type { RevenueSegmentation } from "@/lib/shared/markets/intelligence"
 
@@ -45,44 +42,5 @@ export function SegmentationBlock({
         ))}
       </div>
     </div>
-  )
-}
-
-export function StockSectionNav() {
-  const items = [
-    ["summary", "Summary"],
-    ["trading", "Trading"],
-    ["street-view", "Street View"],
-    ["quality", "Quality"],
-    ["financials", "Financials"],
-    ["business-mix", "Business Mix"],
-    ["peers", "Peers"],
-    ["catalysts", "Catalysts"],
-  ] as const
-
-  return (
-    <div className="sticky top-0 z-20 bg-background/95 px-4 py-2.5 backdrop-blur sm:px-6">
-      <div className="flex gap-2 overflow-x-auto">
-        {items.map(([id, label]) => (
-          <a
-            key={id}
-            className="market-chip shrink-0 px-3 py-1 text-xs transition-colors hover:bg-muted/60"
-            href={`#${id}`}
-          >
-            {label}
-          </a>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-export function SectionLoadingState({ title }: { title: string }) {
-  return (
-    <SectionFrame title={title}>
-      <div className="market-soft-surface px-4 py-8 text-sm text-muted-foreground">
-        Loading {title.toLowerCase()}...
-      </div>
-    </SectionFrame>
   )
 }

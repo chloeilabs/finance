@@ -18,11 +18,7 @@ import {
   THREAD_DELETE_ERROR_TOAST_ID,
   THREAD_SYNC_ERROR_TOAST_ID,
 } from "./threads-api"
-import {
-  loadMigratedLocalThreads,
-  mergeThreads,
-  selectThreadsToPersist,
-} from "./threads-storage"
+import { mergeThreads } from "./threads-storage"
 
 const THREAD_SYNC_DEBOUNCE_MS = 800
 const THREAD_SYNC_RETRY_MS = 3_000
@@ -286,31 +282,6 @@ export function useThreadPersistence(params: {
     },
     [clearScheduledFlush, params]
   )
-
-  useEffect(() => {
-    const localThreads = loadMigratedLocalThreads()
-
-    if (localThreads.length === 0) {
-      return
-    }
-
-    let threadsToPersist: Thread[] = []
-
-    params.setThreads((prev) => {
-      threadsToPersist = selectThreadsToPersist(localThreads, prev)
-      return mergeThreads(prev, localThreads)
-    })
-
-    if (threadsToPersist.length === 0) {
-      return
-    }
-
-    threadsToPersist.forEach((thread) => {
-      pendingSyncsRef.current.set(thread.id, normalizeThread(thread))
-    })
-
-    scheduleFlush(0)
-  }, [params, scheduleFlush])
 
   useEffect(() => {
     const controllers = inFlightControllersRef.current

@@ -48,19 +48,12 @@ export const RISK_PREMIUM_TTL_SECONDS = 60 * 60 * 12
 export const QUOTE_FETCH_CONCURRENCY = 4
 export const EOD_CHART_CACHE_VERSION = "v3"
 export const INTRADAY_CHART_CACHE_VERSION = "v1"
-export const CORE_INDEX_SYMBOLS = ["^GSPC", "^IXIC", "^DJI", "^RUT"] as const
 export const CORE_ECONOMIC_INDICATORS = [
   "GDP",
   "CPI",
   "Unemployment Rate",
 ] as const
 export const CORE_MARKET_EXCHANGES = ["NASDAQ", "NYSE", "AMEX"] as const
-export const CORE_SECTOR_HISTORY = [
-  "Technology",
-  "Healthcare",
-  "Financial Services",
-  "Energy",
-] as const
 export const CORE_CRYPTO_SYMBOLS = [
   "BTCUSD",
   "ETHUSD",
