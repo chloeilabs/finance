@@ -61,13 +61,6 @@ function MarketCopilotPanel({
           "relative flex items-center justify-between gap-3 px-4 py-2.5"
         )}
       >
-        <div
-          aria-hidden="true"
-          className={cn(
-            "pointer-events-none absolute inset-x-0 bottom-0 h-px",
-            MARKET_COPILOT_DIVIDER_LINE_CLASS
-          )}
-        />
         <div className="min-w-0 select-none">
           <div className="font-departureMono text-sm tracking-tight text-foreground">
             Copilot
@@ -128,7 +121,6 @@ function MarketCopilotPanel({
           assistantActivityLayout="fullWidth"
           assistantMessageLayout="fullWidth"
           contentWidthMode="rail"
-          craftingShimmerLayout="default"
           homePromptSuggestions={COPILOT_SUGGESTIONS}
           initialSelectedModel={initialSelectedModel}
           integratedLayout

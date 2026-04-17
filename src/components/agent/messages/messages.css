@@ -17,11 +17,28 @@
   -webkit-text-fill-color: transparent;
 }
 
+.crafting-dot-pulse {
+  animation: crafting-dot-pulse 1.4s ease-in-out infinite;
+}
+
 @keyframes shimmer {
   0% {
     background-position: 200% 0;
   }
   100% {
     background-position: -200% 0;
+  }
+}
+
+@keyframes crafting-dot-pulse {
+  0%,
+  100% {
+    opacity: 0.96;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.72;
+    transform: scale(0.82);
   }
 }
