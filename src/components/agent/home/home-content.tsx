@@ -35,8 +35,8 @@ import { useAgentSession } from "./use-agent-session"
 type ViewTransitionStarter = (updateCallback: () => void) => unknown
 const DEFAULT_FALLBACK_TRANSITION_MS = 150
 const MOBILE_FALLBACK_TRANSITION_MS = 110
-const STREAMING_SCROLL_EARLY_TRIGGER_PX = 72
-const STREAMING_SCROLL_PROMPT_BUFFER_PX = 24
+const STREAMING_SCROLL_EARLY_TRIGGER_PX = 160
+const STREAMING_SCROLL_PROMPT_BUFFER_PX = 96
 
 export function HomePageContent({
   assistantActivityLayout,
