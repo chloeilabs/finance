@@ -2,9 +2,9 @@
 
 ## Scope
 
-This file applies repo-wide. Prefer the nearest nested `AGENTS.md` for subtree-specific rules, and keep long playbooks in `docs/agents/*`, `docs/architecture/*`, or `.agents/skills/*`.
+This file applies repo-wide. Prefer the nearest nested `AGENTS.md` for subtree-specific rules, and keep long playbooks in `docs/agents/*` or `docs/architecture/*`.
 
-If an agent keeps making the same mistake, update the closest relevant `AGENTS.md` or skill instead of repeating the instruction in prompts.
+If an agent keeps making the same mistake, update the closest relevant `AGENTS.md` instead of repeating the instruction in prompts.
 
 ## Product Surfaces
 
@@ -23,7 +23,6 @@ Keep behavior stable. Prefer incremental refactors over architecture rewrites.
 - `src/lib/shared`: shared types and pure helpers; prefer narrow imports over broad barrels
 - `docs/agents`: durable agent-facing guidance
 - `docs/architecture`: system notes that are too detailed for AGENTS files
-- `.agents/skills`: repeatable repo workflows
 
 Read [docs/agents/repo-map.md](docs/agents/repo-map.md) for the expanded layout and [docs/agents/verification.md](docs/agents/verification.md) for scoped verification follow-ups.
 
@@ -59,7 +58,7 @@ pnpm build
 - Client components must not import server-only modules.
 - Keep tests in domain-local `__tests__` folders.
 - Do not add or reintroduce catch-all barrels under `src/lib/shared`.
-- Do not duplicate durable instructions in ad hoc prompts when they belong in AGENTS or a skill.
+- Do not duplicate durable instructions in ad hoc prompts when they belong in AGENTS.
 
 ## Done Checklist
 
@@ -75,12 +74,6 @@ Check the nearest nested `AGENTS.md` when working in specialized areas:
 - `src/app/api/agent/AGENTS.md`
 - `src/lib/server/markets/AGENTS.md`
 - `src/components/agent/AGENTS.md`
-
-For longer workflows, use the matching skills:
-
-- `.agents/skills/markets-workflow/SKILL.md`
-- `.agents/skills/copilot-workflow/SKILL.md`
-- `.agents/skills/repo-review/SKILL.md`
 
 Only add another nested `AGENTS.md` when a subtree has durable rules that differ from its parent.
 

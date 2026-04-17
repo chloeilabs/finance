@@ -4,7 +4,7 @@
 
 Applies to `src/lib/server/markets/**`. Use this subtree for market-time rules, FMP access, cache policy, storage invariants, and stable market-service facades.
 
-For longer background, read [docs/architecture/markets.md](../../../docs/architecture/markets.md). For workflow and verification, use `.agents/skills/markets-workflow/SKILL.md`.
+For longer background, read [docs/architecture/markets.md](../../../docs/architecture/markets.md). For verification follow-ups, read [docs/agents/verification.md](../../../docs/agents/verification.md).
 
 ## Invariants
 
