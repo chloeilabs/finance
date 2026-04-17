@@ -231,7 +231,7 @@ export async function createAiSdkFmpMcpSession(): Promise<AiSdkFmpMcpSession> {
     const discoveredTools = await client.tools()
 
     return {
-      tools: wrapToolsWithUsageTracking(discoveredTools),
+      tools: wrapToolsWithUsageTracking(discoveredTools as ToolSet),
       toolNames: new Set(Object.keys(discoveredTools)),
       close: () => closeClientQuietly(client),
     }
