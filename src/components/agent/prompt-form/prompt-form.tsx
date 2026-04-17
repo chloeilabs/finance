@@ -161,6 +161,7 @@ export function PromptForm({
 
   return (
     <form
+      data-prompt-form
       onSubmit={handleSubmit}
       style={formStyle}
       className={cn(
