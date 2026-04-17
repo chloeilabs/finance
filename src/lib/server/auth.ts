@@ -15,7 +15,6 @@ const AUTH_DEFAULT_RATE_LIMIT_MAX_REQUESTS = 100
 const AUTH_CREDENTIAL_RATE_LIMIT_WINDOW_SECONDS = 15 * 60
 const AUTH_CREDENTIAL_RATE_LIMIT_MAX_REQUESTS = 5
 const THIRTY_DAYS_IN_SECONDS = 60 * 60 * 24 * 30
-const RAILWAY_URL_ENV_NAME_PATTERN = /^RAILWAY_SERVICE_.+_URL$/
 const VERCEL_ENV = "VERCEL_ENV" as const
 const VERCEL_BRANCH_URL_ENV = "VERCEL_BRANCH_URL" as const
 const VERCEL_URL_ENV = "VERCEL_URL" as const
@@ -146,10 +145,6 @@ function getTrustedOrigins(baseUrl: string): string[] {
     }
   }
 
-  for (const origin of getRailwayOrigins()) {
-    trustedOrigins.add(origin)
-  }
-
   return [...trustedOrigins]
 }
 
@@ -169,33 +164,6 @@ function normalizeOrigin(value: string): string | null {
       return null
     }
   }
-}
-
-function getRailwayOrigins(): string[] {
-  const railwayOriginCandidates = Object.entries(process.env)
-    .filter(
-      ([name, value]) =>
-        Boolean(value) &&
-        (name === "RAILWAY_PUBLIC_DOMAIN" ||
-          name === "RAILWAY_STATIC_URL" ||
-          RAILWAY_URL_ENV_NAME_PATTERN.test(name))
-    )
-    .map(([, value]) => value)
-
-  const railwayOrigins = new Set<string>()
-
-  for (const originCandidate of railwayOriginCandidates) {
-    if (!originCandidate) {
-      continue
-    }
-
-    const normalizedOrigin = normalizeOrigin(originCandidate)
-    if (normalizedOrigin) {
-      railwayOrigins.add(normalizedOrigin)
-    }
-  }
-
-  return [...railwayOrigins]
 }
 
 function getAllowedHosts(trustedOrigins: string[]): string[] {
