@@ -3,6 +3,7 @@ import process from "node:process"
 import { Client } from "pg"
 
 const databaseUrl = process.env.DATABASE_URL?.trim()
+const DEFAULT_THREAD_TITLE = "New Thread"
 const LEGACY_SSL_MODES = new Set(["prefer", "require", "verify-ca"])
 const THREAD_STORAGE_SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS thread (
@@ -17,6 +18,19 @@ CREATE TABLE IF NOT EXISTS thread (
   "updatedAt" timestamp(3) without time zone NOT NULL,
   PRIMARY KEY ("userId", id)
 );
+
+ALTER TABLE thread
+ADD COLUMN IF NOT EXISTS title text;
+
+UPDATE thread
+SET title = COALESCE(
+  NULLIF(LEFT(TRIM(COALESCE(messages -> 0 ->> 'content', '')), 500), ''),
+  '${DEFAULT_THREAD_TITLE}'
+)
+WHERE title IS NULL;
+
+ALTER TABLE thread
+ALTER COLUMN title SET NOT NULL;
 
 ALTER TABLE thread
 ADD COLUMN IF NOT EXISTS "isPinned" boolean NOT NULL DEFAULT false;
