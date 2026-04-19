@@ -15,6 +15,8 @@ type DatabaseUrlEnvName =
   | typeof DATABASE_URL_ENV_NAME
   | typeof AUTH_DATABASE_URL_ENV_NAME
 
+const LEGACY_SSL_MODES = new Set(["prefer", "require", "verify-ca"])
+
 function getConfiguredDatabaseUrl(name: DatabaseUrlEnvName): string | null {
   const databaseUrl = process.env[name]?.trim()
   if (!databaseUrl) {
@@ -38,9 +40,41 @@ function getRequiredDatabaseUrl(name: DatabaseUrlEnvName): string {
   return databaseUrl
 }
 
+export function normalizeDatabaseConnectionString(
+  connectionString: string
+): string {
+  const normalizedConnectionString = connectionString.trim()
+  if (!normalizedConnectionString) {
+    return normalizedConnectionString
+  }
+
+  let connectionUrl: URL
+
+  try {
+    connectionUrl = new URL(normalizedConnectionString)
+  } catch {
+    return normalizedConnectionString
+  }
+
+  const useLibpqCompat = connectionUrl.searchParams.get("uselibpqcompat")
+  if (useLibpqCompat?.toLowerCase() === "true") {
+    return normalizedConnectionString
+  }
+
+  const sslMode = connectionUrl.searchParams.get("sslmode")?.toLowerCase()
+  if (!sslMode || !LEGACY_SSL_MODES.has(sslMode)) {
+    return normalizedConnectionString
+  }
+
+  // pg currently treats these legacy modes as verify-full. Make that explicit
+  // so builds and migrations keep the same behavior without the warning.
+  connectionUrl.searchParams.set("sslmode", "verify-full")
+  return connectionUrl.toString()
+}
+
 function createPool(connectionString: string) {
   return new Pool({
-    connectionString,
+    connectionString: normalizeDatabaseConnectionString(connectionString),
   })
 }
 
