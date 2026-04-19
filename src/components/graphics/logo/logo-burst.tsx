@@ -1,5 +1,7 @@
 "use client"
 
+import "./logo-animation.css"
+
 import { AnimatedLogo, type LogoSize } from "./logo-animated"
 import { CleoLogoBurstSvg } from "./logo-burst-svg"
 import { CleoLogoSvg } from "./logo-svg"

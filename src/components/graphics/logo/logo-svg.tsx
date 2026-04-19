@@ -8,7 +8,7 @@ export function CleoLogoSvg({ className }: { className?: string }) {
       viewBox="0 0 11 11"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={cn("fill-current", className)}
+      className={cn("size-full fill-current", className)}
     >
       <rect y="5" width="1" height="1" />
       <rect x="8" y="5" width="1" height="1" />
